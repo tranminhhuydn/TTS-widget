@@ -27,6 +27,7 @@ h1{line-height:1.35}
 .reader.light{background:#fff;color:#222}
 .reader.paper{background:#f7f0dc;color:#453b2d}
 .reader-toolbar{position:sticky;top:0;z-index:10;background:#263b55;color:#fff;padding:10px 12px;box-shadow:0 2px 8px #0002}
+.reader-toolbar.toolbar-bottom{top:auto;bottom:0}
 .toolbar-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px}
 .reader-toolbar select,.reader-toolbar input{max-width:240px;padding:7px;border-radius:5px;border:1px solid #ccc;color:#222;background:#fff}
 .reader-content{max-width:760px;margin:35px auto;padding:0 24px 70px;font-family:Georgia,serif;font-size:20px;line-height:1.9}
@@ -84,7 +85,7 @@ h1{line-height:1.35}
 </article>
 <aside><h3>Nội dung bên lề</h3><p>Đây là khu vực quảng cáo minh họa.</p><hr><p>Menu điều hướng</p><p>Bài viết liên quan</p><p>Thông tin tác giả</p></aside>
 </div>
-<div class="open-button"><button id="openReaderBtn">Mở chế độ đọc</button></div>
+<div class="open-button"><button id="openReaderBtn" aria-label="Mở chế độ đọc"><span aria-hidden="true">📖</span> <span>Mở chế độ đọc</span></button></div>
 </main>
 
 <div class="reader paper" id="reader" aria-label="Cửa sổ đọc">
@@ -110,6 +111,7 @@ h1{line-height:1.35}
 <section class="setting-group"><h3>Giao diện</h3>
 <label for="settingTheme">Chủ đề</label><select id="settingTheme"><option value="paper">Màu giấy</option><option value="light">Sáng</option><option value="dark">Tối</option></select>
 <label><input type="checkbox" id="settingCompact" style="width:auto"> Thu gọn thanh công cụ</label>
+<label for="settingToolbarPosition">Vị trí thanh điều khiển</label><select id="settingToolbarPosition"><option value="header">Header - Đầu trang</option><option value="footer">Footer - Chân trang</option></select>
 <label><input type="checkbox" id="settingAutoScroll" style="width:auto"> Tự cuộn theo nội dung đang đọc</label>
 <label><input type="checkbox" id="settingBackgroundReading" style="width:auto" checked> Tiếp tục đọc khi chuyển tab hoặc cửa sổ mất tiêu điểm</label>
 </section>
@@ -159,7 +161,7 @@ h1{line-height:1.35}
 
 /* SETTINGS MANAGER */
 class SettingsManager {
-  constructor(){this.key="tts-widget-settings-v2";this.defaults={theme:"paper",font:"Georgia",size:20,line:1.9,width:760,rate:1,pitch:1,volume:1,highlight:true,wordSync:true,sync:true,autoScroll:true,keepBackgroundReading:true,compact:false,highlightColor:"#ffe58a",textColor:"#332600",borderColor:"#e0a800"};this.value=this.load();}
+  constructor(){this.key="tts-widget-settings-v2";this.defaults={theme:"paper",font:"Georgia",size:20,line:1.9,width:760,rate:1,pitch:1,volume:1,highlight:true,wordSync:true,sync:true,autoScroll:true,keepBackgroundReading:true,compact:false,toolbarPosition:"header",highlightColor:"#ffe58a",textColor:"#332600",borderColor:"#e0a800"};this.value=this.load();}
   load(){
     try{
       const saved=JSON.parse(localStorage.getItem(this.key)||"{}");
@@ -169,6 +171,7 @@ class SettingsManager {
       number("size",14,36);number("line",1.2,2.4);number("width",520,1200);
       number("rate",0.6,1.8);number("pitch",0.5,2);number("volume",0,1);
       ["highlight","wordSync","sync","autoScroll","keepBackgroundReading","compact"].forEach(key=>{value[key]=typeof value[key]==="boolean"?value[key]:this.defaults[key];});
+      if(!["header","footer"].includes(value.toolbarPosition))value.toolbarPosition=this.defaults.toolbarPosition;
       if(!["paper","light","dark"].includes(value.theme))value.theme=this.defaults.theme;
       if(!["Georgia","Arial","system-ui","Trebuchet MS"].includes(value.font))value.font=this.defaults.font;
       ["highlightColor","textColor","borderColor"].forEach(key=>{if(typeof value[key]!=="string"||!/^#[0-9a-f]{6}$/i.test(value[key]))value[key]=this.defaults[key];});
@@ -314,8 +317,16 @@ const voices=new VoiceManager();
 const highlight=new HighlightManager(reader,settings);
 const speech=new SpeechManager(reader,voices,settings,highlight);
 const $=id=>document.getElementById(id);
+function applyToolbarPosition(){
+  const toolbarElement=$("readerToolbar");
+  const isFooter=settings.value.toolbarPosition==="footer";
+  if(isFooter)reader.root.append(toolbarElement);
+  else reader.root.insertBefore(toolbarElement,reader.content);
+  toolbarElement.classList.toggle("toolbar-bottom",isFooter);
+}
 function applySettings(){
   const s=settings.value;
+  applyToolbarPosition();
   reader.root.classList.remove("paper","light","dark");
   reader.root.classList.add(s.theme);
   reader.content.style.fontFamily=s.font+", sans-serif";
@@ -328,9 +339,9 @@ function applySettings(){
   $("quickFont").value=s.font;
   syncSettingsForm();
 }
-function syncSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingBackgroundReading:"keepBackgroundReading",settingCompact:"compact",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);if(el.type==="checkbox")el.checked=!!s[key];else el.value=s[key];});}
-function readSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingBackgroundReading:"keepBackgroundReading",settingCompact:"compact",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);s[key]=el.type==="checkbox"?el.checked:el.type==="range"?Number(el.value):el.value;});applySettings();settings.save();}
-Object.keys({settingTheme:1,settingFont:1,settingSize:1,settingLine:1,settingWidth:1,settingRate:1,settingPitch:1,settingVolume:1,settingHighlight:1,settingWordSync:1,settingSync:1,settingAutoScroll:1,settingBackgroundReading:1,settingCompact:1,settingHighlightColor:1,settingTextColor:1,settingBorderColor:1}).forEach(id=>$(id).addEventListener("input",readSettingsForm));
+function syncSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingBackgroundReading:"keepBackgroundReading",settingCompact:"compact",settingToolbarPosition:"toolbarPosition",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);if(el.type==="checkbox")el.checked=!!s[key];else el.value=s[key];});}
+function readSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingBackgroundReading:"keepBackgroundReading",settingCompact:"compact",settingToolbarPosition:"toolbarPosition",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);s[key]=el.type==="checkbox"?el.checked:el.type==="range"?Number(el.value):el.value;});applySettings();settings.save();}
+Object.keys({settingTheme:1,settingFont:1,settingSize:1,settingLine:1,settingWidth:1,settingRate:1,settingPitch:1,settingVolume:1,settingHighlight:1,settingWordSync:1,settingSync:1,settingAutoScroll:1,settingBackgroundReading:1,settingCompact:1,settingToolbarPosition:1,settingHighlightColor:1,settingTextColor:1,settingBorderColor:1}).forEach(id=>$(id).addEventListener("input",readSettingsForm));
 $("openReaderBtn").addEventListener("click",()=>{speech.stop(false);reader.open();applySettings();toolbar.update();});
 $("closeBtn").addEventListener("click",()=>{speech.stop(false);reader.close();});
 $("playBtn").addEventListener("click",()=>speech.start(0));
