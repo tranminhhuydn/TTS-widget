@@ -316,3 +316,24 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 - Không mô tả tính năng chưa được triển khai như thể đã hoạt động. Phải nêu rõ giới hạn của trình duyệt/hệ điều hành và những phần chỉ hoạt động best-effort.
 - Khi thay đổi hành vi hoặc giao diện người dùng, phải rà soát và cập nhật README trong cùng đợt nếu hướng dẫn hiện tại không còn chính xác.
 - Việc người dùng yêu cầu tạo/cập nhật README là ngoại lệ được cho phép đối với nguyên tắc chỉ duy trì một file mã nguồn `index.html`; không được vì vậy tự ý tách HTML/CSS/JavaScript thành nhiều file.
+
+
+## 11. Biểu tượng mở Reader và vị trí thanh điều khiển
+
+- Nút mở chế độ đọc trên trang nguồn phải có biểu tượng quyển sách dễ nhận biết, đặt cạnh nhãn “Mở chế độ đọc”; biểu tượng trang trí phải được ẩn khỏi trình đọc màn hình khi nhãn truy cập đã đầy đủ.
+- Trong nhóm cài đặt Giao diện, cung cấp tùy chọn **Vị trí thanh điều khiển** với hai lựa chọn:
+  - **Header - Đầu trang**: đặt thanh điều khiển ở đầu Reader và giữ hành vi sticky ở cạnh trên khi cuộn.
+  - **Footer - Chân trang**: đặt thanh điều khiển sau nội dung Reader ở cuối luồng nội dung và giữ hành vi sticky ở cạnh dưới khi cuộn.
+- Mặc định là Header để bảo toàn hành vi hiện tại.
+- Khi đổi vị trí, phải di chuyển chính phần tử thanh điều khiển hiện có; không tạo bản sao, không nhân đôi event listener, Settings, nút điều khiển hoặc context menu.
+- Lựa chọn Header/Footer phải cập nhật ngay khi thay đổi, đồng bộ với Settings và được lưu/khôi phục qua localStorage.
+- Khi đổi vị trí nhiều lần, các nút đọc, tạm dừng, tiếp tục, dừng, chuyển đoạn, Settings, thu gọn thanh công cụ và menu “Đọc từ đây” vẫn phải hoạt động.
+- Trên màn hình desktop và mobile, thanh điều khiển không được che khuất vùng nội dung đang thao tác; bảng Settings phải mở được ở cả hai vị trí.
+- Acceptance test:
+  1. Nút mở Reader hiển thị icon quyển sách và nhãn truy cập “Mở chế độ đọc”.
+  2. Mặc định Reader hiển thị toolbar ở Header.
+  3. Chọn Footer: toolbar chuyển xuống sau nội dung và status, bám cạnh dưới khi cuộn đến vùng cuối.
+  4. Chọn lại Header: toolbar trở về trước nội dung và bám cạnh trên.
+  5. Tải lại trang: vị trí đã chọn được khôi phục.
+  6. Chuyển Header/Footer liên tục không tạo toolbar hoặc listener trùng lặp; toàn bộ điều khiển vẫn hoạt động.
+  7. Mở Settings, thu gọn toolbar và dùng “Đọc từ đây” ở cả hai vị trí.
