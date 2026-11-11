@@ -58,7 +58,7 @@ h1{line-height:1.35}
 .reader.minimized .reader-content,.reader.minimized .reader-status,.reader.minimized .settings-panel{display:none}
 .mini-reading-progress{display:none;min-width:0;max-width:min(42vw,420px);overflow:hidden;text-overflow:ellipsis;white-space:normal;color:#fff;font-size:12px;line-height:1.35;text-align:left}
 .reader.minimized .mini-reading-progress{display:block;flex:1 1 180px;max-height:2.7em;overflow:hidden}
-.reader.maximized .reader-content{max-width:1100px!important;width:calc(100% - 48px)!important}
+.reader.maximized .reader-content{box-sizing:border-box;max-width:min(1100px,calc(100% - 48px))!important;width:100%!important;margin-left:auto;margin-right:auto}
 .reader.maximized .reader-toolbar{position:sticky;top:0}
 .reader.minimized #maximizeBtn{background:#0f766e}
 @media(max-width:700px){.reader.minimized .mini-reading-progress{flex-basis:100%;max-width:100%;text-align:center}.reader.minimized .toolbar-row{justify-content:center}}
@@ -164,7 +164,21 @@ h1{line-height:1.35}
 /* SETTINGS MANAGER */
 class SettingsManager {
   constructor(){this.key="tts-widget-settings-v2";this.defaults={theme:"paper",font:"Georgia",size:20,line:1.9,width:760,rate:1,pitch:1,volume:1,highlight:true,wordSync:true,sync:true,autoScroll:true,keepBackgroundReading:true,compact:false,highlightColor:"#ffe58a",textColor:"#332600",borderColor:"#e0a800"};this.value=this.load();}
-  load(){try{return {...this.defaults,...JSON.parse(localStorage.getItem(this.key)||"{}")};}catch(_){return {...this.defaults};}}
+  load(){
+    try{
+      const saved=JSON.parse(localStorage.getItem(this.key)||"{}");
+      if(!saved||typeof saved!=="object"||Array.isArray(saved))return {...this.defaults};
+      const value={...this.defaults,...saved};
+      const number=(key,min,max)=>{const n=Number(value[key]);value[key]=Number.isFinite(n)?Math.min(max,Math.max(min,n)):this.defaults[key];};
+      number("size",14,36);number("line",1.2,2.4);number("width",520,1200);
+      number("rate",0.6,1.8);number("pitch",0.5,2);number("volume",0,1);
+      ["highlight","wordSync","sync","autoScroll","keepBackgroundReading","compact"].forEach(key=>{value[key]=typeof value[key]==="boolean"?value[key]:this.defaults[key];});
+      if(!["paper","light","dark"].includes(value.theme))value.theme=this.defaults.theme;
+      if(!["Georgia","Arial","system-ui","Trebuchet MS"].includes(value.font))value.font=this.defaults.font;
+      ["highlightColor","textColor","borderColor"].forEach(key=>{if(typeof value[key]!=="string"||!/^#[0-9a-f]{6}$/i.test(value[key]))value[key]=this.defaults[key];});
+      return value;
+    }catch(_){return {...this.defaults};}
+  }
   save(){try{localStorage.setItem(this.key,JSON.stringify(this.value));}catch(_){}}
   reset(){this.value={...this.defaults};this.save();}
 }
@@ -330,7 +344,27 @@ const voices=new VoiceManager();
 const highlight=new HighlightManager(reader,settings);
 const speech=new SpeechManager(reader,voices,settings,highlight);
 const $=id=>document.getElementById(id);
-function applySettings(){const s=settings.value;reader.root.classList.remove("paper","light","dark");reader.root.classList.add(s.theme);reader.content.style.fontFamily=s.font+", sans-serif";reader.content.style.fontSize=s.size+"px";reader.content.style.lineHeight=s.line;reader.content.style.maxWidth=s.width+"px";$("readerToolbar").classList.toggle("toolbar-collapsed",s.compact);highlight.applyColors();$("quickFont").value=s.font;syncSettingsForm();}
+function applySettings(){
+  const s=settings.value;
+  reader.root.classList.remove("paper","light","dark");
+  reader.root.classList.add(s.theme);
+  reader.content.style.fontFamily=s.font+", sans-serif";
+  reader.content.style.fontSize=s.size+"px";
+  reader.content.style.lineHeight=String(s.line);
+  // Width from localStorage applies only to normal reading mode.
+  // Expanded mode owns its layout and cannot be narrowed by saved settings.
+  if(reader.root.classList.contains("maximized")){
+    reader.content.style.maxWidth="";
+    reader.content.style.width="";
+  }else{
+    reader.content.style.maxWidth=s.width+"px";
+    reader.content.style.width="";
+  }
+  $("readerToolbar").classList.toggle("toolbar-collapsed",s.compact);
+  highlight.applyColors();
+  $("quickFont").value=s.font;
+  syncSettingsForm();
+}
 function syncSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingBackgroundReading:"keepBackgroundReading",settingCompact:"compact",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);if(el.type==="checkbox")el.checked=!!s[key];else el.value=s[key];});}
 function readSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingBackgroundReading:"keepBackgroundReading",settingCompact:"compact",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);s[key]=el.type==="checkbox"?el.checked:el.type==="range"?Number(el.value):el.value;});applySettings();settings.save();}
 Object.keys({settingTheme:1,settingFont:1,settingSize:1,settingLine:1,settingWidth:1,settingRate:1,settingPitch:1,settingVolume:1,settingHighlight:1,settingWordSync:1,settingSync:1,settingAutoScroll:1,settingBackgroundReading:1,settingCompact:1,settingHighlightColor:1,settingTextColor:1,settingBorderColor:1}).forEach(id=>$(id).addEventListener("input",readSettingsForm));
