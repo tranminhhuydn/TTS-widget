@@ -25,8 +25,8 @@ Cho phép cấu hình:
 - Kích thước cửa sổ đọc.
 - Reader chỉ có một trạng thái hiển thị: cửa sổ đọc bình thường; không có chế độ thu nhỏ hoặc mở rộng.
 - Giao diện sáng, tối, màu giấy.
-- Thanh công cụ thu gọn hoặc mở rộng.
-- Hiển thị hoặc ẩn các thành phần điều khiển.
+- Toàn bộ điều khiển phụ trên thanh công cụ luôn hiển thị; không có chế độ thu gọn/mở rộng thanh công cụ.
+- Các điều khiển chính và phụ luôn hiển thị trực tiếp trên thanh công cụ.
 - Responsive cho desktop, tablet và mobile.
 
 ### 2.2. Phông chữ (Typography)
@@ -158,7 +158,7 @@ Yêu cầu:
 - Có trạng thái disabled khi không thể thực hiện lệnh.
 - Không hiển thị đồng thời những nút có chức năng trùng lặp.
 - Không có nút thu nhỏ hoặc mở rộng Reader.
-- Nút Settings phải luôn truy cập được, kể cả khi thanh công cụ đang ở chế độ thu gọn.
+- Nút Settings luôn hiển thị và truy cập được trên thanh công cụ.
 - Phân biệt rõ Pause và Stop.
 
 ## 4. Hệ thống cài đặt
@@ -295,10 +295,10 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 ### 9.5. Tính nhất quán của Settings và giao diện
 
 - Các điều khiển nhanh bên ngoài Settings (nếu còn được giữ) phải cập nhật cùng một đối tượng cấu hình, đồng bộ lại giá trị trong Settings và lưu localStorage.
-- Thu gọn thanh công cụ chỉ được ẩn các điều khiển phụ; nút Settings và các thao tác thiết yếu phải luôn truy cập được.
-- Không được nhầm lẫn thu gọn thanh công cụ với thu nhỏ/mở rộng Reader. Reader tiếp tục chỉ có một trạng thái hiển thị bình thường.
+- Thanh công cụ không có trạng thái thu gọn/mở rộng; tất cả điều khiển phụ luôn hiển thị.
+- Reader tiếp tục chỉ có một trạng thái hiển thị bình thường; không có chế độ thu nhỏ/mở rộng Reader.
 - Reset phải đưa toàn bộ cấu hình thuộc Settings về mặc định và cập nhật đồng bộ giao diện; phải xác định rõ dữ liệu giọng đọc được lưu riêng có được giữ hay không.
-- Acceptance test: thay đổi từng thiết lập, đóng/mở Settings, thu gọn/mở thanh công cụ, tải lại trang và reset; xác nhận giá trị giao diện và localStorage nhất quán.
+- Acceptance test: thay đổi từng thiết lập còn tồn tại, đóng/mở Settings, tải lại trang và reset; xác nhận giá trị giao diện và localStorage nhất quán. Không còn tùy chọn hoặc trạng thái thu gọn thanh công cụ.
 
 ### 9.6. Quy tắc đối chiếu trước khi kết thúc mỗi lần sửa
 
@@ -327,7 +327,7 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 - Mặc định là Header để bảo toàn hành vi hiện tại.
 - Khi đổi vị trí, phải di chuyển chính phần tử thanh điều khiển hiện có; không tạo bản sao, không nhân đôi event listener, Settings, nút điều khiển hoặc context menu.
 - Lựa chọn Header/Footer phải cập nhật ngay khi thay đổi, đồng bộ với Settings và được lưu/khôi phục qua localStorage.
-- Khi đổi vị trí nhiều lần, các nút đọc, tạm dừng, tiếp tục, dừng, chuyển đoạn, Settings, thu gọn thanh công cụ và menu “Đọc từ đây” vẫn phải hoạt động.
+- Khi đổi vị trí nhiều lần, các nút đọc, tạm dừng, tiếp tục, dừng, chuyển đoạn, Settings và menu “Đọc từ đây” vẫn phải hoạt động.
 - Trên màn hình desktop và mobile, thanh điều khiển không được che khuất vùng nội dung đang thao tác; bảng Settings phải mở được ở cả hai vị trí.
 - Acceptance test:
   1. Nút mở Reader hiển thị icon quyển sách và nhãn truy cập “Mở chế độ đọc”.
@@ -336,7 +336,7 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
   4. Chọn lại Header: toolbar trở về trước nội dung và bám cạnh trên.
   5. Tải lại trang: vị trí đã chọn được khôi phục.
   6. Chuyển Header/Footer liên tục không tạo toolbar hoặc listener trùng lặp; toàn bộ điều khiển vẫn hoạt động.
-  7. Mở Settings, thu gọn toolbar và dùng “Đọc từ đây” ở cả hai vị trí.
+  7. Xác nhận mọi điều khiển phụ luôn hiển thị và dùng được; mở Settings và dùng “Đọc từ đây” ở cả hai vị trí toolbar.
 
 ## 12. Kiểm tra hỗ trợ Web Speech API trên trình duyệt
 
@@ -359,3 +359,17 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
   4. Ở trình duyệt không hỗ trợ, vẫn mở được Reader và nội dung vẫn đọc bằng mắt bình thường.
   5. Nhấn nút Đọc trong Reader khi API không hỗ trợ phải hiển thị thông báo dễ hiểu, không có lỗi JavaScript.
   6. Không dùng user-agent sniffing để kết luận khả năng hỗ trợ.
+
+## 13. Loại bỏ chế độ thu gọn/mở rộng điều khiển phụ trên thanh công cụ
+
+- Không cung cấp nút, checkbox, phím tắt, trạng thái hoặc thao tác nào để thu gọn/mở rộng các điều khiển phụ trên thanh công cụ.
+- Luôn hiển thị hàng điều khiển phụ (giảm/tăng cỡ chữ, chọn phông, đổi nền) cùng các điều khiển chính; không ẩn chúng bằng class CSS hoặc trạng thái JavaScript.
+- Xóa nút `collapseBtn`, tùy chọn `settingCompact`, class `toolbar-extra`/`toolbar-collapsed`, listener và logic áp dụng trạng thái compact khỏi `index.html`.
+- Không giữ thuộc tính `compact` trong cấu hình mặc định hoặc đồng bộ Settings. Nếu localStorage còn khóa `compact` từ phiên bản cũ, bỏ qua khóa dư thừa; không để nó ảnh hưởng giao diện.
+- Giữ nguyên các chức năng riêng biệt của Settings, điều khiển nhanh, vị trí Header/Footer và các chức năng đọc.
+- Acceptance test:
+  1. Không còn nút hoặc checkbox thu gọn/mở rộng điều khiển phụ.
+  2. Các nút giảm/tăng cỡ chữ, chọn phông và đổi nền luôn hiển thị ở cả Header và Footer.
+  3. Mở/đóng Settings, đổi Header/Footer và tải lại trang không làm ẩn điều khiển phụ.
+  4. Cấu hình localStorage cũ có thuộc tính `compact` không gây lỗi hoặc làm thay đổi giao diện.
+  5. Không còn selector, listener hoặc logic CSS/JavaScript điều khiển trạng thái thu gọn thanh công cụ.
