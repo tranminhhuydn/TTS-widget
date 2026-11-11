@@ -153,7 +153,7 @@ h1{line-height:1.35}
 </div>
 
 
-<div class="reader-context-menu" id="readerContextMenu" role="menu" aria-label="Menu đọc văn bản"><button id="readFromCursorBtn" type="button" role="menuitem">▶ Đọc từ đây</button></div>
+
 <script>
 "use strict";
 
@@ -222,7 +222,7 @@ class ReaderManager {
   }
   open(){const clone=document.getElementById("article").cloneNode(true);clone.querySelectorAll("script,style,noscript,iframe,nav,footer,form,button,input,select,textarea,aside").forEach(e=>e.remove());this.content.replaceChildren(clone);
     this.blocks=[];clone.querySelectorAll("p,h1,h2,h3,h4,li,blockquote").forEach(el=>{const text=(el.innerText||el.textContent||"").trim();if(!text)return;el.dataset.readerParagraph=String(this.blocks.length);this.blocks.push({element:el,text});});
-    this.active=-1;this.root.classList.add("open");this.lockPageScroll();}
+    this.active=-1;this.root.classList.add("open");this.lockPageScroll();mountReaderContextMenu();}
   refreshActiveParagraph(){
     if(this.active<0||!this.blocks[this.active])return;
     const el=this.blocks[this.active].element;
@@ -233,7 +233,7 @@ class ReaderManager {
     }
     
   }
-  close(){this.root.classList.remove("open");this.unlockPageScroll();this.clearHighlight();this.content.replaceChildren();this.blocks=[];this.active=-1;}
+  close(){unmountReaderContextMenu();this.root.classList.remove("open");this.unlockPageScroll();this.clearHighlight();this.content.replaceChildren();this.blocks=[];this.active=-1;}
   setActive(index,settings){if(index<0||index>=this.blocks.length)return;this.active=index;this.clearHighlight();const el=this.blocks[index].element;if(settings.value.highlight&&settings.value.sync){el.classList.add("tts-active");if(settings.value.autoScroll)el.scrollIntoView({behavior:"smooth",block:"center"});}}
   clearHighlight(){this.content.querySelectorAll(".tts-active").forEach(el=>el.classList.remove("tts-active"));this.content.querySelectorAll("mark.tts-word").forEach(mark=>{mark.replaceWith(document.createTextNode(mark.textContent||""));});this.content.normalize();}
   getBlocks(){return this.blocks;}
@@ -370,42 +370,48 @@ window.addEventListener("blur",handleReaderFocusChange);
 window.addEventListener("focus",handleReaderFocusChange);
 
 
-/* CONTEXT MENU: read the paragraph under the pointer */
-const readerContextMenu=$("readerContextMenu");
+
+/* CONTEXT MENU: exists only while Reader mode is open */
+let readerContextMenu=null;
 let contextReadTarget=null;
-function hideReaderContextMenu(){readerContextMenu.classList.remove("open");contextReadTarget=null;}
+function hideReaderContextMenu(){if(readerContextMenu)readerContextMenu.classList.remove("open");contextReadTarget=null;}
+function unmountReaderContextMenu(){
+  hideReaderContextMenu();
+  if(readerContextMenu){readerContextMenu.remove();readerContextMenu=null;}
+}
+function mountReaderContextMenu(){
+  unmountReaderContextMenu();
+  if(!reader.root.classList.contains("open"))return;
+  readerContextMenu=document.createElement("div");
+  readerContextMenu.className="reader-context-menu";
+  readerContextMenu.id="readerContextMenu";
+  readerContextMenu.setAttribute("role","menu");
+  readerContextMenu.setAttribute("aria-label","Menu đọc văn bản");
+  const action=document.createElement("button");
+  action.type="button";action.id="readFromCursorBtn";action.setAttribute("role","menuitem");
+  action.textContent="▶ Đọc từ đây";
+  readerContextMenu.append(action);
+  reader.root.append(readerContextMenu);
+  action.addEventListener("click",()=>{
+    const index=contextReadTarget;hideReaderContextMenu();
+    if(!Number.isInteger(index)||index<0||!reader.root.classList.contains("open"))return;
+    speech.start(index);
+  });
+}
 function showReaderContextMenu(event,index){
+  if(!reader.root.classList.contains("open")||!readerContextMenu)return;
   event.preventDefault();contextReadTarget=index;readerContextMenu.classList.add("open");
   const rect=readerContextMenu.getBoundingClientRect(),margin=8;
   readerContextMenu.style.left=Math.max(margin,Math.min(event.clientX,window.innerWidth-rect.width-margin))+"px";
   readerContextMenu.style.top=Math.max(margin,Math.min(event.clientY,window.innerHeight-rect.height-margin))+"px";
 }
-function getReadableBlockIndex(target,root){
-  const block=target instanceof Element?target.closest("p,h1,h2,h3,h4,li,blockquote"):null;
-  if(!block||!root.contains(block))return -1;
-  return Array.from(root.querySelectorAll("p,h1,h2,h3,h4,li,blockquote"))
-    .filter(el=>(el.innerText||el.textContent||"").trim()).indexOf(block);
-}
-document.addEventListener("contextmenu",event=>{
-  if(readerContextMenu.contains(event.target))return;
-  if(reader.root.classList.contains("open")&&reader.content.contains(event.target)){
-    const block=event.target.closest("[data-reader-paragraph]");
-    if(block)showReaderContextMenu(event,Number(block.dataset.readerParagraph));
-    return;
-  }
-  const article=document.getElementById("article");
-  if(article.contains(event.target)){
-    const index=getReadableBlockIndex(event.target,article);
-    if(index>=0)showReaderContextMenu(event,index);
-  }
+reader.content.addEventListener("contextmenu",event=>{
+  if(!reader.root.classList.contains("open"))return;
+  const block=event.target.closest("[data-reader-paragraph]");
+  if(!block)return;
+  showReaderContextMenu(event,Number(block.dataset.readerParagraph));
 });
-$("readFromCursorBtn").addEventListener("click",()=>{
-  const index=contextReadTarget;hideReaderContextMenu();
-  if(!Number.isInteger(index)||index<0)return;
-  if(!reader.root.classList.contains("open")){speech.stop(false);reader.open();applySettings();}
-  toolbar.update();speech.start(index);
-});
-document.addEventListener("pointerdown",event=>{if(!readerContextMenu.contains(event.target))hideReaderContextMenu();});
+document.addEventListener("pointerdown",event=>{if(readerContextMenu&&!readerContextMenu.contains(event.target))hideReaderContextMenu();});
 document.addEventListener("keydown",event=>{if(event.key==="Escape")hideReaderContextMenu();});
 window.addEventListener("resize",hideReaderContextMenu);
 window.addEventListener("scroll",hideReaderContextMenu,true);
