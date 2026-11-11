@@ -1,0 +1,827 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Web Reader - Demo</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  line-height: 1.7;
+  background: #f2f4f7;
+  color: #263238;
+}
+
+button, select, input {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 13px;
+  background: #2463a6;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: .85;
+}
+
+button.secondary {
+  background: #64748b;
+}
+
+button.danger {
+  background: #b83a3a;
+}
+
+header {
+  padding: 18px max(20px, calc((100% - 1050px)/2));
+  background: #263b55;
+  color: white;
+}
+
+main {
+  max-width: 1050px;
+  margin: 35px auto;
+  padding: 0 20px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 25px;
+}
+
+article, aside {
+  padding: 28px;
+  border-radius: 12px;
+  background: white;
+}
+
+h1 {
+  line-height: 1.35;
+}
+
+.open-button {
+  text-align: center;
+  margin: 30px;
+}
+
+/* READER */
+
+.reader {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow-y: auto;
+  background: #f7f0dc;
+  color: #453b2d;
+}
+
+.reader.open {
+  display: block;
+}
+
+.reader.dark {
+  background: #202124;
+  color: #e8eaed;
+}
+
+.reader.light {
+  background: white;
+  color: #222;
+}
+
+.reader.paper {
+  background: #f7f0dc;
+  color: #453b2d;
+}
+
+.reader-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #263b55;
+  color: white;
+  padding: 12px;
+}
+
+.toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.reader-toolbar select,
+.reader-toolbar input {
+  max-width: 220px;
+  padding: 7px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.reader-content {
+  max-width: 760px;
+  margin: 35px auto;
+  padding: 0 24px 70px;
+  font-family: Georgia, serif;
+  font-size: 20px;
+  line-height: 1.9;
+}
+
+.reader-content h1,
+.reader-content h2 {
+  line-height: 1.4;
+}
+
+.reader-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.reader-content blockquote {
+  border-left: 4px solid #9aa;
+  padding-left: 20px;
+}
+
+/* VOICE SETTINGS */
+
+.voice-panel {
+  max-width: 900px;
+  margin: 10px auto 0;
+  padding: 10px 14px;
+  background: #ffffff18;
+  border-radius: 8px;
+}
+
+.voice-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 7px 0;
+}
+
+.voice-row label {
+  min-width: 100px;
+  font-size: 14px;
+}
+
+.voice-row select {
+  flex: 1;
+  min-width: 180px;
+}
+
+.voice-info {
+  font-size: 12px;
+  color: #dce5ef;
+  margin-top: 5px;
+}
+
+.reader-status {
+  text-align: center;
+  font-size: 13px;
+  padding: 10px;
+  opacity: .8;
+}
+
+@media(max-width:700px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  aside {
+    display: none;
+  }
+
+  .reader-content {
+    margin-top: 22px;
+  }
+
+  .reader-toolbar select {
+    max-width: 100%;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <strong>GÓC ĐỌC CÔNG NGHỆ</strong>
+</header>
+
+<main>
+  <div class="layout">
+
+    <article id="article">
+      <h1>Chế độ đọc trên trình duyệt web hoạt động như thế nào?</h1>
+
+      <p><small>Chuyên mục công nghệ · Bài viết minh họa</small></p>
+
+      <p>
+        Khi đọc một bài viết trên Internet, chúng ta thường gặp rất
+        nhiều thành phần gây mất tập trung như quảng cáo, menu,
+        thanh điều hướng và các nội dung đề xuất.
+      </p>
+
+      <h2>1. Chế độ đọc là gì?</h2>
+
+      <p>
+        Chế độ đọc (Reader Mode) giúp trích xuất nội dung chính
+        của một trang web và trình bày lại trong một giao diện
+        đơn giản. Người đọc có thể tập trung vào văn bản thay vì
+        các thành phần trang trí xung quanh.
+      </p>
+
+      <p>
+        Một giao diện đọc tốt thường cho phép thay đổi kích thước
+        chữ, kiểu chữ, màu nền và chiều rộng của vùng nội dung.
+      </p>
+
+      <h2>2. JavaScript có thể làm được gì?</h2>
+
+      <p>
+        JavaScript có thể tìm phần tử article, sao chép nội dung,
+        loại bỏ những thành phần không cần thiết và hiển thị
+        nội dung trong một lớp giao diện mới.
+      </p>
+
+      <blockquote>
+        Mục tiêu của chế độ đọc là giảm nhiễu thị giác và giúp
+        người đọc tập trung vào nội dung.
+      </blockquote>
+
+      <h2>3. Đọc thành tiếng</h2>
+
+      <p>
+        Trình duyệt hiện đại cung cấp Web Speech API. Thông qua
+        SpeechSynthesis, trang web có thể yêu cầu trình duyệt
+        đọc văn bản bằng giọng nói có sẵn trên thiết bị.
+      </p>
+
+      <p>
+        Chất lượng và số lượng giọng tiếng Việt phụ thuộc vào
+        hệ điều hành và trình duyệt của người dùng.
+      </p>
+
+      <h2>4. Kết luận</h2>
+
+      <p>
+        Với HTML, CSS và JavaScript thuần, chúng ta có thể xây dựng
+        một giao diện đọc độc lập mà không cần máy chủ.
+      </p>
+    </article>
+
+    <aside>
+      <h3>Nội dung bên lề</h3>
+      <p>Đây là khu vực quảng cáo minh họa.</p>
+      <hr>
+      <p>Menu điều hướng</p>
+      <p>Bài viết liên quan</p>
+      <p>Thông tin tác giả</p>
+    </aside>
+
+  </div>
+
+  <div class="open-button">
+    <button onclick="openReader()">Mở chế độ đọc</button>
+  </div>
+</main>
+
+<!-- READER WINDOW -->
+
+<div class="reader paper" id="reader">
+
+  <div class="reader-toolbar">
+
+    <div class="toolbar-row">
+
+      <button class="danger" onclick="closeReader()">Đóng</button>
+
+      <button onclick="changeSize(-1)">A−</button>
+      <button onclick="changeSize(1)">A+</button>
+
+      <button onclick="changeTheme()">Đổi nền</button>
+
+      <select id="fontSelect" onchange="changeFont(this.value)">
+        <option value="Georgia">Georgia</option>
+        <option value="Arial">Arial</option>
+        <option value="system-ui">System UI</option>
+        <option value="Trebuchet MS">Trebuchet</option>
+      </select>
+
+    </div>
+
+    <!-- VOICE SETTINGS -->
+
+    <div class="voice-panel">
+
+      <div class="voice-row">
+
+        <label for="voiceSelect">Giọng đọc:</label>
+
+        <select id="voiceSelect" onchange="selectVoice(this.value)">
+          <option value="">Đang tải danh sách giọng đọc...</option>
+        </select>
+
+        <button class="secondary" onclick="loadVoices()">
+          Làm mới
+        </button>
+
+      </div>
+
+      <div class="voice-info" id="voiceInfo">
+        Đang tìm giọng đọc tiếng Việt...
+      </div>
+
+      <div class="voice-row">
+
+        <label for="rateSelect">Tốc độ:</label>
+
+        <select id="rateSelect">
+          <option value="0.7">0.7x - Rất chậm</option>
+          <option value="0.85">0.85x - Chậm</option>
+          <option value="1" selected>1.0x - Bình thường</option>
+          <option value="1.15">1.15x - Nhanh</option>
+          <option value="1.3">1.3x - Nhanh hơn</option>
+          <option value="1.5">1.5x - Rất nhanh</option>
+        </select>
+
+      </div>
+
+      <div class="toolbar-row">
+
+        <button onclick="startReading()">▶ Đọc</button>
+
+        <button onclick="pauseReading()">⏸ Tạm dừng</button>
+
+        <button onclick="resumeReading()">▶ Tiếp tục</button>
+
+        <button class="danger" onclick="stopReading()">■ Dừng</button>
+
+        <button class="secondary" onclick="testVoice()">Thử giọng</button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="reader-content" id="readerContent"></div>
+
+  <div class="reader-status" id="status">
+    Sẵn sàng đọc
+  </div>
+
+</div>
+
+<script>
+
+/* ================================
+   READER
+================================ */
+
+const reader = document.getElementById("reader");
+const readerContent = document.getElementById("readerContent");
+const statusText = document.getElementById("status");
+
+let fontSize = 20;
+let themeIndex = 0;
+
+function openReader() {
+
+  stopReading();
+
+  const source = document.getElementById("article");
+  const clone = source.cloneNode(true);
+
+  clone.querySelectorAll(
+    "script,style,noscript,iframe,nav,footer,form,button,input,select,textarea,aside"
+  ).forEach(el => el.remove());
+
+  readerContent.replaceChildren(clone);
+
+  reader.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeReader() {
+
+  stopReading();
+
+  reader.classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+function changeSize(amount) {
+
+  fontSize = Math.min(36, Math.max(14, fontSize + amount));
+
+  readerContent.style.fontSize = fontSize + "px";
+}
+
+function changeTheme() {
+
+  const themes = ["paper", "dark", "light"];
+
+  themeIndex = (themeIndex + 1) % themes.length;
+
+  reader.classList.remove(...themes);
+  reader.classList.add(themes[themeIndex]);
+}
+
+function changeFont(font) {
+
+  readerContent.style.fontFamily = font + ", sans-serif";
+}
+
+
+/* ================================
+   VOICE MANAGEMENT
+================================ */
+
+const voiceSelect = document.getElementById("voiceSelect");
+const voiceInfo = document.getElementById("voiceInfo");
+
+let voices = [];
+let selectedVoice = null;
+
+function loadVoices() {
+
+  if (!("speechSynthesis" in window)) {
+
+    voiceInfo.textContent =
+      "Trình duyệt không hỗ trợ đọc thành tiếng.";
+
+    return;
+  }
+
+  voices = speechSynthesis.getVoices();
+
+  voiceSelect.innerHTML = "";
+
+  if (voices.length === 0) {
+
+    voiceSelect.innerHTML =
+      '<option value="">Chưa tìm thấy giọng đọc</option>';
+
+    voiceInfo.textContent =
+      "Hãy thử nhấn Làm mới hoặc kiểm tra giọng đọc của hệ điều hành.";
+
+    return;
+  }
+
+  voices.forEach((voice, index) => {
+
+    const option = document.createElement("option");
+
+    option.value = index;
+
+    option.textContent =
+      voice.name + " (" + voice.lang + ")" +
+      (voice.default ? " - Mặc định" : "");
+
+    voiceSelect.appendChild(option);
+
+  });
+
+  // Ưu tiên giọng tiếng Việt
+  let defaultIndex = voices.findIndex(
+    voice => voice.lang.toLowerCase() === "vi-vn"
+  );
+
+  if (defaultIndex < 0) {
+
+    defaultIndex = voices.findIndex(
+      voice => voice.lang.toLowerCase().startsWith("vi")
+    );
+
+  }
+
+  if (defaultIndex < 0) {
+
+    defaultIndex = voices.findIndex(
+      voice => voice.default
+    );
+
+  }
+
+  if (defaultIndex < 0) {
+    defaultIndex = 0;
+  }
+
+  voiceSelect.value = defaultIndex;
+
+  selectVoice(defaultIndex);
+}
+
+function selectVoice(index) {
+
+  selectedVoice = voices[Number(index)] || null;
+
+  if (!selectedVoice) {
+
+    voiceInfo.textContent = "Chưa chọn giọng đọc.";
+
+    return;
+  }
+
+  voiceInfo.textContent =
+    "Đang chọn: " +
+    selectedVoice.name +
+    " | Ngôn ngữ: " +
+    selectedVoice.lang +
+    (selectedVoice.localService ? " | Giọng cài trên thiết bị" : " | Giọng dịch vụ");
+
+}
+
+if ("speechSynthesis" in window) {
+
+  // Danh sách giọng có thể được tải bất đồng bộ.
+  speechSynthesis.onvoiceschanged = loadVoices;
+
+  loadVoices();
+
+  // Một số trình duyệt cần gọi lại sau khi khởi tạo.
+  setTimeout(loadVoices, 500);
+}
+
+
+/* ================================
+   TEXT TO SPEECH
+================================ */
+
+let chunks = [];
+let currentIndex = 0;
+let reading = false;
+let paused = false;
+let readingSession = 0;
+
+function splitText(text, maxLength = 220) {
+
+  const sentences =
+    text.match(/[^.!?。！？]+[.!?。！？]?/g) || [text];
+
+  const result = [];
+  let current = "";
+
+  for (const sentence of sentences) {
+
+    if (
+      current.length + sentence.length > maxLength &&
+      current.length > 0
+    ) {
+
+      result.push(current.trim());
+      current = "";
+
+    }
+
+    current += sentence;
+
+    if (current.length >= maxLength) {
+
+      result.push(current.trim());
+      current = "";
+
+    }
+
+  }
+
+  if (current.trim()) {
+    result.push(current.trim());
+  }
+
+  return result;
+}
+
+function startReading() {
+
+  if (!("speechSynthesis" in window)) {
+
+    statusText.textContent =
+      "Trình duyệt không hỗ trợ đọc thành tiếng.";
+
+    return;
+  }
+
+  stopReading();
+
+  const text = readerContent.innerText.trim();
+
+  if (!text) return;
+
+  chunks = splitText(text);
+
+  currentIndex = 0;
+  reading = true;
+  paused = false;
+
+  const session = readingSession;
+
+  statusText.textContent = "Đang chuẩn bị đọc...";
+
+  readNext(session);
+}
+
+function readNext(session) {
+
+  if (session !== readingSession || !reading || paused) {
+    return;
+  }
+
+  if (currentIndex >= chunks.length) {
+
+    reading = false;
+    statusText.textContent = "Đã đọc xong.";
+
+    return;
+  }
+
+  const index = currentIndex;
+  const text = chunks[index];
+
+  const utterance = new SpeechSynthesisUtterance(text);
+
+  utterance.lang = selectedVoice
+    ? selectedVoice.lang
+    : "vi-VN";
+
+  if (selectedVoice) {
+    utterance.voice = selectedVoice;
+  }
+
+  utterance.rate = Number(
+    document.getElementById("rateSelect").value
+  );
+
+  utterance.onstart = () => {
+
+    if (session !== readingSession) return;
+
+    statusText.textContent =
+      "Đang đọc đoạn " +
+      (index + 1) +
+      "/" +
+      chunks.length;
+
+  };
+
+  utterance.onend = () => {
+
+    if (session !== readingSession || !reading) return;
+
+    currentIndex++;
+
+    readNext(session);
+
+  };
+
+  utterance.onerror = event => {
+
+    if (session !== readingSession) return;
+
+    if (event.error === "canceled" || event.error === "interrupted") {
+      return;
+    }
+
+    statusText.textContent =
+      "Lỗi đọc: " + event.error;
+
+    reading = false;
+
+  };
+
+  speechSynthesis.speak(utterance);
+}
+
+function pauseReading() {
+
+  if (!reading) return;
+
+  speechSynthesis.pause();
+  paused = true;
+
+  statusText.textContent = "Đã tạm dừng.";
+
+}
+
+function resumeReading() {
+
+  if (!reading || !paused) return;
+
+  paused = false;
+
+  speechSynthesis.resume();
+
+  statusText.textContent = "Đang tiếp tục đọc.";
+
+}
+
+function stopReading() {
+
+  readingSession++;
+
+  reading = false;
+  paused = false;
+
+  if ("speechSynthesis" in window) {
+    speechSynthesis.cancel();
+  }
+
+  chunks = [];
+  currentIndex = 0;
+
+  statusText.textContent = "Đã dừng đọc.";
+
+}
+
+
+/* ================================
+   TEST VOICE
+================================ */
+
+function testVoice() {
+
+  if (!selectedVoice) {
+
+    statusText.textContent =
+      "Vui lòng chọn một giọng đọc trước.";
+
+    return;
+  }
+
+  stopReading();
+
+  const session = readingSession;
+
+  const utterance = new SpeechSynthesisUtterance(
+    "Xin chào. Đây là phần thử nghiệm giọng đọc tiếng Việt."
+  );
+
+  utterance.voice = selectedVoice;
+  utterance.lang = selectedVoice.lang;
+
+  utterance.rate = Number(
+    document.getElementById("rateSelect").value
+  );
+
+  utterance.onstart = () => {
+    if (session === readingSession) {
+      statusText.textContent =
+        "Đang thử giọng: " + selectedVoice.name;
+    }
+  };
+
+  utterance.onend = () => {
+    if (session === readingSession) {
+      statusText.textContent = "Đã thử giọng xong.";
+    }
+  };
+
+  utterance.onerror = event => {
+    if (session === readingSession) {
+      statusText.textContent =
+        "Lỗi thử giọng: " + event.error;
+    }
+  };
+
+  speechSynthesis.speak(utterance);
+}
+
+
+/* ================================
+   KEYBOARD
+================================ */
+
+document.addEventListener("keydown", event => {
+
+  if (
+    event.key === "Escape" &&
+    reader.classList.contains("open")
+  ) {
+
+    closeReader();
+
+  }
+
+});
+
+</script>
+
+</body>
+</html>
