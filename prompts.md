@@ -220,7 +220,15 @@ Kiểm tra các tình huống:
 
 Không tuyên bố đã kiểm thử thành công nếu chưa thực sự chạy thử.
 
-## 7. Đầu ra
+## 7. Quy trình cập nhật prompt sau mỗi yêu cầu
+
+- Sau mỗi yêu cầu mới của người dùng liên quan đến dự án, phải cập nhật `prompts.md` để phản ánh yêu cầu, quyết định thiết kế, hành vi mong đợi và tiêu chí kiểm thử mới hoặc đã thay đổi.
+- Thực hiện cập nhật prompt cùng đợt với thay đổi mã nguồn; không chờ người dùng nhắc lại.
+- Giữ lại các yêu cầu cũ còn hiệu lực; chỉ sửa hoặc loại bỏ nội dung khi người dùng yêu cầu thay đổi hoặc khi nội dung đã lỗi thời/mâu thuẫn.
+- Trước khi cập nhật, luôn lấy phiên bản mới nhất của `prompts.md` trên nhánh `main` và ghi bằng SHA mới nhất.
+- Không tạo file prompt phụ; `prompts.md` là đặc tả chuẩn của dự án.
+
+## 8. Đầu ra
 
 - Chỉ cập nhật file `index.html` hiện tại.
 - Trả về một file hoàn chỉnh.
