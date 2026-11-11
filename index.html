@@ -118,6 +118,7 @@ h1{line-height:1.35}
 <label for="settingTheme">Chủ đề</label><select id="settingTheme"><option value="paper">Màu giấy</option><option value="light">Sáng</option><option value="dark">Tối</option></select>
 <label><input type="checkbox" id="settingCompact" style="width:auto"> Thu gọn thanh công cụ</label>
 <label><input type="checkbox" id="settingAutoScroll" style="width:auto"> Tự cuộn theo nội dung đang đọc</label>
+<label><input type="checkbox" id="settingBackgroundReading" style="width:auto" checked> Tiếp tục đọc khi chuyển tab hoặc cửa sổ mất tiêu điểm</label>
 </section>
 <section class="setting-group"><h3>Kiểu chữ</h3>
 <label for="settingFont">Font chữ</label><select id="settingFont"><option>Georgia</option><option>Arial</option><option>system-ui</option><option>Trebuchet MS</option></select>
@@ -154,7 +155,7 @@ h1{line-height:1.35}
 
 /* SETTINGS MANAGER */
 class SettingsManager {
-  constructor(){this.key="tts-widget-settings-v2";this.defaults={theme:"paper",font:"Georgia",size:20,line:1.9,width:760,rate:1,pitch:1,volume:1,highlight:true,wordSync:true,sync:true,autoScroll:true,compact:false,highlightColor:"#ffe58a",textColor:"#332600",borderColor:"#e0a800"};this.value=this.load();}
+  constructor(){this.key="tts-widget-settings-v2";this.defaults={theme:"paper",font:"Georgia",size:20,line:1.9,width:760,rate:1,pitch:1,volume:1,highlight:true,wordSync:true,sync:true,autoScroll:true,keepBackgroundReading:true,compact:false,highlightColor:"#ffe58a",textColor:"#332600",borderColor:"#e0a800"};this.value=this.load();}
   load(){try{return {...this.defaults,...JSON.parse(localStorage.getItem(this.key)||"{}")};}catch(_){return {...this.defaults};}}
   save(){try{localStorage.setItem(this.key,JSON.stringify(this.value));}catch(_){}}
   reset(){this.value={...this.defaults};this.save();}
@@ -252,9 +253,9 @@ const highlight=new HighlightManager(reader,settings);
 const speech=new SpeechManager(reader,voices,settings,highlight);
 const $=id=>document.getElementById(id);
 function applySettings(){const s=settings.value;reader.root.classList.remove("paper","light","dark");reader.root.classList.add(s.theme);reader.content.style.fontFamily=s.font+", sans-serif";reader.content.style.fontSize=s.size+"px";reader.content.style.lineHeight=s.line;reader.content.style.maxWidth=s.width+"px";$("readerToolbar").classList.toggle("toolbar-collapsed",s.compact);highlight.applyColors();$("quickFont").value=s.font;syncSettingsForm();}
-function syncSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingCompact:"compact",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);if(el.type==="checkbox")el.checked=!!s[key];else el.value=s[key];});}
+function syncSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingBackgroundReading:"keepBackgroundReading",settingCompact:"compact",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);if(el.type==="checkbox")el.checked=!!s[key];else el.value=s[key];});}
 function readSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingCompact:"compact",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);s[key]=el.type==="checkbox"?el.checked:el.type==="range"?Number(el.value):el.value;});applySettings();settings.save();}
-Object.keys({settingTheme:1,settingFont:1,settingSize:1,settingLine:1,settingWidth:1,settingRate:1,settingPitch:1,settingVolume:1,settingHighlight:1,settingWordSync:1,settingSync:1,settingAutoScroll:1,settingCompact:1,settingHighlightColor:1,settingTextColor:1,settingBorderColor:1}).forEach(id=>$(id).addEventListener("input",readSettingsForm));
+Object.keys({settingTheme:1,settingFont:1,settingSize:1,settingLine:1,settingWidth:1,settingRate:1,settingPitch:1,settingVolume:1,settingHighlight:1,settingWordSync:1,settingSync:1,settingAutoScroll:1,settingBackgroundReading:1,settingCompact:1,settingHighlightColor:1,settingTextColor:1,settingBorderColor:1}).forEach(id=>$(id).addEventListener("input",readSettingsForm));
 $("openReaderBtn").addEventListener("click",()=>{speech.stop(false);reader.open();applySettings();toolbar.update();});
 $("closeBtn").addEventListener("click",()=>{speech.stop(false);reader.close();});
 $("playBtn").addEventListener("click",()=>speech.start(0));
@@ -278,6 +279,23 @@ $("resetSettingsBtn").addEventListener("click",()=>{settings.reset();applySettin
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&reader.root.classList.contains("open")){speech.stop(false);reader.close();}});
 const toolbar=new ToolbarManager(speech,reader);
 speech.onState=()=>toolbar.update();
+// Keep the speech session independent from window focus and tab visibility.
+// Losing focus must never cancel or explicitly pause the current utterance.
+function handleReaderFocusChange(){
+  if(!settings.value.keepBackgroundReading||!reader.root.classList.contains("open"))return;
+  if(speech.state==="reading"&&document.visibilityState==="visible"&&speech.synth?.paused){
+    try{speech.synth.resume();}catch(_){}
+  }
+  if(speech.state==="reading"&&document.visibilityState==="hidden"){
+    $("status").textContent="Đang tiếp tục đọc trong nền. Bạn có thể chuyển sang tab hoặc cửa sổ khác.";
+  }else if(speech.state==="reading"&&document.visibilityState==="visible"){
+    $("status").textContent="Đang đọc. Tiến trình được giữ khi chuyển tab hoặc cửa sổ.";
+  }
+}
+document.addEventListener("visibilitychange",handleReaderFocusChange);
+window.addEventListener("blur",handleReaderFocusChange);
+window.addEventListener("focus",handleReaderFocusChange);
+
 voices.onChange=()=>{};
 applySettings();
 toolbar.update();
