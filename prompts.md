@@ -149,6 +149,7 @@ Yêu cầu:
 - Có trạng thái disabled khi không thể thực hiện lệnh.
 - Không hiển thị đồng thời những nút có chức năng trùng lặp.
 - Không có nút mở rộng Reader; chỉ có nút thu nhỏ/khôi phục.
+- Nút Settings phải luôn truy cập được, kể cả khi thanh công cụ đang ở chế độ thu gọn.
 - Phân biệt rõ Pause và Stop.
 
 ## 4. Hệ thống cài đặt
