@@ -125,6 +125,16 @@ Hiệu ứng phải có thể tùy chỉnh:
 
 Nếu Chrome không cung cấp vị trí từ hoặc câu chính xác, phải có cơ chế dự phòng và thông báo giới hạn kỹ thuật.
 
+### 3.1. Menu ngữ cảnh đọc tại vị trí con trỏ (Context Menu)
+
+- Khi người dùng nhấn chuột phải trên đoạn văn, tiêu đề, mục danh sách hoặc blockquote thuộc bài viết nguồn hay Reader, hiển thị menu ngữ cảnh tùy chỉnh ngay cạnh vị trí con trỏ chuột.
+- Menu có lệnh **“Đọc từ đây”**.
+- Khi chọn lệnh, mở Reader nếu chưa mở và bắt đầu đọc từ đúng khối văn bản được nhấn; không đọc lại các khối đứng trước.
+- Trong Reader, xác định điểm bắt đầu bằng chỉ số data-reader-paragraph.
+- Trên bài viết nguồn, xác định chỉ số theo đúng thứ tự khối mà Reader trích xuất (p, h1–h4, li, blockquote), để khớp với nội dung sau khi clone.
+- Menu phải nằm trong viewport, không bị cắt ở cạnh màn hình; đóng khi chọn lệnh, nhấn Escape, nhấn ra ngoài, cuộn hoặc resize.
+- Không chặn menu chuột phải mặc định ở vùng không hỗ trợ đọc và không làm gián đoạn phiên đọc chỉ vì mở/đóng menu.
+- Menu có role/nhãn truy cập phù hợp.
 ## 3. Thiết kế thanh công cụ
 
 Không sử dụng các nhãn chữ dài cho những lệnh điều khiển phổ biến.
@@ -217,6 +227,9 @@ Kiểm tra các tình huống:
 18. Mở Settings, tìm/lọc và chọn giọng đọc; thử giọng và xác nhận lựa chọn được giữ khi đóng/mở Settings.
 19. Tải lại trang: khôi phục giọng đã chọn nếu giọng đó vẫn được `speechSynthesis.getVoices()` cung cấp; nếu không còn, chọn giọng tiếng Việt phù hợp hoặc giọng mặc định.
 20. Xác nhận Reader chỉ có một trạng thái bình thường; không còn nút thu nhỏ, nút mở rộng, thanh điều khiển nổi hoặc logic chuyển trạng thái.
+21. Chuột phải trên đoạn văn/tiêu đề trong bài viết nguồn: menu xuất hiện tại vị trí con trỏ; chọn “Đọc từ đây” mở Reader và bắt đầu đúng khối.
+22. Chuột phải trên đoạn bất kỳ trong Reader: menu xuất hiện cạnh con trỏ và bắt đầu đúng đoạn đó.
+23. Menu không tràn viewport, đóng khi Escape/nhấn ngoài/cuộn/resize; chuột phải ở vùng không hỗ trợ vẫn dùng menu mặc định.
 
 Không tuyên bố đã kiểm thử thành công nếu chưa thực sự chạy thử.
 
