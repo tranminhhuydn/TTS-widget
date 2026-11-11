@@ -1,827 +1,267 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Web Reader - Demo</title>
-
+<title>TTS Widget - Web Reader</title>
 <style>
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  line-height: 1.7;
-  background: #f2f4f7;
-  color: #263238;
-}
-
-button, select, input {
-  font: inherit;
-}
-
-button {
-  border: 0;
-  border-radius: 6px;
-  padding: 9px 13px;
-  background: #2463a6;
-  color: white;
-  cursor: pointer;
-}
-
-button:hover {
-  opacity: .85;
-}
-
-button.secondary {
-  background: #64748b;
-}
-
-button.danger {
-  background: #b83a3a;
-}
-
-header {
-  padding: 18px max(20px, calc((100% - 1050px)/2));
-  background: #263b55;
-  color: white;
-}
-
-main {
-  max-width: 1050px;
-  margin: 35px auto;
-  padding: 0 20px;
-}
-
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 250px;
-  gap: 25px;
-}
-
-article, aside {
-  padding: 28px;
-  border-radius: 12px;
-  background: white;
-}
-
-h1 {
-  line-height: 1.35;
-}
-
-.open-button {
-  text-align: center;
-  margin: 30px;
-}
-
-/* READER */
-
-.reader {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  overflow-y: auto;
-  background: #f7f0dc;
-  color: #453b2d;
-}
-
-.reader.open {
-  display: block;
-}
-
-.reader.dark {
-  background: #202124;
-  color: #e8eaed;
-}
-
-.reader.light {
-  background: white;
-  color: #222;
-}
-
-.reader.paper {
-  background: #f7f0dc;
-  color: #453b2d;
-}
-
-.reader-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: #263b55;
-  color: white;
-  padding: 12px;
-}
-
-.toolbar-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-}
-
-.reader-toolbar select,
-.reader-toolbar input {
-  max-width: 220px;
-  padding: 7px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-}
-
-.reader-content {
-  max-width: 760px;
-  margin: 35px auto;
-  padding: 0 24px 70px;
-  font-family: Georgia, serif;
-  font-size: 20px;
-  line-height: 1.9;
-}
-
-.reader-content h1,
-.reader-content h2 {
-  line-height: 1.4;
-}
-
-.reader-content img {
-  max-width: 100%;
-  height: auto;
-}
-
-.reader-content blockquote {
-  border-left: 4px solid #9aa;
-  padding-left: 20px;
-}
-
-/* VOICE SETTINGS */
-
-.voice-panel {
-  max-width: 900px;
-  margin: 10px auto 0;
-  padding: 10px 14px;
-  background: #ffffff18;
-  border-radius: 8px;
-}
-
-.voice-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin: 7px 0;
-}
-
-.voice-row label {
-  min-width: 100px;
-  font-size: 14px;
-}
-
-.voice-row select {
-  flex: 1;
-  min-width: 180px;
-}
-
-.voice-info {
-  font-size: 12px;
-  color: #dce5ef;
-  margin-top: 5px;
-}
-
-.reader-status {
-  text-align: center;
-  font-size: 13px;
-  padding: 10px;
-  opacity: .8;
-}
-
-@media(max-width:700px) {
-  .layout {
-    grid-template-columns: 1fr;
-  }
-
-  aside {
-    display: none;
-  }
-
-  .reader-content {
-    margin-top: 22px;
-  }
-
-  .reader-toolbar select {
-    max-width: 100%;
-  }
-}
+:root{color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.7 Arial,sans-serif;background:#f2f4f7;color:#263238}
+button,select,input{font:inherit}
+button{border:0;border-radius:7px;padding:9px 13px;background:#2463a6;color:#fff;cursor:pointer}
+button:hover:not(:disabled){filter:brightness(1.08)}
+button:disabled{opacity:.42;cursor:not-allowed}
+button.secondary{background:#64748b}
+button.danger{background:#b83a3a}
+button.active{outline:2px solid #fbbf24;outline-offset:2px}
+header{padding:18px max(20px,calc((100% - 1050px)/2));background:#263b55;color:#fff}
+main{max-width:1050px;margin:35px auto;padding:0 20px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:25px}
+article,aside{padding:28px;border-radius:12px;background:#fff}
+h1{line-height:1.35}
+.open-button{text-align:center;margin:30px}
+.reader{display:none;position:fixed;inset:0;z-index:1000;overflow-y:auto;background:#f7f0dc;color:#453b2d}
+.reader.open{display:block}
+.reader.dark{background:#202124;color:#e8eaed}
+.reader.light{background:#fff;color:#222}
+.reader.paper{background:#f7f0dc;color:#453b2d}
+.reader-toolbar{position:sticky;top:0;z-index:10;background:#263b55;color:#fff;padding:10px 12px;box-shadow:0 2px 8px #0002}
+.toolbar-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px}
+.reader-toolbar select,.reader-toolbar input{max-width:240px;padding:7px;border-radius:5px;border:1px solid #ccc;color:#222;background:#fff}
+.reader-content{max-width:760px;margin:35px auto;padding:0 24px 70px;font-family:Georgia,serif;font-size:20px;line-height:1.9}
+.reader-content h1,.reader-content h2{line-height:1.4}
+.reader-content img{max-width:100%;height:auto}
+.reader-content blockquote{border-left:4px solid #9aa;padding-left:20px}
+.reader-content [data-reader-paragraph]{border-radius:5px;transition:background-color .18s ease,color .18s ease,outline-color .18s ease}
+.reader-content .tts-active{background:var(--hl-bg,#ffe58a);color:var(--hl-color,#332600);outline:2px solid var(--hl-border,#e0a800);outline-offset:3px}
+.reader-content .tts-word{background:#ffbd59;color:#241500;border-radius:3px}
+.voice-panel{max-width:1000px;margin:10px auto 0;padding:10px 14px;background:#ffffff18;border-radius:8px}
+.voice-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:7px 0}
+.voice-row label{min-width:100px;font-size:14px}
+.voice-row select{flex:1;min-width:180px}
+.voice-info{font-size:12px;color:#dce5ef;margin-top:5px}
+.reader-status{text-align:center;font-size:13px;padding:9px;opacity:.9}
+.settings-panel{display:none;max-width:1000px;margin:10px auto 0;padding:14px;background:#fff;color:#263238;border-radius:9px;max-height:48vh;overflow:auto}
+.settings-panel.open{display:block}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.setting-group{border:1px solid #dbe1e8;border-radius:8px;padding:12px}
+.setting-group h3{font-size:15px;margin:0 0 10px}
+.setting-group label{display:block;font-size:13px;margin:8px 0 4px}
+.setting-group input,.setting-group select{width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:5px}
+.setting-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.toolbar-collapsed .toolbar-extra,.toolbar-collapsed .voice-panel{display:none}
+.reader.minimized{inset:auto 16px 16px auto;width:min(420px,calc(100vw - 32px));height:58px;overflow:hidden;border-radius:10px;box-shadow:0 4px 24px #0005}
+.reader.minimized .reader-toolbar{height:58px;overflow:hidden}
+.reader.minimized .reader-content,.reader.minimized .reader-status,.reader.minimized .settings-panel{display:none}
+.reader.maximized .reader-content{max-width:1100px}
+@media(max-width:700px){.layout{grid-template-columns:1fr}aside{display:none}.reader-content{margin-top:22px}.reader-toolbar select{max-width:100%}.voice-row label{min-width:78px}.reader.minimized{inset:auto 8px 8px;width:calc(100vw - 16px)}}
 </style>
 </head>
-
 <body>
-
-<header>
-  <strong>GÓC ĐỌC CÔNG NGHỆ</strong>
-</header>
-
+<header><strong>GÓC ĐỌC CÔNG NGHỆ</strong></header>
 <main>
-  <div class="layout">
-
-    <article id="article">
-      <h1>Chế độ đọc trên trình duyệt web hoạt động như thế nào?</h1>
-
-      <p><small>Chuyên mục công nghệ · Bài viết minh họa</small></p>
-
-      <p>
-        Khi đọc một bài viết trên Internet, chúng ta thường gặp rất
-        nhiều thành phần gây mất tập trung như quảng cáo, menu,
-        thanh điều hướng và các nội dung đề xuất.
-      </p>
-
-      <h2>1. Chế độ đọc là gì?</h2>
-
-      <p>
-        Chế độ đọc (Reader Mode) giúp trích xuất nội dung chính
-        của một trang web và trình bày lại trong một giao diện
-        đơn giản. Người đọc có thể tập trung vào văn bản thay vì
-        các thành phần trang trí xung quanh.
-      </p>
-
-      <p>
-        Một giao diện đọc tốt thường cho phép thay đổi kích thước
-        chữ, kiểu chữ, màu nền và chiều rộng của vùng nội dung.
-      </p>
-
-      <h2>2. JavaScript có thể làm được gì?</h2>
-
-      <p>
-        JavaScript có thể tìm phần tử article, sao chép nội dung,
-        loại bỏ những thành phần không cần thiết và hiển thị
-        nội dung trong một lớp giao diện mới.
-      </p>
-
-      <blockquote>
-        Mục tiêu của chế độ đọc là giảm nhiễu thị giác và giúp
-        người đọc tập trung vào nội dung.
-      </blockquote>
-
-      <h2>3. Đọc thành tiếng</h2>
-
-      <p>
-        Trình duyệt hiện đại cung cấp Web Speech API. Thông qua
-        SpeechSynthesis, trang web có thể yêu cầu trình duyệt
-        đọc văn bản bằng giọng nói có sẵn trên thiết bị.
-      </p>
-
-      <p>
-        Chất lượng và số lượng giọng tiếng Việt phụ thuộc vào
-        hệ điều hành và trình duyệt của người dùng.
-      </p>
-
-      <h2>4. Kết luận</h2>
-
-      <p>
-        Với HTML, CSS và JavaScript thuần, chúng ta có thể xây dựng
-        một giao diện đọc độc lập mà không cần máy chủ.
-      </p>
-    </article>
-
-    <aside>
-      <h3>Nội dung bên lề</h3>
-      <p>Đây là khu vực quảng cáo minh họa.</p>
-      <hr>
-      <p>Menu điều hướng</p>
-      <p>Bài viết liên quan</p>
-      <p>Thông tin tác giả</p>
-    </aside>
-
-  </div>
-
-  <div class="open-button">
-    <button onclick="openReader()">Mở chế độ đọc</button>
-  </div>
+<div class="layout">
+<article id="article">
+<h1>Chế độ đọc trên trình duyệt web hoạt động như thế nào?</h1>
+<p><small>Chuyên mục công nghệ · Bài viết minh họa</small></p>
+<p>Khi đọc một bài viết trên Internet, chúng ta thường gặp rất nhiều thành phần gây mất tập trung như quảng cáo, menu, thanh điều hướng và các nội dung đề xuất.</p>
+<h2>1. Chế độ đọc là gì?</h2>
+<p>Chế độ đọc (Reader Mode) giúp trích xuất nội dung chính của một trang web và trình bày lại trong một giao diện đơn giản. Người đọc có thể tập trung vào văn bản thay vì các thành phần trang trí xung quanh.</p>
+<p>Một giao diện đọc tốt thường cho phép thay đổi kích thước chữ, kiểu chữ, màu nền và chiều rộng của vùng nội dung.</p>
+<h2>2. JavaScript có thể làm được gì?</h2>
+<p>JavaScript có thể tìm phần tử article, sao chép nội dung, loại bỏ những thành phần không cần thiết và hiển thị nội dung trong một lớp giao diện mới.</p>
+<blockquote>Mục tiêu của chế độ đọc là giảm nhiễu thị giác và giúp người đọc tập trung vào nội dung.</blockquote>
+<h2>3. Đọc thành tiếng</h2>
+<p>Trình duyệt hiện đại cung cấp Web Speech API. Thông qua SpeechSynthesis, trang web có thể yêu cầu trình duyệt đọc văn bản bằng giọng nói có sẵn trên thiết bị.</p>
+<p>Chất lượng và số lượng giọng tiếng Việt phụ thuộc vào hệ điều hành và trình duyệt của người dùng.</p>
+<h2>4. Kết luận</h2>
+<p>Với HTML, CSS và JavaScript thuần, chúng ta có thể xây dựng một giao diện đọc độc lập mà không cần máy chủ.</p>
+</article>
+<aside><h3>Nội dung bên lề</h3><p>Đây là khu vực quảng cáo minh họa.</p><hr><p>Menu điều hướng</p><p>Bài viết liên quan</p><p>Thông tin tác giả</p></aside>
+</div>
+<div class="open-button"><button id="openReaderBtn">Mở chế độ đọc</button></div>
 </main>
 
-<!-- READER WINDOW -->
-
-<div class="reader paper" id="reader">
-
-  <div class="reader-toolbar">
-
-    <div class="toolbar-row">
-
-      <button class="danger" onclick="closeReader()">Đóng</button>
-
-      <button onclick="changeSize(-1)">A−</button>
-      <button onclick="changeSize(1)">A+</button>
-
-      <button onclick="changeTheme()">Đổi nền</button>
-
-      <select id="fontSelect" onchange="changeFont(this.value)">
-        <option value="Georgia">Georgia</option>
-        <option value="Arial">Arial</option>
-        <option value="system-ui">System UI</option>
-        <option value="Trebuchet MS">Trebuchet</option>
-      </select>
-
-    </div>
-
-    <!-- VOICE SETTINGS -->
-
-    <div class="voice-panel">
-
-      <div class="voice-row">
-
-        <label for="voiceSelect">Giọng đọc:</label>
-
-        <select id="voiceSelect" onchange="selectVoice(this.value)">
-          <option value="">Đang tải danh sách giọng đọc...</option>
-        </select>
-
-        <button class="secondary" onclick="loadVoices()">
-          Làm mới
-        </button>
-
-      </div>
-
-      <div class="voice-info" id="voiceInfo">
-        Đang tìm giọng đọc tiếng Việt...
-      </div>
-
-      <div class="voice-row">
-
-        <label for="rateSelect">Tốc độ:</label>
-
-        <select id="rateSelect">
-          <option value="0.7">0.7x - Rất chậm</option>
-          <option value="0.85">0.85x - Chậm</option>
-          <option value="1" selected>1.0x - Bình thường</option>
-          <option value="1.15">1.15x - Nhanh</option>
-          <option value="1.3">1.3x - Nhanh hơn</option>
-          <option value="1.5">1.5x - Rất nhanh</option>
-        </select>
-
-      </div>
-
-      <div class="toolbar-row">
-
-        <button onclick="startReading()">▶ Đọc</button>
-
-        <button onclick="pauseReading()">⏸ Tạm dừng</button>
-
-        <button onclick="resumeReading()">▶ Tiếp tục</button>
-
-        <button class="danger" onclick="stopReading()">■ Dừng</button>
-
-        <button class="secondary" onclick="testVoice()">Thử giọng</button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-  <div class="reader-content" id="readerContent"></div>
-
-  <div class="reader-status" id="status">
-    Sẵn sàng đọc
-  </div>
-
+<div class="reader paper" id="reader" aria-label="Cửa sổ đọc">
+<div class="reader-toolbar" id="readerToolbar">
+<div class="toolbar-row">
+<button class="danger" id="closeBtn" title="Đóng (Esc)">✕</button>
+<button id="prevBtn" title="Đoạn trước">⏮</button>
+<button id="playBtn" title="Đọc">▶</button>
+<button id="pauseBtn" title="Tạm dừng">⏸</button>
+<button id="resumeBtn" title="Tiếp tục">⏵</button>
+<button class="danger" id="stopBtn" title="Dừng">■</button>
+<button id="nextBtn" title="Đoạn tiếp">⏭</button>
+<button class="secondary toolbar-extra" id="settingsBtn" title="Cài đặt">⚙</button>
+<button class="secondary toolbar-extra" id="collapseBtn" title="Thu gọn thanh công cụ">⌄</button>
+<button class="secondary" id="minimizeBtn" title="Thu nhỏ">▁</button>
+<button class="secondary" id="maximizeBtn" title="Mở rộng">□</button>
+</div>
+<div class="toolbar-row toolbar-extra" style="margin-top:8px">
+<button id="smallerBtn" title="Giảm cỡ chữ">A−</button><button id="largerBtn" title="Tăng cỡ chữ">A+</button>
+<select id="quickFont" aria-label="Phông chữ"><option value="Georgia">Georgia</option><option value="Arial">Arial</option><option value="system-ui">System UI</option><option value="Trebuchet MS">Trebuchet</option></select>
+<button id="themeBtn">Đổi nền</button>
+</div>
+<div class="voice-panel toolbar-extra">
+<div class="voice-row">
+<label for="voiceSelect">Giọng đọc:</label><input id="voiceSearch" placeholder="Lọc giọng đọc..." aria-label="Tìm giọng đọc" style="max-width:180px">
+<select id="voiceSelect"><option value="">Đang tải danh sách giọng đọc...</option></select>
+<button class="secondary" id="refreshVoicesBtn">Làm mới</button>
+<button class="secondary" id="testVoiceBtn">Thử giọng</button>
+</div>
+<div class="voice-info" id="voiceInfo" aria-live="polite">Đang tìm giọng đọc...</div>
+</div>
+<div class="settings-panel" id="settingsPanel">
+<div class="settings-grid">
+<section class="setting-group"><h3>Giao diện</h3>
+<label for="settingTheme">Chủ đề</label><select id="settingTheme"><option value="paper">Màu giấy</option><option value="light">Sáng</option><option value="dark">Tối</option></select>
+<label><input type="checkbox" id="settingCompact" style="width:auto"> Thu gọn thanh công cụ</label>
+<label><input type="checkbox" id="settingAutoScroll" style="width:auto"> Tự cuộn theo nội dung đang đọc</label>
+</section>
+<section class="setting-group"><h3>Kiểu chữ</h3>
+<label for="settingFont">Font chữ</label><select id="settingFont"><option>Georgia</option><option>Arial</option><option>system-ui</option><option>Trebuchet MS</option></select>
+<label for="settingSize">Cỡ chữ</label><input id="settingSize" type="range" min="14" max="36" value="20">
+<label for="settingLine">Chiều cao dòng</label><input id="settingLine" type="range" min="1.2" max="2.4" step=".1" value="1.9">
+<label for="settingWidth">Chiều rộng nội dung (px)</label><input id="settingWidth" type="range" min="520" max="1200" step="20" value="760">
+</section>
+<section class="setting-group"><h3>Giọng đọc</h3>
+<label for="settingRate">Tốc độ đọc</label><input id="settingRate" type="range" min=".6" max="1.8" step=".05" value="1">
+<label for="settingPitch">Cao độ</label><input id="settingPitch" type="range" min=".5" max="2" step=".05" value="1">
+<label for="settingVolume">Âm lượng</label><input id="settingVolume" type="range" min="0" max="1" step=".05" value="1">
+</section>
+<section class="setting-group"><h3>Đồng bộ đọc</h3>
+<label><input type="checkbox" id="settingSync" style="width:auto" checked> Theo dõi đoạn đang đọc</label>
+<label><input type="checkbox" id="settingWordSync" style="width:auto" checked> Highlight từ nếu API hỗ trợ</label>
+<p style="font-size:12px">Sự kiện ranh giới từ (onboundary) phụ thuộc giọng đọc và trình duyệt. Nếu không có sự kiện này, widget chỉ đánh dấu đoạn hiện tại.</p>
+</section>
+<section class="setting-group"><h3>Highlight</h3>
+<label><input type="checkbox" id="settingHighlight" style="width:auto" checked> Bật highlight đoạn</label>
+<label for="settingHighlightColor">Màu nền highlight</label><input id="settingHighlightColor" type="color" value="#ffe58a">
+<label for="settingTextColor">Màu chữ highlight</label><input id="settingTextColor" type="color" value="#332600">
+<label for="settingBorderColor">Màu viền highlight</label><input id="settingBorderColor" type="color" value="#e0a800">
+</section>
+</div>
+<div class="setting-actions"><button class="secondary" id="resetSettingsBtn">Mặc định</button><button id="saveSettingsBtn">Lưu cài đặt</button></div>
+</div>
+</div>
+<div class="reader-content" id="readerContent"></div>
+<div class="reader-status" id="status" aria-live="polite">Sẵn sàng đọc</div>
 </div>
 
 <script>
+"use strict";
 
-/* ================================
-   READER
-================================ */
-
-const reader = document.getElementById("reader");
-const readerContent = document.getElementById("readerContent");
-const statusText = document.getElementById("status");
-
-let fontSize = 20;
-let themeIndex = 0;
-
-function openReader() {
-
-  stopReading();
-
-  const source = document.getElementById("article");
-  const clone = source.cloneNode(true);
-
-  clone.querySelectorAll(
-    "script,style,noscript,iframe,nav,footer,form,button,input,select,textarea,aside"
-  ).forEach(el => el.remove());
-
-  readerContent.replaceChildren(clone);
-
-  reader.classList.add("open");
-  document.body.style.overflow = "hidden";
+/* SETTINGS MANAGER */
+class SettingsManager {
+  constructor(){this.key="tts-widget-settings-v2";this.defaults={theme:"paper",font:"Georgia",size:20,line:1.9,width:760,rate:1,pitch:1,volume:1,highlight:true,wordSync:true,sync:true,autoScroll:true,compact:false,highlightColor:"#ffe58a",textColor:"#332600",borderColor:"#e0a800"};this.value=this.load();}
+  load(){try{return {...this.defaults,...JSON.parse(localStorage.getItem(this.key)||"{}")};}catch(_){return {...this.defaults};}}
+  save(){try{localStorage.setItem(this.key,JSON.stringify(this.value));}catch(_){}}
+  reset(){this.value={...this.defaults};this.save();}
 }
 
-function closeReader() {
-
-  stopReading();
-
-  reader.classList.remove("open");
-  document.body.style.overflow = "";
+/* VOICE MANAGER */
+class VoiceManager {
+  constructor(){this.voices=[];this.selected=null;this.select=document.getElementById("voiceSelect");this.search=document.getElementById("voiceSearch");this.info=document.getElementById("voiceInfo");this.storageKey="tts-widget-voice-v1";this.onChange=()=>{};this.search.addEventListener("input",()=>this.render());this.select.addEventListener("change",()=>this.choose(this.select.value));}
+  identity(v){return v?v.voiceURI+"|"+v.name+"|"+v.lang:"";}
+  load(){if(!("speechSynthesis" in window)){this.info.textContent="Trình duyệt không hỗ trợ SpeechSynthesis.";return;}
+    const previous=this.identity(this.selected)||localStorage.getItem(this.storageKey)||"";
+    this.voices=window.speechSynthesis.getVoices()||[];
+    if(!this.voices.length){this.select.innerHTML='<option value="">Chưa tìm thấy giọng đọc</option>';this.info.textContent="Danh sách giọng chưa sẵn sàng. Hãy thử làm mới.";return;}
+    this.render();
+    let index=this.voices.findIndex(v=>this.identity(v)===previous);
+    if(index<0)index=this.voices.findIndex(v=>/^vi(-|_)/i.test(v.lang));
+    if(index<0)index=this.voices.findIndex(v=>v.default);
+    if(index<0)index=0;
+    this.choose(String(index),false);
+  }
+  render(){const q=this.search.value.trim().toLocaleLowerCase();const old=this.select.value;this.select.replaceChildren();
+    this.voices.forEach((v,i)=>{if(q&&!((v.name+" "+v.lang).toLocaleLowerCase().includes(q)))return;const o=document.createElement("option");o.value=String(i);o.textContent=v.name+" ("+v.lang+")"+(v.default?" - Mặc định":"");this.select.append(o);});
+    if(old&&this.select.querySelector('option[value="'+old+'"]'))this.select.value=old;
+    if(!this.select.options.length){const o=document.createElement("option");o.value="";o.textContent="Không có kết quả";this.select.append(o);}
+  }
+  choose(index,persist=true){const v=this.voices[Number(index)];if(!v)return;this.selected=v;this.select.value=String(this.voices.indexOf(v));this.info.textContent="Đã chọn: "+v.name+" | "+v.lang+(v.localService?" | Trên thiết bị":" | Dịch vụ");if(persist){try{localStorage.setItem(this.storageKey,this.identity(v));}catch(_){}}this.onChange(v);}
 }
 
-function changeSize(amount) {
-
-  fontSize = Math.min(36, Math.max(14, fontSize + amount));
-
-  readerContent.style.fontSize = fontSize + "px";
+/* READER MANAGER */
+class ReaderManager {
+  constructor(){this.root=document.getElementById("reader");this.content=document.getElementById("readerContent");this.blocks=[];this.active=-1;}
+  open(){const clone=document.getElementById("article").cloneNode(true);clone.querySelectorAll("script,style,noscript,iframe,nav,footer,form,button,input,select,textarea,aside").forEach(e=>e.remove());this.content.replaceChildren(clone);
+    this.blocks=[];clone.querySelectorAll("p,h1,h2,h3,h4,li,blockquote").forEach(el=>{const text=(el.innerText||el.textContent||"").trim();if(!text)return;el.dataset.readerParagraph=String(this.blocks.length);this.blocks.push({element:el,text});});
+    this.active=-1;this.root.classList.add("open");document.body.style.overflow="hidden";}
+  close(){this.root.classList.remove("open","minimized","maximized");document.body.style.overflow="";this.clearHighlight();}
+  setActive(index,settings){if(index<0||index>=this.blocks.length)return;this.active=index;this.clearHighlight();const el=this.blocks[index].element;if(settings.value.highlight&&settings.value.sync){el.classList.add("tts-active");if(settings.value.autoScroll)el.scrollIntoView({behavior:"smooth",block:"center"});}}
+  clearHighlight(){this.content.querySelectorAll(".tts-active,.tts-word").forEach(el=>el.classList.remove("tts-active","tts-word"));}
+  getBlocks(){return this.blocks;}
 }
 
-function changeTheme() {
-
-  const themes = ["paper", "dark", "light"];
-
-  themeIndex = (themeIndex + 1) % themes.length;
-
-  reader.classList.remove(...themes);
-  reader.classList.add(themes[themeIndex]);
+/* HIGHLIGHT MANAGER */
+class HighlightManager {
+  constructor(reader,settings){this.reader=reader;this.settings=settings;this.boundarySupported=false;}
+  paragraph(index){this.reader.setActive(index,this.settings);}
+  word(index,charIndex,charLength){const s=this.settings.value;if(!s.wordSync||!s.highlight)return;const block=this.reader.blocks[index];if(!block)return;
+    const el=block.element;const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);let node,offset=charIndex,remaining=charLength||1;
+    while((node=walker.nextNode())){if(offset>=node.textContent.length){offset-=node.textContent.length;continue;}const start=offset;const end=Math.min(node.textContent.length,start+remaining);try{const range=document.createRange();range.setStart(node,start);range.setEnd(node,end);const mark=document.createElement("mark");mark.className="tts-word";range.surroundContents(mark);}catch(_){}break;}
+  }
+  applyColors(){const s=this.settings.value;this.reader.content.style.setProperty("--hl-bg",s.highlightColor);this.reader.content.style.setProperty("--hl-color",s.textColor);this.reader.content.style.setProperty("--hl-border",s.borderColor);}
 }
 
-function changeFont(font) {
-
-  readerContent.style.fontFamily = font + ", sans-serif";
+/* SPEECH MANAGER */
+class SpeechManager {
+  constructor(reader,voices,settings,highlight){this.reader=reader;this.voices=voices;this.settings=settings;this.highlight=highlight;this.synth=window.speechSynthesis;this.queue=[];this.position=0;this.state="idle";this.session=0;this.current=null;this.onState=()=>{};}
+  emit(message){document.getElementById("status").textContent=message;this.onState();}
+  makeQueue(){this.queue=[];this.reader.blocks.forEach((b,paragraph)=>{const sentences=b.text.match(/[^.!?。！？]+[.!?。！？]?/g)||[b.text];let part="";sentences.forEach(sentence=>{if(part.length+sentence.length>220&&part){this.queue.push({text:part.trim(),paragraph});part="";}part+=sentence;if(part.length>=220){this.queue.push({text:part.trim(),paragraph});part="";}});if(part.trim())this.queue.push({text:part.trim(),paragraph});});}
+  start(paragraph=0){if(!("speechSynthesis" in window)){this.emit("Trình duyệt không hỗ trợ đọc thành tiếng.");return;}if(!this.reader.blocks.length){this.emit("Không có nội dung để đọc.");return;}this.stop(false);this.makeQueue();this.position=this.queue.findIndex(x=>x.paragraph>=paragraph);if(this.position<0)this.position=0;this.state="reading";const id=this.session;this.emit("Đang chuẩn bị đọc...");this.next(id);}
+  next(id){if(id!==this.session||this.state!=="reading")return;if(this.position>=this.queue.length){this.state="ended";this.reader.clearHighlight();this.emit("Đã đọc xong.");return;}
+    const item=this.queue[this.position];const utterance=new SpeechSynthesisUtterance(item.text);const s=this.settings.value;utterance.lang=this.voices.selected?.lang||"vi-VN";if(this.voices.selected)utterance.voice=this.voices.selected;utterance.rate=Number(s.rate);utterance.pitch=Number(s.pitch);utterance.volume=Number(s.volume);this.current=utterance;
+    utterance.onstart=()=>{if(id!==this.session)return;this.highlight.paragraph(item.paragraph);this.emit("Đang đọc đoạn "+(item.paragraph+1)+"/"+this.reader.blocks.length);};
+    utterance.onboundary=e=>{if(id!==this.session||e.name!=="word")return;this.highlight.boundarySupported=true;this.highlight.word(item.paragraph,e.charIndex,Math.max(1,(e.charLength||1)));};
+    utterance.onend=()=>{if(id!==this.session||this.state!=="reading")return;this.position++;this.next(id);};
+    utterance.onerror=e=>{if(id!==this.session||e.error==="canceled"||e.error==="interrupted")return;this.state="error";this.emit("Lỗi đọc: "+e.error);};
+    this.synth.speak(utterance);
+  }
+  pause(){if(this.state!=="reading")return;this.synth.pause();this.state="paused";this.emit("Đã tạm dừng.");}
+  resume(){if(this.state!=="paused")return;this.synth.resume();this.state="reading";this.emit("Đang tiếp tục đọc.");}
+  stop(show=true){this.session++;if("speechSynthesis"in window)this.synth.cancel();this.state="idle";this.current=null;this.queue=[];this.position=0;this.reader.clearHighlight();if(show)this.emit("Đã dừng đọc.");}
+  move(delta){if(!this.reader.blocks.length)return;const current=this.queue[this.position]?.paragraph??this.reader.active;let target=Math.max(0,Math.min(this.reader.blocks.length-1,(current<0?0:current)+delta));this.start(target);}
+  test(){if(!this.voices.selected){this.emit("Vui lòng chọn giọng đọc.");return;}this.stop(false);const id=this.session;const u=new SpeechSynthesisUtterance("Xin chào. Đây là phần thử nghiệm giọng đọc.");const s=this.settings.value;u.voice=this.voices.selected;u.lang=u.voice.lang;u.rate=Number(s.rate);u.pitch=Number(s.pitch);u.volume=Number(s.volume);u.onstart=()=>{if(id===this.session)this.emit("Đang thử giọng: "+u.voice.name);};u.onend=()=>{if(id===this.session)this.emit("Đã thử giọng xong.");};u.onerror=e=>{if(id===this.session)this.emit("Lỗi thử giọng: "+e.error);};this.synth.speak(u);this.state="testing";}
 }
 
-
-/* ================================
-   VOICE MANAGEMENT
-================================ */
-
-const voiceSelect = document.getElementById("voiceSelect");
-const voiceInfo = document.getElementById("voiceInfo");
-
-let voices = [];
-let selectedVoice = null;
-
-function loadVoices() {
-
-  if (!("speechSynthesis" in window)) {
-
-    voiceInfo.textContent =
-      "Trình duyệt không hỗ trợ đọc thành tiếng.";
-
-    return;
-  }
-
-  voices = speechSynthesis.getVoices();
-
-  voiceSelect.innerHTML = "";
-
-  if (voices.length === 0) {
-
-    voiceSelect.innerHTML =
-      '<option value="">Chưa tìm thấy giọng đọc</option>';
-
-    voiceInfo.textContent =
-      "Hãy thử nhấn Làm mới hoặc kiểm tra giọng đọc của hệ điều hành.";
-
-    return;
-  }
-
-  voices.forEach((voice, index) => {
-
-    const option = document.createElement("option");
-
-    option.value = index;
-
-    option.textContent =
-      voice.name + " (" + voice.lang + ")" +
-      (voice.default ? " - Mặc định" : "");
-
-    voiceSelect.appendChild(option);
-
-  });
-
-  // Ưu tiên giọng tiếng Việt
-  let defaultIndex = voices.findIndex(
-    voice => voice.lang.toLowerCase() === "vi-vn"
-  );
-
-  if (defaultIndex < 0) {
-
-    defaultIndex = voices.findIndex(
-      voice => voice.lang.toLowerCase().startsWith("vi")
-    );
-
-  }
-
-  if (defaultIndex < 0) {
-
-    defaultIndex = voices.findIndex(
-      voice => voice.default
-    );
-
-  }
-
-  if (defaultIndex < 0) {
-    defaultIndex = 0;
-  }
-
-  voiceSelect.value = defaultIndex;
-
-  selectVoice(defaultIndex);
-}
-
-function selectVoice(index) {
-
-  selectedVoice = voices[Number(index)] || null;
-
-  if (!selectedVoice) {
-
-    voiceInfo.textContent = "Chưa chọn giọng đọc.";
-
-    return;
-  }
-
-  voiceInfo.textContent =
-    "Đang chọn: " +
-    selectedVoice.name +
-    " | Ngôn ngữ: " +
-    selectedVoice.lang +
-    (selectedVoice.localService ? " | Giọng cài trên thiết bị" : " | Giọng dịch vụ");
-
-}
-
-if ("speechSynthesis" in window) {
-
-  // Danh sách giọng có thể được tải bất đồng bộ.
-  speechSynthesis.onvoiceschanged = loadVoices;
-
-  loadVoices();
-
-  // Một số trình duyệt cần gọi lại sau khi khởi tạo.
-  setTimeout(loadVoices, 500);
-}
-
-
-/* ================================
-   TEXT TO SPEECH
-================================ */
-
-let chunks = [];
-let currentIndex = 0;
-let reading = false;
-let paused = false;
-let readingSession = 0;
-
-function splitText(text, maxLength = 220) {
-
-  const sentences =
-    text.match(/[^.!?。！？]+[.!?。！？]?/g) || [text];
-
-  const result = [];
-  let current = "";
-
-  for (const sentence of sentences) {
-
-    if (
-      current.length + sentence.length > maxLength &&
-      current.length > 0
-    ) {
-
-      result.push(current.trim());
-      current = "";
-
-    }
-
-    current += sentence;
-
-    if (current.length >= maxLength) {
-
-      result.push(current.trim());
-      current = "";
-
-    }
-
-  }
-
-  if (current.trim()) {
-    result.push(current.trim());
-  }
-
-  return result;
-}
-
-function startReading() {
-
-  if (!("speechSynthesis" in window)) {
-
-    statusText.textContent =
-      "Trình duyệt không hỗ trợ đọc thành tiếng.";
-
-    return;
-  }
-
-  stopReading();
-
-  const text = readerContent.innerText.trim();
-
-  if (!text) return;
-
-  chunks = splitText(text);
-
-  currentIndex = 0;
-  reading = true;
-  paused = false;
-
-  const session = readingSession;
-
-  statusText.textContent = "Đang chuẩn bị đọc...";
-
-  readNext(session);
-}
-
-function readNext(session) {
-
-  if (session !== readingSession || !reading || paused) {
-    return;
-  }
-
-  if (currentIndex >= chunks.length) {
-
-    reading = false;
-    statusText.textContent = "Đã đọc xong.";
-
-    return;
-  }
-
-  const index = currentIndex;
-  const text = chunks[index];
-
-  const utterance = new SpeechSynthesisUtterance(text);
-
-  utterance.lang = selectedVoice
-    ? selectedVoice.lang
-    : "vi-VN";
-
-  if (selectedVoice) {
-    utterance.voice = selectedVoice;
-  }
-
-  utterance.rate = Number(
-    document.getElementById("rateSelect").value
-  );
-
-  utterance.onstart = () => {
-
-    if (session !== readingSession) return;
-
-    statusText.textContent =
-      "Đang đọc đoạn " +
-      (index + 1) +
-      "/" +
-      chunks.length;
-
-  };
-
-  utterance.onend = () => {
-
-    if (session !== readingSession || !reading) return;
-
-    currentIndex++;
-
-    readNext(session);
-
-  };
-
-  utterance.onerror = event => {
-
-    if (session !== readingSession) return;
-
-    if (event.error === "canceled" || event.error === "interrupted") {
-      return;
-    }
-
-    statusText.textContent =
-      "Lỗi đọc: " + event.error;
-
-    reading = false;
-
-  };
-
-  speechSynthesis.speak(utterance);
-}
-
-function pauseReading() {
-
-  if (!reading) return;
-
-  speechSynthesis.pause();
-  paused = true;
-
-  statusText.textContent = "Đã tạm dừng.";
-
-}
-
-function resumeReading() {
-
-  if (!reading || !paused) return;
-
-  paused = false;
-
-  speechSynthesis.resume();
-
-  statusText.textContent = "Đang tiếp tục đọc.";
-
-}
-
-function stopReading() {
-
-  readingSession++;
-
-  reading = false;
-  paused = false;
-
-  if ("speechSynthesis" in window) {
-    speechSynthesis.cancel();
-  }
-
-  chunks = [];
-  currentIndex = 0;
-
-  statusText.textContent = "Đã dừng đọc.";
-
-}
-
-
-/* ================================
-   TEST VOICE
-================================ */
-
-function testVoice() {
-
-  if (!selectedVoice) {
-
-    statusText.textContent =
-      "Vui lòng chọn một giọng đọc trước.";
-
-    return;
-  }
-
-  stopReading();
-
-  const session = readingSession;
-
-  const utterance = new SpeechSynthesisUtterance(
-    "Xin chào. Đây là phần thử nghiệm giọng đọc tiếng Việt."
-  );
-
-  utterance.voice = selectedVoice;
-  utterance.lang = selectedVoice.lang;
-
-  utterance.rate = Number(
-    document.getElementById("rateSelect").value
-  );
-
-  utterance.onstart = () => {
-    if (session === readingSession) {
-      statusText.textContent =
-        "Đang thử giọng: " + selectedVoice.name;
-    }
-  };
-
-  utterance.onend = () => {
-    if (session === readingSession) {
-      statusText.textContent = "Đã thử giọng xong.";
-    }
-  };
-
-  utterance.onerror = event => {
-    if (session === readingSession) {
-      statusText.textContent =
-        "Lỗi thử giọng: " + event.error;
-    }
-  };
-
-  speechSynthesis.speak(utterance);
-}
-
-
-/* ================================
-   KEYBOARD
-================================ */
-
-document.addEventListener("keydown", event => {
-
-  if (
-    event.key === "Escape" &&
-    reader.classList.contains("open")
-  ) {
-
-    closeReader();
-
-  }
-
-});
-
+/* SETTINGS APPLICATION */
+const settings=new SettingsManager();
+const reader=new ReaderManager();
+const voices=new VoiceManager();
+const highlight=new HighlightManager(reader,settings);
+const speech=new SpeechManager(reader,voices,settings,highlight);
+const $=id=>document.getElementById(id);
+function applySettings(){const s=settings.value;reader.root.classList.remove("paper","light","dark");reader.root.classList.add(s.theme);reader.content.style.fontFamily=s.font+", sans-serif";reader.content.style.fontSize=s.size+"px";reader.content.style.lineHeight=s.line;reader.content.style.maxWidth=s.width+"px";$("readerToolbar").classList.toggle("toolbar-collapsed",s.compact);highlight.applyColors();$("quickFont").value=s.font;syncSettingsForm();}
+function syncSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingCompact:"compact",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);if(el.type==="checkbox")el.checked=!!s[key];else el.value=s[key];});}
+function readSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingCompact:"compact",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);s[key]=el.type==="checkbox"?el.checked:el.type==="range"?Number(el.value):el.value;});applySettings();settings.save();}
+Object.keys({settingTheme:1,settingFont:1,settingSize:1,settingLine:1,settingWidth:1,settingRate:1,settingPitch:1,settingVolume:1,settingHighlight:1,settingWordSync:1,settingSync:1,settingAutoScroll:1,settingCompact:1,settingHighlightColor:1,settingTextColor:1,settingBorderColor:1}).forEach(id=>$(id).addEventListener("input",readSettingsForm));
+$("openReaderBtn").addEventListener("click",()=>{speech.stop(false);reader.open();applySettings();});
+$("closeBtn").addEventListener("click",()=>{speech.stop(false);reader.close();});
+$("playBtn").addEventListener("click",()=>speech.start(0));
+$("pauseBtn").addEventListener("click",()=>speech.pause());
+$("resumeBtn").addEventListener("click",()=>speech.resume());
+$("stopBtn").addEventListener("click",()=>speech.stop());
+$("prevBtn").addEventListener("click",()=>speech.move(-1));
+$("nextBtn").addEventListener("click",()=>speech.move(1));
+$("testVoiceBtn").addEventListener("click",()=>speech.test());
+$("refreshVoicesBtn").addEventListener("click",()=>voices.load());
+$("settingsBtn").addEventListener("click",()=> $("settingsPanel").classList.toggle("open"));
+$("collapseBtn").addEventListener("click",()=>{settings.value.compact=!settings.value.compact;applySettings();settings.save();});
+$("minimizeBtn").addEventListener("click",()=>reader.root.classList.toggle("minimized"));
+$("maximizeBtn").addEventListener("click",()=>reader.root.classList.toggle("maximized"));
+$("smallerBtn").addEventListener("click",()=>{settings.value.size=Math.max(14,settings.value.size-1);applySettings();settings.save();});
+$("largerBtn").addEventListener("click",()=>{settings.value.size=Math.min(36,settings.value.size+1);applySettings();settings.save();});
+$("quickFont").addEventListener("change",e=>{settings.value.font=e.target.value;applySettings();settings.save();});
+$("themeBtn").addEventListener("click",()=>{const a=["paper","dark","light"];settings.value.theme=a[(a.indexOf(settings.value.theme)+1)%a.length];applySettings();settings.save();});
+$("saveSettingsBtn").addEventListener("click",()=>{readSettingsForm();settings.save();$("status").textContent="Đã lưu cài đặt.";});
+$("resetSettingsBtn").addEventListener("click",()=>{settings.reset();applySettings();$("status").textContent="Đã khôi phục cài đặt mặc định.";});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&reader.root.classList.contains("open")){speech.stop(false);reader.close();}});
+voices.onChange=()=>{};
+applySettings();
+if("speechSynthesis"in window){window.speechSynthesis.addEventListener?.("voiceschanged",()=>voices.load());voices.load();setTimeout(()=>voices.load(),500);}
 </script>
-
 </body>
 </html>
