@@ -28,7 +28,7 @@ Dự án hiện được tổ chức trong một file chính là `index.html`.
 
 1. Tải hoặc clone repository về máy.
 2. Mở `index.html` bằng Chrome để chạy thử; khi triển khai lên website, hãy phục vụ file qua HTTPS.
-3. Nhấn **Mở chế độ đọc** để mở Reader.
+3. Nhấn **📖 Mở chế độ đọc** để mở Reader.
 
 Không cần cài thư viện JavaScript bên ngoài hoặc chạy máy chủ backend cho chức năng đọc cơ bản.
 
@@ -72,6 +72,7 @@ Nhấn biểu tượng **⚙ Settings** trên thanh công cụ. Các thay đổi
 ### Giao diện
 
 - Chọn chủ đề màu giấy, sáng hoặc tối.
+- Chọn vị trí thanh điều khiển: **Header - Đầu trang** hoặc **Footer - Chân trang**. Header là vị trí mặc định; Footer đặt thanh điều khiển sau nội dung Reader và bám cạnh dưới khi cuộn.
 - Thu gọn thanh công cụ.
 - Bật/tắt tự cuộn theo đoạn đang đọc.
 - Bật/tắt tùy chọn tiếp tục đọc khi chuyển tab hoặc cửa sổ mất tiêu điểm.
