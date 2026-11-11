@@ -56,9 +56,12 @@ h1{line-height:1.35}
 .reader.minimized .toolbar-extra{display:none!important}
 .reader.minimized .toolbar-row{gap:6px}
 .reader.minimized .reader-content,.reader.minimized .reader-status,.reader.minimized .settings-panel{display:none}
-.mini-reading-progress{display:none;min-width:0;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font-size:12px;line-height:1.4}
-.reader.minimized .mini-reading-progress{display:inline-block}
-.reader.maximized .reader-content{max-width:1100px!important;width:100%!important}
+.mini-reading-progress{display:none;min-width:0;max-width:min(42vw,420px);overflow:hidden;text-overflow:ellipsis;white-space:normal;color:#fff;font-size:12px;line-height:1.35;text-align:left}
+.reader.minimized .mini-reading-progress{display:block;flex:1 1 180px;max-height:2.7em;overflow:hidden}
+.reader.maximized .reader-content{max-width:1100px!important;width:calc(100% - 48px)!important}
+.reader.maximized .reader-toolbar{position:sticky;top:0}
+.reader.minimized #maximizeBtn{background:#0f766e}
+@media(max-width:700px){.reader.minimized .mini-reading-progress{flex-basis:100%;max-width:100%;text-align:center}.reader.minimized .toolbar-row{justify-content:center}}
 @media(max-width:700px){.layout{grid-template-columns:1fr}aside{display:none}.reader-content{margin-top:22px}.reader-toolbar select{max-width:100%}.voice-row label{min-width:78px}.reader.minimized{bottom:8px!important;left:50%!important;width:calc(100vw - 16px)}}
 </style>
 </head>
@@ -209,14 +212,32 @@ class ReaderManager {
   }
   open(){const clone=document.getElementById("article").cloneNode(true);clone.querySelectorAll("script,style,noscript,iframe,nav,footer,form,button,input,select,textarea,aside").forEach(e=>e.remove());this.content.replaceChildren(clone);
     this.blocks=[];clone.querySelectorAll("p,h1,h2,h3,h4,li,blockquote").forEach(el=>{const text=(el.innerText||el.textContent||"").trim();if(!text)return;el.dataset.readerParagraph=String(this.blocks.length);this.blocks.push({element:el,text});});
-    this.active=-1;this.root.classList.remove("minimized");this.root.classList.add("open");this.lockPageScroll();}
-  minimize(){if(!this.root.classList.contains("open"))return;this.root.classList.add("minimized");this.unlockPageScroll();}
-  restore(){if(!this.root.classList.contains("open"))return;this.root.classList.remove("minimized");this.lockPageScroll();this.refreshActiveParagraph();}
+    this.active=-1;this.root.classList.remove("minimized","maximized");this.root.classList.add("open");this.updateMiniProgress(-1);this.lockPageScroll();this.updateLayoutButton();}
+  minimize(){if(!this.root.classList.contains("open"))return;this.root.classList.remove("maximized");this.root.classList.add("minimized");this.unlockPageScroll();this.updateLayoutButton();}
+  restore(){if(!this.root.classList.contains("open"))return;this.root.classList.remove("minimized");this.lockPageScroll();this.refreshActiveParagraph();this.updateLayoutButton();}
+  maximize(){if(!this.root.classList.contains("open"))return;this.root.classList.remove("minimized");this.root.classList.add("maximized");this.lockPageScroll();this.refreshActiveParagraph();this.updateLayoutButton();}
   toggleMaximize(){
     if(!this.root.classList.contains("open"))return;
-    if(this.root.classList.contains("minimized"))this.restore();
+    if(this.root.classList.contains("minimized")){this.maximize();return;}
     this.root.classList.toggle("maximized");
-    this.refreshActiveParagraph();
+    this.lockPageScroll();this.refreshActiveParagraph();this.updateLayoutButton();
+  }
+  updateLayoutButton(){
+    const button=document.getElementById("maximizeBtn");
+    if(!button)return;
+    const minimized=this.root.classList.contains("minimized");
+    const maximized=this.root.classList.contains("maximized");
+    button.title=minimized?"Mở rộng Reader":maximized?"Thu về kích thước đọc":"Mở rộng Reader";
+    button.setAttribute("aria-label",button.title);
+    button.textContent=maximized?"▣":"□";
+  }
+  updateMiniProgress(index=this.active){
+    const indicator=document.getElementById("miniReadingProgress");
+    if(!indicator)return;
+    if(index<0||!this.blocks[index]){indicator.textContent="Sẵn sàng · "+this.blocks.length+" đoạn";indicator.title=indicator.textContent;return;}
+    const text=this.blocks[index].text.replace(/\s+/g," ").trim();
+    indicator.textContent="Đang đọc đoạn "+(index+1)+"/"+this.blocks.length+" · "+text;
+    indicator.title=indicator.textContent;
   }
   refreshActiveParagraph(){
     if(this.active<0||!this.blocks[this.active])return;
@@ -224,11 +245,12 @@ class ReaderManager {
     this.content.querySelectorAll(".tts-active").forEach(node=>node.classList.remove("tts-active"));
     if(settings.value.highlight&&settings.value.sync){
       el.classList.add("tts-active");
-      if(settings.value.autoScroll)el.scrollIntoView({behavior:"smooth",block:"center"});
+      if(settings.value.autoScroll&&!this.root.classList.contains("minimized"))el.scrollIntoView({behavior:"smooth",block:"center"});
     }
+    this.updateMiniProgress(this.active);
   }
   close(){this.root.classList.remove("open","minimized","maximized");this.unlockPageScroll();this.clearHighlight();this.content.replaceChildren();this.blocks=[];this.active=-1;}
-  setActive(index,settings){if(index<0||index>=this.blocks.length)return;this.active=index;this.clearHighlight();const el=this.blocks[index].element;if(settings.value.highlight&&settings.value.sync){el.classList.add("tts-active");if(settings.value.autoScroll&&!this.root.classList.contains("minimized"))el.scrollIntoView({behavior:"smooth",block:"center"});}}
+  setActive(index,settings){if(index<0||index>=this.blocks.length)return;this.active=index;this.clearHighlight();const el=this.blocks[index].element;if(settings.value.highlight&&settings.value.sync){el.classList.add("tts-active");if(settings.value.autoScroll&&!this.root.classList.contains("minimized"))el.scrollIntoView({behavior:"smooth",block:"center"});}this.updateMiniProgress(index);}
   clearHighlight(){this.content.querySelectorAll(".tts-active").forEach(el=>el.classList.remove("tts-active"));this.content.querySelectorAll("mark.tts-word").forEach(mark=>{mark.replaceWith(document.createTextNode(mark.textContent||""));});this.content.normalize();}
   getBlocks(){return this.blocks;}
 }
@@ -258,7 +280,8 @@ class SpeechManager {
     utterance.lang=this.voices.selected?.lang||"vi-VN";if(this.voices.selected)utterance.voice=this.voices.selected;
     utterance.rate=Number(s.rate);utterance.pitch=Number(s.pitch);utterance.volume=Number(s.volume);
     this.current=utterance;this.currentStarted=false;this.backgroundInterrupted=false;
-    utterance.onstart=()=>{if(id!==this.session)return;this.currentStarted=true;this.highlight.paragraph(item.paragraph);const block=this.reader.blocks[item.paragraph];const preview=(block?.text||item.text).replace(/\s+/g," ").trim();const indicator=document.getElementById("miniReadingProgress");if(indicator)indicator.textContent="Đoạn "+(item.paragraph+1)+"/"+this.reader.blocks.length+": "+preview.slice(0,90)+(preview.length>90?"…":"");this.emit("Đang đọc đoạn "+(item.paragraph+1)+"/"+this.reader.blocks.length);};
+    // Cập nhật tiến trình khi utterance bắt đầu; setActive tiếp tục đồng bộ mỗi khi đổi đoạn.
+    utterance.onstart=()=>{if(id!==this.session)return;this.currentStarted=true;this.highlight.paragraph(item.paragraph);this.reader.updateMiniProgress(item.paragraph);this.emit("Đang đọc đoạn "+(item.paragraph+1)+"/"+this.reader.blocks.length);};
     utterance.onboundary=e=>{if(id!==this.session||e.name!=="word")return;this.highlight.boundarySupported=true;this.highlight.word(item.paragraph,e.charIndex,Math.max(1,(e.charLength||1)));};
     utterance.onend=()=>{if(id!==this.session||this.state!=="reading")return;this.current=null;this.currentStarted=false;this.position++;this.next(id);};
     utterance.onerror=e=>{
