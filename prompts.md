@@ -23,7 +23,7 @@ Thiết kế hệ thống thành 5 nhóm cài đặt độc lập.
 Cho phép cấu hình:
 - Vị trí và cách hiển thị TTS-widget.
 - Kích thước cửa sổ đọc.
-- Reader chỉ có hai trạng thái: bình thường và thu nhỏ/khôi phục; không có chế độ mở rộng Reader.
+- Reader chỉ có một trạng thái hiển thị: cửa sổ đọc bình thường; không có chế độ thu nhỏ hoặc mở rộng.
 - Giao diện sáng, tối, màu giấy.
 - Thanh công cụ thu gọn hoặc mở rộng.
 - Hiển thị hoặc ẩn các thành phần điều khiển.
@@ -141,14 +141,13 @@ Sử dụng icon có tooltip.
 | Cài đặt | settings |
 | Đoạn trước | skip-back |
 | Đoạn tiếp | skip-forward |
-| Thu nhỏ | minimize |
 
 Yêu cầu:
 - Icon phải dễ nhận biết.
 - Có tooltip giải thích.
 - Có trạng thái disabled khi không thể thực hiện lệnh.
 - Không hiển thị đồng thời những nút có chức năng trùng lặp.
-- Không có nút mở rộng Reader; chỉ có nút thu nhỏ/khôi phục.
+- Không có nút thu nhỏ hoặc mở rộng Reader.
 - Nút Settings phải luôn truy cập được, kể cả khi thanh công cụ đang ở chế độ thu gọn.
 - Phân biệt rõ Pause và Stop.
 
@@ -217,7 +216,7 @@ Kiểm tra các tình huống:
 17. Chrome ngừng utterance mà không phát `onend`: khi focus trở lại, phát lại queue item hiện tại nếu state vẫn là reading.
 18. Mở Settings, tìm/lọc và chọn giọng đọc; thử giọng và xác nhận lựa chọn được giữ khi đóng/mở Settings.
 19. Tải lại trang: khôi phục giọng đã chọn nếu giọng đó vẫn được `speechSynthesis.getVoices()` cung cấp; nếu không còn, chọn giọng tiếng Việt phù hợp hoặc giọng mặc định.
-20. Xác nhận Reader chỉ có trạng thái bình thường và thu nhỏ/khôi phục, không còn nút hoặc chế độ mở rộng.
+20. Xác nhận Reader chỉ có một trạng thái bình thường; không còn nút thu nhỏ, nút mở rộng, thanh điều khiển nổi hoặc logic chuyển trạng thái.
 
 Không tuyên bố đã kiểm thử thành công nếu chưa thực sự chạy thử.
 
