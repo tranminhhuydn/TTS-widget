@@ -251,3 +251,59 @@ Không tuyên bố đã kiểm thử thành công nếu chưa thực sự chạy
 - Báo cáo rõ tính năng nào đã hoàn thành, tính năng nào bị giới hạn bởi Chrome API và tính năng nào chưa kiểm thử.
 
 **Ưu tiên cao nhất:** Tính ổn định của quá trình đọc, đồng bộ nội dung và khả năng mở rộng của hệ thống.
+
+## 9. Yêu cầu đối chiếu và các trường hợp dễ bỏ sót
+
+Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc tả với mã nguồn hiện tại. Đây là tiêu chí bắt buộc cho các lần sửa tiếp theo; không được xem việc đã có tên hàm hoặc giao diện tương ứng là bằng chứng tính năng đã hoạt động đúng.
+
+### 9.1. Đồng bộ vị trí từ khi chia utterance
+
+- `SpeechSynthesisEvent.charIndex` là vị trí trong văn bản của utterance hiện tại, không mặc nhiên là vị trí trong toàn bộ đoạn văn gốc.
+- Khi chia một đoạn thành nhiều utterance, phải lưu offset bắt đầu của từng phần trong văn bản gốc.
+- Khi nhận `onboundary`, cộng offset của phần hiện tại vào `charIndex` trước khi tìm node/vị trí trong đoạn gốc.
+- Việc đánh dấu từ phải xử lý đúng cả đoạn có nhiều node văn bản, dấu câu, khoảng trắng và nội dung HTML lồng nhau.
+- Trước khi đánh dấu từ mới, phải gỡ đánh dấu từ cũ theo cách không làm thay đổi nội dung hoặc thứ tự văn bản.
+- Nếu trình duyệt/giọng đọc không phát boundary đáng tin cậy, chỉ đánh dấu đoạn hiện tại; không tạo vị trí từ giả.
+- Acceptance test: kiểm tra từ đầu, giữa và cuối của đoạn; kiểm tra đoạn dài bị chia thành ít nhất hai utterance; xác nhận từ được đánh dấu khớp chính xác với âm thanh đang đọc.
+
+### 9.2. Khôi phục phiên đọc nền sau canceled/interrupted
+
+- Phải phân biệt rõ ba tình huống: SpeechSynthesis đang paused nhưng utterance còn trong hàng đợi; utterance đã bị canceled/interrupted; và utterance đã biến mất khỏi speaking/pending mà không có onend hợp lệ.
+- Nếu utterance hiện tại đã bị canceled/interrupted, không được chỉ gọi `speechSynthesis.resume()` rồi coi như đã khôi phục. Phải phát lại đúng queue item hiện tại.
+- Chỉ gọi `resume()` khi xác định utterance vẫn còn hiệu lực và đang bị pause ngoài ý muốn.
+- Khi phát lại queue item hiện tại, không tăng position; không tạo hai utterance cùng chạy; không khôi phục nếu người dùng đã Pause, Stop, đóng Reader hoặc phiên đọc đã đổi session.
+- Có cơ chế chống khôi phục lặp nhiều lần do đồng thời nhận `focus`, `visibilitychange` và các sự kiện liên quan.
+- Acceptance test: mô phỏng/kiểm tra riêng trạng thái paused, canceled, interrupted, mất speaking/pending không có onend; xác nhận không bỏ qua câu, không đọc chồng và không tự phát lại sau thao tác Pause/Stop của người dùng.
+
+### 9.3. Vòng đời thao tác thử giọng
+
+- Thao tác thử giọng phải được quản lý tách biệt với hàng đợi đọc nội dung.
+- Khi thử giọng bắt đầu, giao diện phải phản ánh trạng thái testing; khi kết thúc hoặc lỗi, phải trở về trạng thái sẵn sàng phù hợp.
+- Nút Stop phải dừng được thử giọng; bắt đầu đọc nội dung hoặc đóng Reader phải hủy thử giọng đang chạy.
+- Callback cũ của utterance thử giọng không được ghi đè trạng thái của một phiên đọc mới.
+- Acceptance test: thử giọng thành công, thử giọng lỗi, Stop khi đang thử, bắt đầu đọc nội dung khi đang thử và đóng Reader khi đang thử.
+
+### 9.4. Đóng Reader và giải phóng tài nguyên
+
+- Khi đóng Reader, phải dừng SpeechSynthesis trước khi xóa nội dung; không để utterance tiếp tục đọc nội dung đã bị gỡ khỏi DOM.
+- Phải xóa highlight, menu ngữ cảnh, mục tiêu đọc từ menu, nội dung clone và các trạng thái phiên đọc liên quan.
+- Phải khôi phục chính xác thuộc tính cuộn ban đầu của trang nguồn; không ghi đè các giá trị overflow đã tồn tại trước khi mở Reader.
+- Việc mở Reader nhiều lần liên tiếp không được nhân đôi event listener, menu, nội dung clone hoặc trạng thái khóa cuộn.
+- Escape và nút Đóng phải có hành vi tương đương.
+- Acceptance test: đóng Reader trong lúc reading, paused và testing; mở/đóng liên tục nhiều lần; xác nhận trang nguồn cuộn bình thường, không còn menu trong DOM và không còn âm thanh.
+
+### 9.5. Tính nhất quán của Settings và giao diện
+
+- Các điều khiển nhanh bên ngoài Settings (nếu còn được giữ) phải cập nhật cùng một đối tượng cấu hình, đồng bộ lại giá trị trong Settings và lưu localStorage.
+- Thu gọn thanh công cụ chỉ được ẩn các điều khiển phụ; nút Settings và các thao tác thiết yếu phải luôn truy cập được.
+- Không được nhầm lẫn thu gọn thanh công cụ với thu nhỏ/mở rộng Reader. Reader tiếp tục chỉ có một trạng thái hiển thị bình thường.
+- Reset phải đưa toàn bộ cấu hình thuộc Settings về mặc định và cập nhật đồng bộ giao diện; phải xác định rõ dữ liệu giọng đọc được lưu riêng có được giữ hay không.
+- Acceptance test: thay đổi từng thiết lập, đóng/mở Settings, thu gọn/mở thanh công cụ, tải lại trang và reset; xác nhận giá trị giao diện và localStorage nhất quán.
+
+### 9.6. Quy tắc đối chiếu trước khi kết thúc mỗi lần sửa
+
+- Đối chiếu từng yêu cầu trong prompt với phần triển khai thực tế trong `index.html`; không chỉ kiểm tra sự tồn tại của selector, class, hàm hoặc nút.
+- Ghi nhận rõ ba trạng thái: đã triển khai và có kiểm chứng; đã triển khai nhưng chưa kiểm chứng trên trình duyệt; chưa triển khai hoặc còn lỗi.
+- Mỗi lỗi phát hiện khi đối chiếu phải được chuyển thành acceptance test cụ thể trong prompt.
+- Không ghi một tiêu chí là hoàn thành chỉ vì mã có đoạn xử lý tương ứng; phải kiểm tra cả luồng thành công, luồng lỗi, trạng thái biên và tương tác giữa các tính năng.
+- Không tuyên bố đã kiểm thử tương tác nếu chỉ mới kiểm tra cú pháp JavaScript hoặc đọc mã tĩnh.
