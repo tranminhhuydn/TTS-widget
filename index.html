@@ -227,6 +227,23 @@ class SpeechManager {
   test(){if(!this.voices.selected){this.emit("Vui lòng chọn giọng đọc.");return;}this.stop(false);const id=this.session;const u=new SpeechSynthesisUtterance("Xin chào. Đây là phần thử nghiệm giọng đọc.");const s=this.settings.value;u.voice=this.voices.selected;u.lang=u.voice.lang;u.rate=Number(s.rate);u.pitch=Number(s.pitch);u.volume=Number(s.volume);u.onstart=()=>{if(id===this.session)this.emit("Đang thử giọng: "+u.voice.name);};u.onend=()=>{if(id===this.session)this.emit("Đã thử giọng xong.");};u.onerror=e=>{if(id===this.session)this.emit("Lỗi thử giọng: "+e.error);};this.synth.speak(u);this.state="testing";}
 }
 
+/* TOOLBAR MANAGER */
+class ToolbarManager {
+  constructor(speech,reader){
+    this.speech=speech;this.reader=reader;
+    this.buttons={play:$("playBtn"),pause:$("pauseBtn"),resume:$("resumeBtn"),stop:$("stopBtn"),prev:$("prevBtn"),next:$("nextBtn")};
+  }
+  update(){
+    const state=this.speech.state,hasContent=this.reader.blocks.length>0;
+    this.buttons.play.disabled=!hasContent;
+    this.buttons.pause.disabled=state!=="reading";
+    this.buttons.resume.disabled=state!=="paused";
+    this.buttons.stop.disabled=!["reading","paused","testing"].includes(state);
+    this.buttons.prev.disabled=!hasContent||this.reader.active<=0;
+    this.buttons.next.disabled=!hasContent||this.reader.active>=this.reader.blocks.length-1;
+  }
+}
+
 /* SETTINGS APPLICATION */
 const settings=new SettingsManager();
 const reader=new ReaderManager();
@@ -259,8 +276,11 @@ $("themeBtn").addEventListener("click",()=>{const a=["paper","dark","light"];set
 $("saveSettingsBtn").addEventListener("click",()=>{readSettingsForm();settings.save();$("status").textContent="Đã lưu cài đặt.";});
 $("resetSettingsBtn").addEventListener("click",()=>{settings.reset();applySettings();$("status").textContent="Đã khôi phục cài đặt mặc định.";});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&reader.root.classList.contains("open")){speech.stop(false);reader.close();}});
+const toolbar=new ToolbarManager(speech,reader);
+speech.onState=()=>toolbar.update();
 voices.onChange=()=>{};
 applySettings();
+toolbar.update();
 if("speechSynthesis"in window){window.speechSynthesis.addEventListener?.("voiceschanged",()=>voices.load());voices.load();setTimeout(()=>voices.load(),500);}
 </script>
 </body>
