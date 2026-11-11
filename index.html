@@ -54,6 +54,12 @@ h1{line-height:1.35}
 .setting-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 .toolbar-collapsed .toolbar-extra{display:none}
 @media(max-width:700px){.layout{grid-template-columns:1fr}aside{display:none}.reader-content{margin-top:22px}.reader-toolbar select{max-width:100%}.voice-row label{min-width:78px}}
+
+/* CONTEXT MENU */
+.reader-context-menu{position:fixed;z-index:3000;display:none;min-width:170px;padding:6px;background:#fff;color:#1f2937;border:1px solid #cbd5e1;border-radius:9px;box-shadow:0 8px 28px #0003}
+.reader-context-menu.open{display:block}
+.reader-context-menu button{display:block;width:100%;padding:9px 12px;text-align:left;background:transparent;color:#1f2937;border-radius:5px}
+.reader-context-menu button:hover{background:#eaf2fb;filter:none}
 </style>
 </head>
 <body>
@@ -146,6 +152,8 @@ h1{line-height:1.35}
 <div class="reader-status" id="status" aria-live="polite">Sẵn sàng đọc</div>
 </div>
 
+
+<div class="reader-context-menu" id="readerContextMenu" role="menu" aria-label="Menu đọc văn bản"><button id="readFromCursorBtn" type="button" role="menuitem">▶ Đọc từ đây</button></div>
 <script>
 "use strict";
 
@@ -360,6 +368,47 @@ function handleReaderFocusChange(){
 document.addEventListener("visibilitychange",handleReaderFocusChange);
 window.addEventListener("blur",handleReaderFocusChange);
 window.addEventListener("focus",handleReaderFocusChange);
+
+
+/* CONTEXT MENU: read the paragraph under the pointer */
+const readerContextMenu=$("readerContextMenu");
+let contextReadTarget=null;
+function hideReaderContextMenu(){readerContextMenu.classList.remove("open");contextReadTarget=null;}
+function showReaderContextMenu(event,index){
+  event.preventDefault();contextReadTarget=index;readerContextMenu.classList.add("open");
+  const rect=readerContextMenu.getBoundingClientRect(),margin=8;
+  readerContextMenu.style.left=Math.max(margin,Math.min(event.clientX,window.innerWidth-rect.width-margin))+"px";
+  readerContextMenu.style.top=Math.max(margin,Math.min(event.clientY,window.innerHeight-rect.height-margin))+"px";
+}
+function getReadableBlockIndex(target,root){
+  const block=target instanceof Element?target.closest("p,h1,h2,h3,h4,li,blockquote"):null;
+  if(!block||!root.contains(block))return -1;
+  return Array.from(root.querySelectorAll("p,h1,h2,h3,h4,li,blockquote"))
+    .filter(el=>(el.innerText||el.textContent||"").trim()).indexOf(block);
+}
+document.addEventListener("contextmenu",event=>{
+  if(readerContextMenu.contains(event.target))return;
+  if(reader.root.classList.contains("open")&&reader.content.contains(event.target)){
+    const block=event.target.closest("[data-reader-paragraph]");
+    if(block)showReaderContextMenu(event,Number(block.dataset.readerParagraph));
+    return;
+  }
+  const article=document.getElementById("article");
+  if(article.contains(event.target)){
+    const index=getReadableBlockIndex(event.target,article);
+    if(index>=0)showReaderContextMenu(event,index);
+  }
+});
+$("readFromCursorBtn").addEventListener("click",()=>{
+  const index=contextReadTarget;hideReaderContextMenu();
+  if(!Number.isInteger(index)||index<0)return;
+  if(!reader.root.classList.contains("open")){speech.stop(false);reader.open();applySettings();}
+  toolbar.update();speech.start(index);
+});
+document.addEventListener("pointerdown",event=>{if(!readerContextMenu.contains(event.target))hideReaderContextMenu();});
+document.addEventListener("keydown",event=>{if(event.key==="Escape")hideReaderContextMenu();});
+window.addEventListener("resize",hideReaderContextMenu);
+window.addEventListener("scroll",hideReaderContextMenu,true);
 
 voices.onChange=()=>{};
 applySettings();
