@@ -88,7 +88,10 @@ Yêu cầu:
 - Không tự thay đổi trạng thái từ `reading` sang `paused` khi tab/cửa sổ mất tiêu điểm.
 - Duy trì hàng đợi utterance, vị trí đọc, giọng đọc và cấu hình hiện tại khi chuyển tab/cửa sổ.
 - Theo dõi `visibilitychange`, `window.blur` và `window.focus` để cập nhật trạng thái giao diện mà không làm gián đoạn phiên đọc.
-- Nếu người dùng bật chế độ đọc nền và trình duyệt đưa SpeechSynthesis vào trạng thái paused ngoài ý muốn, có thể gọi `speechSynthesis.resume()` khi trang hiển thị trở lại, nhưng chỉ khi trạng thái ứng dụng vẫn là `reading`. Tuyệt đối không resume khi người dùng đã chủ động Pause hoặc Stop.
+- Nếu người dùng bật chế độ đọc nền và trình duyệt đưa SpeechSynthesis vào trạng thái paused ngoài ý muốn, gọi `speechSynthesis.resume()` khi trang hiển thị trở lại, nhưng chỉ khi trạng thái ứng dụng vẫn là `reading`. Tuyệt đối không resume khi người dùng đã chủ động Pause hoặc Stop.
+- Phải xử lý cả trường hợp Chrome phát sinh `onerror` với `canceled`/`interrupted`, hoặc utterance đã bắt đầu nhưng bị ngắt mà không còn `speaking`/`pending`. Không được bỏ qua lỗi rồi để state mắc kẹt ở `reading`.
+- Tách việc phát utterance hiện tại thành hàm có thể gọi lại (ví dụ `speakCurrent()`). Khi trang hiển thị/focus trở lại, nếu state vẫn là `reading` và xác nhận utterance hiện tại đã bị ngắt, khởi chạy lại đúng phần tử queue hiện tại; không tăng vị trí queue khi chưa có `onend` hợp lệ.
+- Trước khi phát lại, kiểm tra `speechSynthesis.paused`, `speaking`, `pending` để tránh đọc chồng. Không phát lại khi utterance vẫn đang chạy hoặc khi state là `paused`, `idle`, `ended` hay `error`.
 - Có tùy chọn bật/tắt chế độ đọc nền trong Settings và lưu tùy chọn này vào localStorage.
 - Khi quay lại tab, giao diện phải phản ánh đúng trạng thái đọc hiện tại.
 
@@ -204,6 +207,8 @@ Kiểm tra các tình huống:
 13. Chuyển sang tab khác khi đang đọc: âm thanh và hàng đợi đọc vẫn tiếp tục nếu nền tảng cho phép.
 14. Chuyển sang cửa sổ/ứng dụng khác khi đang đọc: không tự pause hoặc stop.
 15. Quay lại tab sau khi SpeechSynthesis bị pause ngoài ý muốn: chỉ resume nếu trạng thái ứng dụng vẫn là reading; không resume nếu người dùng đã Pause/Stop.
+16. Quay lại tab sau khi utterance bị `canceled`/`interrupted`: khôi phục đúng utterance hiện tại, không bỏ qua đoạn và không đọc chồng.
+17. Chrome ngừng utterance mà không phát `onend`: khi focus trở lại, phát lại queue item hiện tại nếu state vẫn là reading.
 
 Không tuyên bố đã kiểm thử thành công nếu chưa thực sự chạy thử.
 
