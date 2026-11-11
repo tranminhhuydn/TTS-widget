@@ -53,7 +53,6 @@ h1{line-height:1.35}
 .setting-group label{display:block;font-size:13px;margin:8px 0 4px}
 .setting-group input,.setting-group select{width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:5px}
 .setting-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-.toolbar-collapsed .toolbar-extra{display:none}
 @media(max-width:700px){.layout{grid-template-columns:1fr}aside{display:none}.reader-content{margin-top:22px}.reader-toolbar select{max-width:100%}.voice-row label{min-width:78px}}
 
 /* CONTEXT MENU */
@@ -99,9 +98,8 @@ h1{line-height:1.35}
 <button class="danger" id="stopBtn" title="Dừng">■</button>
 <button id="nextBtn" title="Đoạn tiếp">⏭</button>
 <button class="secondary" id="settingsBtn" title="Cài đặt">⚙</button>
-<button class="secondary toolbar-extra" id="collapseBtn" title="Thu gọn thanh công cụ">⌄</button>
 </div>
-<div class="toolbar-row toolbar-extra" style="margin-top:8px">
+<div class="toolbar-row" style="margin-top:8px">
 <button id="smallerBtn" title="Giảm cỡ chữ">A−</button><button id="largerBtn" title="Tăng cỡ chữ">A+</button>
 <select id="quickFont" aria-label="Phông chữ"><option value="Georgia">Georgia</option><option value="Arial">Arial</option><option value="system-ui">System UI</option><option value="Trebuchet MS">Trebuchet</option></select>
 <button id="themeBtn">Đổi nền</button>
@@ -110,7 +108,6 @@ h1{line-height:1.35}
 <div class="settings-grid">
 <section class="setting-group"><h3>Giao diện</h3>
 <label for="settingTheme">Chủ đề</label><select id="settingTheme"><option value="paper">Màu giấy</option><option value="light">Sáng</option><option value="dark">Tối</option></select>
-<label><input type="checkbox" id="settingCompact" style="width:auto"> Thu gọn thanh công cụ</label>
 <label for="settingToolbarPosition">Vị trí thanh điều khiển</label><select id="settingToolbarPosition"><option value="header">Header - Đầu trang</option><option value="footer">Footer - Chân trang</option></select>
 <label><input type="checkbox" id="settingAutoScroll" style="width:auto"> Tự cuộn theo nội dung đang đọc</label>
 <label><input type="checkbox" id="settingBackgroundReading" style="width:auto" checked> Tiếp tục đọc khi chuyển tab hoặc cửa sổ mất tiêu điểm</label>
@@ -161,7 +158,7 @@ h1{line-height:1.35}
 
 /* SETTINGS MANAGER */
 class SettingsManager {
-  constructor(){this.key="tts-widget-settings-v2";this.defaults={theme:"paper",font:"Georgia",size:20,line:1.9,width:760,rate:1,pitch:1,volume:1,highlight:true,wordSync:true,sync:true,autoScroll:true,keepBackgroundReading:true,compact:false,toolbarPosition:"header",highlightColor:"#ffe58a",textColor:"#332600",borderColor:"#e0a800"};this.value=this.load();}
+  constructor(){this.key="tts-widget-settings-v2";this.defaults={theme:"paper",font:"Georgia",size:20,line:1.9,width:760,rate:1,pitch:1,volume:1,highlight:true,wordSync:true,sync:true,autoScroll:true,keepBackgroundReading:true,toolbarPosition:"header",highlightColor:"#ffe58a",textColor:"#332600",borderColor:"#e0a800"};this.value=this.load();}
   load(){
     try{
       const saved=JSON.parse(localStorage.getItem(this.key)||"{}");
@@ -170,7 +167,7 @@ class SettingsManager {
       const number=(key,min,max)=>{const n=Number(value[key]);value[key]=Number.isFinite(n)?Math.min(max,Math.max(min,n)):this.defaults[key];};
       number("size",14,36);number("line",1.2,2.4);number("width",520,1200);
       number("rate",0.6,1.8);number("pitch",0.5,2);number("volume",0,1);
-      ["highlight","wordSync","sync","autoScroll","keepBackgroundReading","compact"].forEach(key=>{value[key]=typeof value[key]==="boolean"?value[key]:this.defaults[key];});
+      ["highlight","wordSync","sync","autoScroll","keepBackgroundReading"].forEach(key=>{value[key]=typeof value[key]==="boolean"?value[key]:this.defaults[key];});
       if(!["header","footer"].includes(value.toolbarPosition))value.toolbarPosition=this.defaults.toolbarPosition;
       if(!["paper","light","dark"].includes(value.theme))value.theme=this.defaults.theme;
       if(!["Georgia","Arial","system-ui","Trebuchet MS"].includes(value.font))value.font=this.defaults.font;
@@ -347,14 +344,13 @@ function applySettings(){
   reader.content.style.lineHeight=String(s.line);
   reader.content.style.maxWidth=s.width+"px";
   reader.content.style.width="";
-  $("readerToolbar").classList.toggle("toolbar-collapsed",s.compact);
   highlight.applyColors();
   $("quickFont").value=s.font;
   syncSettingsForm();
 }
-function syncSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingBackgroundReading:"keepBackgroundReading",settingCompact:"compact",settingToolbarPosition:"toolbarPosition",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);if(el.type==="checkbox")el.checked=!!s[key];else el.value=s[key];});}
-function readSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingBackgroundReading:"keepBackgroundReading",settingCompact:"compact",settingToolbarPosition:"toolbarPosition",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);s[key]=el.type==="checkbox"?el.checked:el.type==="range"?Number(el.value):el.value;});applySettings();settings.save();}
-Object.keys({settingTheme:1,settingFont:1,settingSize:1,settingLine:1,settingWidth:1,settingRate:1,settingPitch:1,settingVolume:1,settingHighlight:1,settingWordSync:1,settingSync:1,settingAutoScroll:1,settingBackgroundReading:1,settingCompact:1,settingToolbarPosition:1,settingHighlightColor:1,settingTextColor:1,settingBorderColor:1}).forEach(id=>$(id).addEventListener("input",readSettingsForm));
+function syncSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingBackgroundReading:"keepBackgroundReading",settingToolbarPosition:"toolbarPosition",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);if(el.type==="checkbox")el.checked=!!s[key];else el.value=s[key];});}
+function readSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingBackgroundReading:"keepBackgroundReading",settingToolbarPosition:"toolbarPosition",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);s[key]=el.type==="checkbox"?el.checked:el.type==="range"?Number(el.value):el.value;});applySettings();settings.save();}
+Object.keys({settingTheme:1,settingFont:1,settingSize:1,settingLine:1,settingWidth:1,settingRate:1,settingPitch:1,settingVolume:1,settingHighlight:1,settingWordSync:1,settingSync:1,settingAutoScroll:1,settingBackgroundReading:1,settingToolbarPosition:1,settingHighlightColor:1,settingTextColor:1,settingBorderColor:1}).forEach(id=>$(id).addEventListener("input",readSettingsForm));
 $("openReaderBtn").addEventListener("click",()=>{speech.stop(false);reader.open();applySettings();toolbar.update();});
 updateReaderAvailability();
 $("closeBtn").addEventListener("click",()=>{speech.stop(false);reader.close();});
@@ -367,7 +363,6 @@ $("nextBtn").addEventListener("click",()=>speech.move(1));
 $("testVoiceBtn").addEventListener("click",()=>speech.test());
 $("refreshVoicesBtn").addEventListener("click",()=>voices.load());
 $("settingsBtn").addEventListener("click",()=> $("settingsPanel").classList.toggle("open"));
-$("collapseBtn").addEventListener("click",()=>{settings.value.compact=!settings.value.compact;applySettings();settings.save();});
 $("smallerBtn").addEventListener("click",()=>{settings.value.size=Math.max(14,settings.value.size-1);applySettings();settings.save();});
 $("largerBtn").addEventListener("click",()=>{settings.value.size=Math.min(36,settings.value.size+1);applySettings();settings.save();});
 $("quickFont").addEventListener("change",e=>{settings.value.font=e.target.value;applySettings();settings.save();});
