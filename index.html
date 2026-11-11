@@ -51,8 +51,9 @@ h1{line-height:1.35}
 .setting-group input,.setting-group select{width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:5px}
 .setting-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 .toolbar-collapsed .toolbar-extra,.toolbar-collapsed .voice-panel{display:none}
-.reader.minimized{position:fixed!important;top:auto!important;right:auto!important;bottom:12px!important;left:50%!important;transform:translateX(-50%);width:min(680px,calc(100vw - 24px));height:auto!important;max-height:none!important;overflow:visible!important;background:transparent;border-radius:12px;box-shadow:0 4px 24px #0005;pointer-events:none}
-.reader.minimized .reader-toolbar{position:relative;height:auto;max-height:none;overflow:visible;border-radius:12px;padding:9px 10px;pointer-events:auto}
+.reader.minimized{position:fixed!important;z-index:2147483000!important;top:auto!important;right:auto!important;bottom:12px!important;left:50%!important;transform:translate3d(-50%,0,0);width:min(680px,calc(100vw - 24px));height:auto!important;max-height:none!important;overflow:visible!important;background:transparent;border-radius:12px;box-shadow:0 4px 24px #0005;pointer-events:none}
+.reader.minimized .reader-toolbar{position:relative;z-index:1;height:auto;max-height:none;overflow:visible;border-radius:12px;padding:9px 10px;pointer-events:auto;touch-action:manipulation}
+.reader.minimized #minimizeBtn,.reader.minimized #maximizeBtn{position:relative;z-index:2;pointer-events:auto;touch-action:manipulation}
 .reader.minimized .toolbar-extra{display:none!important}
 .reader.minimized .toolbar-row{gap:6px}
 .reader.minimized .reader-content,.reader.minimized .reader-status,.reader.minimized .settings-panel{display:none}
@@ -227,23 +228,45 @@ class ReaderManager {
   open(){const clone=document.getElementById("article").cloneNode(true);clone.querySelectorAll("script,style,noscript,iframe,nav,footer,form,button,input,select,textarea,aside").forEach(e=>e.remove());this.content.replaceChildren(clone);
     this.blocks=[];clone.querySelectorAll("p,h1,h2,h3,h4,li,blockquote").forEach(el=>{const text=(el.innerText||el.textContent||"").trim();if(!text)return;el.dataset.readerParagraph=String(this.blocks.length);this.blocks.push({element:el,text});});
     this.active=-1;this.root.classList.remove("minimized","maximized");this.root.classList.add("open");this.updateMiniProgress(-1);this.lockPageScroll();this.updateLayoutButton();}
-  minimize(){if(!this.root.classList.contains("open"))return;this.root.classList.remove("maximized");this.root.classList.add("minimized");this.unlockPageScroll();this.updateLayoutButton();}
-  restore(){if(!this.root.classList.contains("open"))return;this.root.classList.remove("minimized");this.lockPageScroll();this.refreshActiveParagraph();this.updateLayoutButton();}
-  maximize(){if(!this.root.classList.contains("open"))return;this.root.classList.remove("minimized");this.root.classList.add("maximized");this.lockPageScroll();this.refreshActiveParagraph();this.updateLayoutButton();}
+  setMode(mode){
+    if(!this.root.classList.contains("open"))return;
+    this.root.classList.remove("minimized","maximized");
+    if(mode==="minimized"){
+      this.root.classList.add("minimized");
+      this.unlockPageScroll();
+    }else{
+      if(mode==="maximized")this.root.classList.add("maximized");
+      this.lockPageScroll();
+      this.refreshActiveParagraph();
+    }
+    this.updateLayoutButton();
+  }
+  minimize(){this.setMode("minimized");}
+  restore(){this.setMode("normal");}
+  maximize(){this.setMode("maximized");}
   toggleMaximize(){
     if(!this.root.classList.contains("open"))return;
-    if(this.root.classList.contains("minimized")){this.maximize();return;}
-    this.root.classList.toggle("maximized");
-    this.lockPageScroll();this.refreshActiveParagraph();this.updateLayoutButton();
+    if(this.root.classList.contains("minimized")||!this.root.classList.contains("maximized")){
+      this.maximize();
+    }else{
+      this.restore();
+    }
   }
   updateLayoutButton(){
     const button=document.getElementById("maximizeBtn");
+    const minimizeButton=document.getElementById("minimizeBtn");
     if(!button)return;
     const minimized=this.root.classList.contains("minimized");
     const maximized=this.root.classList.contains("maximized");
     button.title=minimized?"Mở rộng Reader":maximized?"Thu về kích thước đọc":"Mở rộng Reader";
     button.setAttribute("aria-label",button.title);
+    button.setAttribute("aria-pressed",String(maximized));
     button.textContent=maximized?"▣":"□";
+    if(minimizeButton){
+      minimizeButton.title=minimized?"Khôi phục Reader":"Thu nhỏ Reader";
+      minimizeButton.setAttribute("aria-label",minimizeButton.title);
+      minimizeButton.setAttribute("aria-pressed",String(minimized));
+    }
   }
   updateMiniProgress(index=this.active){
     const indicator=document.getElementById("miniReadingProgress");
@@ -380,8 +403,17 @@ $("testVoiceBtn").addEventListener("click",()=>speech.test());
 $("refreshVoicesBtn").addEventListener("click",()=>voices.load());
 $("settingsBtn").addEventListener("click",()=> $("settingsPanel").classList.toggle("open"));
 $("collapseBtn").addEventListener("click",()=>{settings.value.compact=!settings.value.compact;applySettings();settings.save();});
-$("minimizeBtn").addEventListener("click",()=>{if(reader.root.classList.contains("minimized"))reader.restore();else reader.minimize();});
-$("maximizeBtn").addEventListener("click",()=>reader.toggleMaximize());
+$("minimizeBtn").addEventListener("click",event=>{
+  event.preventDefault();
+  event.stopPropagation();
+  if(reader.root.classList.contains("minimized"))reader.restore();
+  else reader.minimize();
+});
+$("maximizeBtn").addEventListener("click",event=>{
+  event.preventDefault();
+  event.stopPropagation();
+  reader.toggleMaximize();
+});
 $("smallerBtn").addEventListener("click",()=>{settings.value.size=Math.max(14,settings.value.size-1);applySettings();settings.save();});
 $("largerBtn").addEventListener("click",()=>{settings.value.size=Math.min(36,settings.value.size+1);applySettings();settings.save();});
 $("quickFont").addEventListener("change",e=>{settings.value.font=e.target.value;applySettings();settings.save();});
