@@ -189,9 +189,9 @@ class ReaderManager {
   open(){const clone=document.getElementById("article").cloneNode(true);clone.querySelectorAll("script,style,noscript,iframe,nav,footer,form,button,input,select,textarea,aside").forEach(e=>e.remove());this.content.replaceChildren(clone);
     this.blocks=[];clone.querySelectorAll("p,h1,h2,h3,h4,li,blockquote").forEach(el=>{const text=(el.innerText||el.textContent||"").trim();if(!text)return;el.dataset.readerParagraph=String(this.blocks.length);this.blocks.push({element:el,text});});
     this.active=-1;this.root.classList.add("open");document.body.style.overflow="hidden";}
-  close(){this.root.classList.remove("open","minimized","maximized");document.body.style.overflow="";this.clearHighlight();}
+  close(){this.root.classList.remove("open","minimized","maximized");document.body.style.overflow="";this.clearHighlight();this.content.replaceChildren();this.blocks=[];this.active=-1;}
   setActive(index,settings){if(index<0||index>=this.blocks.length)return;this.active=index;this.clearHighlight();const el=this.blocks[index].element;if(settings.value.highlight&&settings.value.sync){el.classList.add("tts-active");if(settings.value.autoScroll)el.scrollIntoView({behavior:"smooth",block:"center"});}}
-  clearHighlight(){this.content.querySelectorAll(".tts-active,.tts-word").forEach(el=>el.classList.remove("tts-active","tts-word"));}
+  clearHighlight(){this.content.querySelectorAll(".tts-active").forEach(el=>el.classList.remove("tts-active"));this.content.querySelectorAll("mark.tts-word").forEach(mark=>{mark.replaceWith(document.createTextNode(mark.textContent||""));});this.content.normalize();}
   getBlocks(){return this.blocks;}
 }
 
