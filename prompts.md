@@ -307,3 +307,12 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 - Mỗi lỗi phát hiện khi đối chiếu phải được chuyển thành acceptance test cụ thể trong prompt.
 - Không ghi một tiêu chí là hoàn thành chỉ vì mã có đoạn xử lý tương ứng; phải kiểm tra cả luồng thành công, luồng lỗi, trạng thái biên và tương tác giữa các tính năng.
 - Không tuyên bố đã kiểm thử tương tác nếu chỉ mới kiểm tra cú pháp JavaScript hoặc đọc mã tĩnh.
+
+
+## 10. Tài liệu hướng dẫn sử dụng (README)
+
+- Repository phải có `README.md` bằng tiếng Việt, mô tả cách khởi chạy và sử dụng các tính năng thực sự có trong `index.html`.
+- README cần có mục lục, yêu cầu môi trường, cách mở Reader, các nút điều khiển, Settings, chọn/thử giọng, đọc từ vị trí chuột phải, lưu cấu hình, đọc nền, giới hạn Web Speech API và hướng xử lý sự cố.
+- Không mô tả tính năng chưa được triển khai như thể đã hoạt động. Phải nêu rõ giới hạn của trình duyệt/hệ điều hành và những phần chỉ hoạt động best-effort.
+- Khi thay đổi hành vi hoặc giao diện người dùng, phải rà soát và cập nhật README trong cùng đợt nếu hướng dẫn hiện tại không còn chính xác.
+- Việc người dùng yêu cầu tạo/cập nhật README là ngoại lệ được cho phép đối với nguyên tắc chỉ duy trì một file mã nguồn `index.html`; không được vì vậy tự ý tách HTML/CSS/JavaScript thành nhiều file.
