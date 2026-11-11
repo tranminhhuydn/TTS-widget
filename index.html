@@ -164,6 +164,7 @@ class SettingsManager {
       const saved=JSON.parse(localStorage.getItem(this.key)||"{}");
       if(!saved||typeof saved!=="object"||Array.isArray(saved))return {...this.defaults};
       const value={...this.defaults,...saved};
+      delete value.compact; // Ignore the legacy toolbar-collapse setting.
       const number=(key,min,max)=>{const n=Number(value[key]);value[key]=Number.isFinite(n)?Math.min(max,Math.max(min,n)):this.defaults[key];};
       number("size",14,36);number("line",1.2,2.4);number("width",520,1200);
       number("rate",0.6,1.8);number("pitch",0.5,2);number("volume",0,1);
