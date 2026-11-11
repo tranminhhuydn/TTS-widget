@@ -51,11 +51,13 @@ h1{line-height:1.35}
 .setting-group input,.setting-group select{width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:5px}
 .setting-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 .toolbar-collapsed .toolbar-extra,.toolbar-collapsed .voice-panel{display:none}
-.reader.minimized{inset:auto 16px 16px auto;width:min(420px,calc(100vw - 32px));height:58px;overflow:hidden;border-radius:10px;box-shadow:0 4px 24px #0005}
-.reader.minimized .reader-toolbar{height:58px;overflow:hidden}
+.reader.minimized{inset:auto auto 12px 50%;transform:translateX(-50%);width:min(680px,calc(100vw - 24px));height:auto;max-height:none;overflow:visible;background:transparent;border-radius:12px;box-shadow:0 4px 24px #0005}
+.reader.minimized .reader-toolbar{position:relative;height:auto;max-height:none;overflow:visible;border-radius:12px;padding:9px 10px}
+.reader.minimized .toolbar-extra{display:none!important}
+.reader.minimized .toolbar-row{gap:6px}
 .reader.minimized .reader-content,.reader.minimized .reader-status,.reader.minimized .settings-panel{display:none}
 .reader.maximized .reader-content{max-width:1100px}
-@media(max-width:700px){.layout{grid-template-columns:1fr}aside{display:none}.reader-content{margin-top:22px}.reader-toolbar select{max-width:100%}.voice-row label{min-width:78px}.reader.minimized{inset:auto 8px 8px;width:calc(100vw - 16px)}}
+@media(max-width:700px){.layout{grid-template-columns:1fr}aside{display:none}.reader-content{margin-top:22px}.reader-toolbar select{max-width:100%}.voice-row label{min-width:78px}.reader.minimized{inset:auto auto 8px 50%;width:calc(100vw - 16px)}}
 </style>
 </head>
 <body>
@@ -189,7 +191,9 @@ class ReaderManager {
   constructor(){this.root=document.getElementById("reader");this.content=document.getElementById("readerContent");this.blocks=[];this.active=-1;}
   open(){const clone=document.getElementById("article").cloneNode(true);clone.querySelectorAll("script,style,noscript,iframe,nav,footer,form,button,input,select,textarea,aside").forEach(e=>e.remove());this.content.replaceChildren(clone);
     this.blocks=[];clone.querySelectorAll("p,h1,h2,h3,h4,li,blockquote").forEach(el=>{const text=(el.innerText||el.textContent||"").trim();if(!text)return;el.dataset.readerParagraph=String(this.blocks.length);this.blocks.push({element:el,text});});
-    this.active=-1;this.root.classList.add("open");document.body.style.overflow="hidden";}
+    this.active=-1;this.root.classList.remove("minimized");this.root.classList.add("open");document.body.style.overflow="hidden";}
+  minimize(){if(!this.root.classList.contains("open"))return;this.root.classList.add("minimized");document.body.style.overflow="";}
+  restore(){if(!this.root.classList.contains("open"))return;this.root.classList.remove("minimized");document.body.style.overflow="hidden";}
   close(){this.root.classList.remove("open","minimized","maximized");document.body.style.overflow="";this.clearHighlight();this.content.replaceChildren();this.blocks=[];this.active=-1;}
   setActive(index,settings){if(index<0||index>=this.blocks.length)return;this.active=index;this.clearHighlight();const el=this.blocks[index].element;if(settings.value.highlight&&settings.value.sync){el.classList.add("tts-active");if(settings.value.autoScroll)el.scrollIntoView({behavior:"smooth",block:"center"});}}
   clearHighlight(){this.content.querySelectorAll(".tts-active").forEach(el=>el.classList.remove("tts-active"));this.content.querySelectorAll("mark.tts-word").forEach(mark=>{mark.replaceWith(document.createTextNode(mark.textContent||""));});this.content.normalize();}
@@ -286,8 +290,8 @@ $("testVoiceBtn").addEventListener("click",()=>speech.test());
 $("refreshVoicesBtn").addEventListener("click",()=>voices.load());
 $("settingsBtn").addEventListener("click",()=> $("settingsPanel").classList.toggle("open"));
 $("collapseBtn").addEventListener("click",()=>{settings.value.compact=!settings.value.compact;applySettings();settings.save();});
-$("minimizeBtn").addEventListener("click",()=>reader.root.classList.toggle("minimized"));
-$("maximizeBtn").addEventListener("click",()=>reader.root.classList.toggle("maximized"));
+$("minimizeBtn").addEventListener("click",()=>{if(reader.root.classList.contains("minimized"))reader.restore();else reader.minimize();});
+$("maximizeBtn").addEventListener("click",()=>{if(reader.root.classList.contains("minimized"))reader.restore();else reader.root.classList.toggle("maximized");});
 $("smallerBtn").addEventListener("click",()=>{settings.value.size=Math.max(14,settings.value.size-1);applySettings();settings.save();});
 $("largerBtn").addEventListener("click",()=>{settings.value.size=Math.min(36,settings.value.size+1);applySettings();settings.save();});
 $("quickFont").addEventListener("change",e=>{settings.value.font=e.target.value;applySettings();settings.save();});
