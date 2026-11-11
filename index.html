@@ -85,7 +85,7 @@ h1{line-height:1.35}
 </article>
 <aside><h3>Nội dung bên lề</h3><p>Đây là khu vực quảng cáo minh họa.</p><hr><p>Menu điều hướng</p><p>Bài viết liên quan</p><p>Thông tin tác giả</p></aside>
 </div>
-<div class="open-button"><button id="openReaderBtn" aria-label="Mở chế độ đọc"><span aria-hidden="true">📖</span> <span>Mở chế độ đọc</span></button></div>
+<div class="open-button"><button id="openReaderBtn" aria-label="Mở chế độ đọc"><span aria-hidden="true">📖</span> <span id="openReaderLabel">Mở chế độ đọc</span></button></div>
 </main>
 
 <div class="reader paper" id="reader" aria-label="Cửa sổ đọc">
@@ -258,7 +258,7 @@ class SpeechManager {
   constructor(reader,voices,settings,highlight){this.reader=reader;this.voices=voices;this.settings=settings;this.highlight=highlight;this.synth=window.speechSynthesis;this.queue=[];this.position=0;this.state="idle";this.session=0;this.current=null;this.currentStarted=false;this.backgroundInterrupted=false;this.onState=()=>{};}
   emit(message){document.getElementById("status").textContent=message;this.onState();}
   makeQueue(){this.queue=[];this.reader.blocks.forEach((b,paragraph)=>{const sentences=b.text.match(/[^.!?。！？]+[.!?。！？]?/g)||[b.text];let part="";sentences.forEach(sentence=>{if(part.length+sentence.length>220&&part){this.queue.push({text:part.trim(),paragraph});part="";}part+=sentence;if(part.length>=220){this.queue.push({text:part.trim(),paragraph});part="";}});if(part.trim())this.queue.push({text:part.trim(),paragraph});});}
-  start(paragraph=0){if(!("speechSynthesis" in window)){this.emit("Trình duyệt không hỗ trợ đọc thành tiếng.");return;}if(!this.reader.blocks.length){this.emit("Không có nội dung để đọc.");return;}this.stop(false);this.makeQueue();this.position=this.queue.findIndex(x=>x.paragraph>=paragraph);if(this.position<0)this.position=0;this.state="reading";const id=this.session;this.emit("Đang chuẩn bị đọc...");this.next(id);}
+  start(paragraph=0){if(!isSpeechSynthesisSupported()){this.emit("Trình duyệt không hỗ trợ Web Speech API (SpeechSynthesis).");return;}if(!this.reader.blocks.length){this.emit("Không có nội dung để đọc.");return;}this.stop(false);this.makeQueue();this.position=this.queue.findIndex(x=>x.paragraph>=paragraph);if(this.position<0)this.position=0;this.state="reading";const id=this.session;this.emit("Đang chuẩn bị đọc...");this.next(id);}
   next(id){if(id!==this.session||this.state!=="reading")return;if(this.position>=this.queue.length){this.state="ended";this.current=null;this.currentStarted=false;this.reader.clearHighlight();this.emit("Đã đọc xong.");return;}this.speakCurrent(id);}
   speakCurrent(id){
     if(id!==this.session||this.state!=="reading")return;
@@ -317,6 +317,19 @@ const voices=new VoiceManager();
 const highlight=new HighlightManager(reader,settings);
 const speech=new SpeechManager(reader,voices,settings,highlight);
 const $=id=>document.getElementById(id);
+function isSpeechSynthesisSupported(){
+  const synth=window.speechSynthesis;
+  return typeof synth!=="undefined" && typeof window.SpeechSynthesisUtterance==="function" && typeof synth.speak==="function" && typeof synth.getVoices==="function";
+}
+function updateReaderAvailability(){
+  const supported=isSpeechSynthesisSupported();
+  const button=$("openReaderBtn");
+  const label=$("openReaderLabel");
+  label.textContent=supported?"Mở chế độ đọc":"Mở chế độ đọc [ không hỗ trợ ]";
+  button.setAttribute("aria-label",label.textContent);
+  button.dataset.speechApiSupported=String(supported);
+  button.title=supported?"Mở chế độ đọc":"Trình duyệt này không hỗ trợ Web Speech API (SpeechSynthesis). Bạn vẫn có thể mở Reader để đọc bằng mắt.";
+}
 function applyToolbarPosition(){
   const toolbarElement=$("readerToolbar");
   const isFooter=settings.value.toolbarPosition==="footer";
@@ -343,6 +356,7 @@ function syncSettingsForm(){const s=settings.value;const map={settingTheme:"them
 function readSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFont:"font",settingSize:"size",settingLine:"line",settingWidth:"width",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingAutoScroll:"autoScroll",settingBackgroundReading:"keepBackgroundReading",settingCompact:"compact",settingToolbarPosition:"toolbarPosition",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);s[key]=el.type==="checkbox"?el.checked:el.type==="range"?Number(el.value):el.value;});applySettings();settings.save();}
 Object.keys({settingTheme:1,settingFont:1,settingSize:1,settingLine:1,settingWidth:1,settingRate:1,settingPitch:1,settingVolume:1,settingHighlight:1,settingWordSync:1,settingSync:1,settingAutoScroll:1,settingBackgroundReading:1,settingCompact:1,settingToolbarPosition:1,settingHighlightColor:1,settingTextColor:1,settingBorderColor:1}).forEach(id=>$(id).addEventListener("input",readSettingsForm));
 $("openReaderBtn").addEventListener("click",()=>{speech.stop(false);reader.open();applySettings();toolbar.update();});
+updateReaderAvailability();
 $("closeBtn").addEventListener("click",()=>{speech.stop(false);reader.close();});
 $("playBtn").addEventListener("click",()=>speech.start(0));
 $("pauseBtn").addEventListener("click",()=>speech.pause());
