@@ -209,21 +209,39 @@ class HighlightManager {
 
 /* SPEECH MANAGER */
 class SpeechManager {
-  constructor(reader,voices,settings,highlight){this.reader=reader;this.voices=voices;this.settings=settings;this.highlight=highlight;this.synth=window.speechSynthesis;this.queue=[];this.position=0;this.state="idle";this.session=0;this.current=null;this.onState=()=>{};}
+  constructor(reader,voices,settings,highlight){this.reader=reader;this.voices=voices;this.settings=settings;this.highlight=highlight;this.synth=window.speechSynthesis;this.queue=[];this.position=0;this.state="idle";this.session=0;this.current=null;this.currentStarted=false;this.backgroundInterrupted=false;this.onState=()=>{};}
   emit(message){document.getElementById("status").textContent=message;this.onState();}
   makeQueue(){this.queue=[];this.reader.blocks.forEach((b,paragraph)=>{const sentences=b.text.match(/[^.!?。！？]+[.!?。！？]?/g)||[b.text];let part="";sentences.forEach(sentence=>{if(part.length+sentence.length>220&&part){this.queue.push({text:part.trim(),paragraph});part="";}part+=sentence;if(part.length>=220){this.queue.push({text:part.trim(),paragraph});part="";}});if(part.trim())this.queue.push({text:part.trim(),paragraph});});}
   start(paragraph=0){if(!("speechSynthesis" in window)){this.emit("Trình duyệt không hỗ trợ đọc thành tiếng.");return;}if(!this.reader.blocks.length){this.emit("Không có nội dung để đọc.");return;}this.stop(false);this.makeQueue();this.position=this.queue.findIndex(x=>x.paragraph>=paragraph);if(this.position<0)this.position=0;this.state="reading";const id=this.session;this.emit("Đang chuẩn bị đọc...");this.next(id);}
-  next(id){if(id!==this.session||this.state!=="reading")return;if(this.position>=this.queue.length){this.state="ended";this.reader.clearHighlight();this.emit("Đã đọc xong.");return;}
-    const item=this.queue[this.position];const utterance=new SpeechSynthesisUtterance(item.text);const s=this.settings.value;utterance.lang=this.voices.selected?.lang||"vi-VN";if(this.voices.selected)utterance.voice=this.voices.selected;utterance.rate=Number(s.rate);utterance.pitch=Number(s.pitch);utterance.volume=Number(s.volume);this.current=utterance;
-    utterance.onstart=()=>{if(id!==this.session)return;this.highlight.paragraph(item.paragraph);this.emit("Đang đọc đoạn "+(item.paragraph+1)+"/"+this.reader.blocks.length);};
+  next(id){if(id!==this.session||this.state!=="reading")return;if(this.position>=this.queue.length){this.state="ended";this.current=null;this.currentStarted=false;this.reader.clearHighlight();this.emit("Đã đọc xong.");return;}this.speakCurrent(id);}
+  speakCurrent(id){
+    if(id!==this.session||this.state!=="reading")return;
+    const item=this.queue[this.position];if(!item)return;
+    const utterance=new SpeechSynthesisUtterance(item.text);const s=this.settings.value;
+    utterance.lang=this.voices.selected?.lang||"vi-VN";if(this.voices.selected)utterance.voice=this.voices.selected;
+    utterance.rate=Number(s.rate);utterance.pitch=Number(s.pitch);utterance.volume=Number(s.volume);
+    this.current=utterance;this.currentStarted=false;this.backgroundInterrupted=false;
+    utterance.onstart=()=>{if(id!==this.session)return;this.currentStarted=true;this.highlight.paragraph(item.paragraph);this.emit("Đang đọc đoạn "+(item.paragraph+1)+"/"+this.reader.blocks.length);};
     utterance.onboundary=e=>{if(id!==this.session||e.name!=="word")return;this.highlight.boundarySupported=true;this.highlight.word(item.paragraph,e.charIndex,Math.max(1,(e.charLength||1)));};
-    utterance.onend=()=>{if(id!==this.session||this.state!=="reading")return;this.position++;this.next(id);};
-    utterance.onerror=e=>{if(id!==this.session||e.error==="canceled"||e.error==="interrupted")return;this.state="error";this.emit("Lỗi đọc: "+e.error);};
+    utterance.onend=()=>{if(id!==this.session||this.state!=="reading")return;this.current=null;this.currentStarted=false;this.position++;this.next(id);};
+    utterance.onerror=e=>{
+      if(id!==this.session)return;
+      if(e.error==="canceled"||e.error==="interrupted"){if(this.state==="reading")this.backgroundInterrupted=true;return;}
+      this.state="error";this.current=null;this.currentStarted=false;this.emit("Lỗi đọc: "+e.error);
+    };
     this.synth.speak(utterance);
+  }
+  recoverBackground(){
+    if(this.state!=="reading"||!this.current)return;
+    if(this.synth?.paused){try{this.synth.resume();return;}catch(_){}}
+    if(this.backgroundInterrupted||(this.currentStarted&&!this.synth?.speaking&&!this.synth?.pending)){
+      this.speakCurrent(this.session);
+      this.emit("Đã khôi phục phiên đọc sau khi chuyển cửa sổ.");
+    }
   }
   pause(){if(this.state!=="reading")return;this.synth.pause();this.state="paused";this.emit("Đã tạm dừng.");}
   resume(){if(this.state!=="paused")return;this.synth.resume();this.state="reading";this.emit("Đang tiếp tục đọc.");}
-  stop(show=true){this.session++;if("speechSynthesis"in window)this.synth.cancel();this.state="idle";this.current=null;this.queue=[];this.position=0;this.reader.clearHighlight();if(show)this.emit("Đã dừng đọc.");}
+  stop(show=true){this.session++;if("speechSynthesis"in window)this.synth.cancel();this.state="idle";this.current=null;this.currentStarted=false;this.backgroundInterrupted=false;this.queue=[];this.position=0;this.reader.clearHighlight();if(show)this.emit("Đã dừng đọc.");}
   move(delta){if(!this.reader.blocks.length)return;const current=this.queue[this.position]?.paragraph??this.reader.active;let target=Math.max(0,Math.min(this.reader.blocks.length-1,(current<0?0:current)+delta));this.start(target);}
   test(){if(!this.voices.selected){this.emit("Vui lòng chọn giọng đọc.");return;}this.stop(false);const id=this.session;const u=new SpeechSynthesisUtterance("Xin chào. Đây là phần thử nghiệm giọng đọc.");const s=this.settings.value;u.voice=this.voices.selected;u.lang=u.voice.lang;u.rate=Number(s.rate);u.pitch=Number(s.pitch);u.volume=Number(s.volume);u.onstart=()=>{if(id===this.session)this.emit("Đang thử giọng: "+u.voice.name);};u.onend=()=>{if(id===this.session)this.emit("Đã thử giọng xong.");};u.onerror=e=>{if(id===this.session)this.emit("Lỗi thử giọng: "+e.error);};this.synth.speak(u);this.state="testing";}
 }
@@ -283,13 +301,13 @@ speech.onState=()=>toolbar.update();
 // Losing focus must never cancel or explicitly pause the current utterance.
 function handleReaderFocusChange(){
   if(!settings.value.keepBackgroundReading||!reader.root.classList.contains("open"))return;
-  if(speech.state==="reading"&&document.visibilityState==="visible"&&speech.synth?.paused){
-    try{speech.synth.resume();}catch(_){}
+  if(document.visibilityState==="hidden"||!document.hasFocus()){
+    if(speech.state==="reading")$("status").textContent="Đang chạy nền. Nếu Chrome ngắt utterance, widget sẽ thử khôi phục khi bạn quay lại.";
+    return;
   }
-  if(speech.state==="reading"&&document.visibilityState==="hidden"){
-    $("status").textContent="Đang tiếp tục đọc trong nền. Bạn có thể chuyển sang tab hoặc cửa sổ khác.";
-  }else if(speech.state==="reading"&&document.visibilityState==="visible"){
-    $("status").textContent="Đang đọc. Tiến trình được giữ khi chuyển tab hoặc cửa sổ.";
+  if(speech.state==="reading"){
+    speech.recoverBackground();
+    if(speech.state==="reading")$("status").textContent="Đang đọc. Đã kiểm tra và khôi phục phiên đọc nếu cần.";
   }
 }
 document.addEventListener("visibilitychange",handleReaderFocusChange);
