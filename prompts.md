@@ -79,6 +79,24 @@ Phân biệt rõ:
 
 Không giả định `onboundary` hoạt động đồng nhất trên mọi giọng đọc.
 
+### 2.6. Đọc nền khi cửa sổ mất tiêu điểm (Background Reading)
+
+Khi người dùng chuyển sang tab khác, chuyển sang ứng dụng/cửa sổ khác hoặc cửa sổ trình duyệt mất focus, tiến trình đọc phải tiếp tục nếu trình duyệt và hệ điều hành còn cho phép.
+
+Yêu cầu:
+- Không gọi `speechSynthesis.cancel()` hoặc `speechSynthesis.pause()` chỉ vì sự kiện `window.blur` hoặc `document.visibilitychange`.
+- Không tự thay đổi trạng thái từ `reading` sang `paused` khi tab/cửa sổ mất tiêu điểm.
+- Duy trì hàng đợi utterance, vị trí đọc, giọng đọc và cấu hình hiện tại khi chuyển tab/cửa sổ.
+- Theo dõi `visibilitychange`, `window.blur` và `window.focus` để cập nhật trạng thái giao diện mà không làm gián đoạn phiên đọc.
+- Nếu người dùng bật chế độ đọc nền và trình duyệt đưa SpeechSynthesis vào trạng thái paused ngoài ý muốn, có thể gọi `speechSynthesis.resume()` khi trang hiển thị trở lại, nhưng chỉ khi trạng thái ứng dụng vẫn là `reading`. Tuyệt đối không resume khi người dùng đã chủ động Pause hoặc Stop.
+- Có tùy chọn bật/tắt chế độ đọc nền trong Settings và lưu tùy chọn này vào localStorage.
+- Khi quay lại tab, giao diện phải phản ánh đúng trạng thái đọc hiện tại.
+
+Giới hạn nền tảng:
+- Web Speech API không cung cấp bảo đảm tuyệt đối rằng âm thanh sẽ tiếp tục trong mọi trường hợp mất focus, tab bị trình duyệt loại bỏ (discard), trang bị đóng/đóng băng, thiết bị ngủ hoặc hệ điều hành chặn âm thanh nền.
+- Không tuyên bố có thể vượt qua chính sách tiết kiệm pin, quyền riêng tư hoặc giới hạn nền của trình duyệt/hệ điều hành.
+- Phải thông báo rõ đây là cơ chế best-effort; không được giả lập khả năng phát âm thanh nền nếu API không hỗ trợ.
+
 ### 2.5. Hiệu ứng đánh dấu dòng (Reading Highlight)
 
 Thiết kế hiệu ứng trực quan độc lập với nhóm giọng nói.
@@ -183,6 +201,9 @@ Kiểm tra các tình huống:
 10. Tắt và bật hiệu ứng đánh dấu.
 11. Tải lại trang và khôi phục cài đặt.
 12. Đóng Reader khi đang phát âm thanh.
+13. Chuyển sang tab khác khi đang đọc: âm thanh và hàng đợi đọc vẫn tiếp tục nếu nền tảng cho phép.
+14. Chuyển sang cửa sổ/ứng dụng khác khi đang đọc: không tự pause hoặc stop.
+15. Quay lại tab sau khi SpeechSynthesis bị pause ngoài ý muốn: chỉ resume nếu trạng thái ứng dụng vẫn là reading; không resume nếu người dùng đã Pause/Stop.
 
 Không tuyên bố đã kiểm thử thành công nếu chưa thực sự chạy thử.
 
