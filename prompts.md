@@ -337,3 +337,25 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
   5. Tải lại trang: vị trí đã chọn được khôi phục.
   6. Chuyển Header/Footer liên tục không tạo toolbar hoặc listener trùng lặp; toàn bộ điều khiển vẫn hoạt động.
   7. Mở Settings, thu gọn toolbar và dùng “Đọc từ đây” ở cả hai vị trí.
+
+## 12. Kiểm tra hỗ trợ Web Speech API trên trình duyệt
+
+- Khi khởi tạo trang, phải kiểm tra khả năng hỗ trợ Web Speech API trước khi cập nhật nhãn nút mở Reader.
+- Feature detection phải kiểm tra tối thiểu:
+  - `window.speechSynthesis` tồn tại.
+  - `window.SpeechSynthesisUtterance` là constructor/function.
+  - `speechSynthesis.speak` là function.
+  - `speechSynthesis.getVoices` là function.
+- Nếu API được hỗ trợ, giữ nguyên giao diện nút: icon quyển sách và nhãn **Mở chế độ đọc**.
+- Nếu API không được hỗ trợ, vẫn giữ icon quyển sách và đổi nhãn thành chính xác **Mở chế độ đọc [ không hỗ trợ ]**; cập nhật accessible name (`aria-label`) và tooltip để nêu rõ trình duyệt không hỗ trợ Web Speech API.
+- Không xóa hoặc ẩn icon trong trường hợp không hỗ trợ.
+- Reader vẫn được phép mở để người dùng đọc nội dung bằng mắt; không vô hiệu hóa nút mở Reader chỉ vì thiếu API đọc thành tiếng.
+- Khi người dùng thử bắt đầu đọc mà API không khả dụng, phải hiển thị thông báo rõ ràng thay vì phát sinh exception.
+- Không dựa vào kiểm tra tên trình duyệt hoặc user-agent; phải dùng feature detection.
+- Acceptance test:
+  1. Trình duyệt có đủ `speechSynthesis`, `SpeechSynthesisUtterance`, `speak()` và `getVoices()`: icon và nhãn nút vẫn là **📖 Mở chế độ đọc**.
+  2. Thiếu một trong các thành phần API: icon vẫn hiển thị, nhãn đổi thành **📖 Mở chế độ đọc [ không hỗ trợ ]**.
+  3. `aria-label` và tooltip phản ánh đúng trạng thái hỗ trợ.
+  4. Ở trình duyệt không hỗ trợ, vẫn mở được Reader và nội dung vẫn đọc bằng mắt bình thường.
+  5. Nhấn nút Đọc trong Reader khi API không hỗ trợ phải hiển thị thông báo dễ hiểu, không có lỗi JavaScript.
+  6. Không dùng user-agent sniffing để kết luận khả năng hỗ trợ.
