@@ -127,13 +127,13 @@ Nếu Chrome không cung cấp vị trí từ hoặc câu chính xác, phải c�
 
 ### 3.1. Menu ngữ cảnh đọc tại vị trí con trỏ (Context Menu)
 
-- Khi người dùng nhấn chuột phải trên đoạn văn, tiêu đề, mục danh sách hoặc blockquote thuộc bài viết nguồn hay Reader, hiển thị menu ngữ cảnh tùy chỉnh ngay cạnh vị trí con trỏ chuột.
+- Chỉ khi Reader đang mở (chế độ đọc đã được bật), mới tạo/nhúng menu ngữ cảnh vào DOM và kích hoạt chức năng chuột phải. Khi Reader đóng, menu phải được gỡ khỏi DOM hoàn toàn; không được chặn hoặc thay thế menu chuột phải mặc định của trang nguồn.
 - Menu có lệnh **“Đọc từ đây”**.
-- Khi chọn lệnh, mở Reader nếu chưa mở và bắt đầu đọc từ đúng khối văn bản được nhấn; không đọc lại các khối đứng trước.
+- Chỉ cho phép lệnh “Đọc từ đây” khi Reader vẫn đang mở; chọn lệnh bắt đầu đọc từ đúng khối trong Reader, không tự mở Reader từ trang nguồn.
 - Trong Reader, xác định điểm bắt đầu bằng chỉ số data-reader-paragraph.
-- Trên bài viết nguồn, xác định chỉ số theo đúng thứ tự khối mà Reader trích xuất (p, h1–h4, li, blockquote), để khớp với nội dung sau khi clone.
+- Chỉ xử lý chuột phải bên trong nội dung Reader; không gắn handler để hiển thị menu trên bài viết nguồn.
 - Menu phải nằm trong viewport, không bị cắt ở cạnh màn hình; đóng khi chọn lệnh, nhấn Escape, nhấn ra ngoài, cuộn hoặc resize.
-- Không chặn menu chuột phải mặc định ở vùng không hỗ trợ đọc và không làm gián đoạn phiên đọc chỉ vì mở/đóng menu.
+- Khi Reader đóng, chuột phải ở mọi vùng trang nguồn phải giữ nguyên menu mặc định của trình duyệt. Khi Reader mở, chỉ chặn menu mặc định trên các khối nội dung Reader được hỗ trợ.
 - Menu có role/nhãn truy cập phù hợp.
 ## 3. Thiết kế thanh công cụ
 
@@ -227,9 +227,9 @@ Kiểm tra các tình huống:
 18. Mở Settings, tìm/lọc và chọn giọng đọc; thử giọng và xác nhận lựa chọn được giữ khi đóng/mở Settings.
 19. Tải lại trang: khôi phục giọng đã chọn nếu giọng đó vẫn được `speechSynthesis.getVoices()` cung cấp; nếu không còn, chọn giọng tiếng Việt phù hợp hoặc giọng mặc định.
 20. Xác nhận Reader chỉ có một trạng thái bình thường; không còn nút thu nhỏ, nút mở rộng, thanh điều khiển nổi hoặc logic chuyển trạng thái.
-21. Chuột phải trên đoạn văn/tiêu đề trong bài viết nguồn: menu xuất hiện tại vị trí con trỏ; chọn “Đọc từ đây” mở Reader và bắt đầu đúng khối.
-22. Chuột phải trên đoạn bất kỳ trong Reader: menu xuất hiện cạnh con trỏ và bắt đầu đúng đoạn đó.
-23. Menu không tràn viewport, đóng khi Escape/nhấn ngoài/cuộn/resize; chuột phải ở vùng không hỗ trợ vẫn dùng menu mặc định.
+21. Khi Reader đóng: menu ngữ cảnh không tồn tại trong DOM; chuột phải trên trang nguồn hiển thị menu mặc định của trình duyệt.
+22. Khi Reader mở: menu được nhúng vào DOM; chuột phải trên đoạn văn/tiêu đề trong Reader hiển thị menu cạnh con trỏ và “Đọc từ đây” bắt đầu đúng đoạn.
+23. Khi đóng Reader: menu bị gỡ khỏi DOM và handler không còn chặn chuột phải trang nguồn. Menu không tràn viewport và đóng khi Escape/nhấn ngoài/cuộn/resize.
 
 Không tuyên bố đã kiểm thử thành công nếu chưa thực sự chạy thử.
 
