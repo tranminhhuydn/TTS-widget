@@ -23,6 +23,7 @@ Thiết kế hệ thống thành 5 nhóm cài đặt độc lập.
 Cho phép cấu hình:
 - Vị trí và cách hiển thị TTS-widget.
 - Kích thước cửa sổ đọc.
+- Reader chỉ có hai trạng thái: bình thường và thu nhỏ/khôi phục; không có chế độ mở rộng Reader.
 - Giao diện sáng, tối, màu giấy.
 - Thanh công cụ thu gọn hoặc mở rộng.
 - Hiển thị hoặc ẩn các thành phần điều khiển.
@@ -56,6 +57,8 @@ Cho phép:
 - Điều chỉnh `pitch`.
 - Điều chỉnh `volume`.
 - Thử giọng trước khi áp dụng.
+- Bộ chọn giọng, ô tìm kiếm/lọc, nút làm mới và nút thử giọng phải nằm bên trong nhóm Voice của bảng Settings, không nằm ngoài bảng Settings.
+- Lưu định danh giọng đã chọn (`voiceURI`, tên, ngôn ngữ); khi tải lại trang, đối chiếu với danh sách giọng thực tế và khôi phục nếu còn tồn tại.
 
 Không tự tạo danh sách giọng đọc. Phải lấy dữ liệu thực tế từ `speechSynthesis.getVoices()`.
 
@@ -139,13 +142,13 @@ Sử dụng icon có tooltip.
 | Đoạn trước | skip-back |
 | Đoạn tiếp | skip-forward |
 | Thu nhỏ | minimize |
-| Mở rộng | maximize |
 
 Yêu cầu:
 - Icon phải dễ nhận biết.
 - Có tooltip giải thích.
 - Có trạng thái disabled khi không thể thực hiện lệnh.
 - Không hiển thị đồng thời những nút có chức năng trùng lặp.
+- Không có nút mở rộng Reader; chỉ có nút thu nhỏ/khôi phục.
 - Phân biệt rõ Pause và Stop.
 
 ## 4. Hệ thống cài đặt
@@ -166,6 +169,8 @@ Cài đặt phải có khả năng:
 - Khôi phục cấu hình khi tải lại trang.
 
 Không lưu đối tượng Voice trực tiếp vào localStorage. Chỉ lưu thông tin định danh phù hợp như `voiceURI`, tên và ngôn ngữ, sau đó đối chiếu với danh sách giọng thực tế khi khởi tạo.
+
+Nhóm Voice phải cung cấp ô tìm kiếm/lọc, nút làm mới danh sách và nút thử giọng; toàn bộ điều khiển chọn giọng phải nằm trong bảng Settings.
 
 ## 5. Yêu cầu kiến trúc JavaScript
 
@@ -209,6 +214,9 @@ Kiểm tra các tình huống:
 15. Quay lại tab sau khi SpeechSynthesis bị pause ngoài ý muốn: chỉ resume nếu trạng thái ứng dụng vẫn là reading; không resume nếu người dùng đã Pause/Stop.
 16. Quay lại tab sau khi utterance bị `canceled`/`interrupted`: khôi phục đúng utterance hiện tại, không bỏ qua đoạn và không đọc chồng.
 17. Chrome ngừng utterance mà không phát `onend`: khi focus trở lại, phát lại queue item hiện tại nếu state vẫn là reading.
+18. Mở Settings, tìm/lọc và chọn giọng đọc; thử giọng và xác nhận lựa chọn được giữ khi đóng/mở Settings.
+19. Tải lại trang: khôi phục giọng đã chọn nếu giọng đó vẫn được `speechSynthesis.getVoices()` cung cấp; nếu không còn, chọn giọng tiếng Việt phù hợp hoặc giọng mặc định.
+20. Xác nhận Reader chỉ có trạng thái bình thường và thu nhỏ/khôi phục, không còn nút hoặc chế độ mở rộng.
 
 Không tuyên bố đã kiểm thử thành công nếu chưa thực sự chạy thử.
 
