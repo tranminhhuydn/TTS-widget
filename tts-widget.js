@@ -40,25 +40,71 @@ class SettingsManager {
 
 /* VOICE MANAGER */
 class VoiceManager {
-  constructor(){this.voices=[];this.selected=null;this.select=widgetRoot.querySelector("#voiceSelect");this.search=widgetRoot.querySelector("#voiceSearch");this.info=widgetRoot.querySelector("#voiceInfo");this.storageKey="tts-widget-voice-v1";this.onChange=()=>{};this.search.addEventListener("input",()=>this.render());this.select.addEventListener("change",()=>this.choose(this.select.value));}
+  constructor(){
+    this.voices=[];this.selected=null;this.select=widgetRoot.querySelector("#voiceSelect");this.search=widgetRoot.querySelector("#voiceSearch");this.info=widgetRoot.querySelector("#voiceInfo");this.storageKey="tts-widget-voice-v1";this.onChange=()=>{};
+    this.storedIdentity="";this.userSelected=false;this.hasInitialSelection=false;this.retryAttempt=0;this.retryTimer=null;this.retryDelays=[150,300,600,1000,1500];
+    try{this.storedIdentity=localStorage.getItem(this.storageKey)||"";}catch(_){}
+    this.search.addEventListener("input",()=>this.render());this.select.addEventListener("change",()=>this.choose(this.select.value));
+  }
   identity(v){return v?v.voiceURI+"|"+v.name+"|"+v.lang:"";}
-  load(){if(!("speechSynthesis" in window)){this.info.textContent="Trình duyệt không hỗ trợ SpeechSynthesis.";return;}
-    const previous=this.identity(this.selected)||localStorage.getItem(this.storageKey)||"";
-    this.voices=window.speechSynthesis.getVoices()||[];
-    if(!this.voices.length){this.select.innerHTML='<option value="">Chưa tìm thấy giọng đọc</option>';this.info.textContent="Danh sách giọng chưa sẵn sàng. Hãy thử làm mới.";return;}
+  clearRetry(){if(this.retryTimer!==null){clearTimeout(this.retryTimer);this.retryTimer=null;}}
+  scheduleRetry(){
+    if(this.retryTimer!==null||this.retryAttempt>=this.retryDelays.length)return;
+    const delay=this.retryDelays[this.retryAttempt++];
+    this.retryTimer=setTimeout(()=>{this.retryTimer=null;this.load();},delay);
+  }
+  refresh(){this.clearRetry();this.retryAttempt=0;this.load();}
+  handleVoicesChanged(){this.clearRetry();this.retryAttempt=0;this.load();}
+  load(){
+    if(!("speechSynthesis" in window)){this.info.textContent="Trình duyệt không hỗ trợ SpeechSynthesis.";return;}
+    let available=[];
+    try{available=window.speechSynthesis.getVoices()||[];}catch(_){}
+    if(!available.length){
+      if(!this.voices.length){
+        this.select.replaceChildren();const option=document.createElement("option");option.value="";option.textContent=this.retryAttempt>=this.retryDelays.length?"Chưa tìm thấy giọng đọc":"Đang tải danh sách giọng đọc...";this.select.append(option);
+        this.info.textContent=this.retryAttempt>=this.retryDelays.length?"Chưa tải được danh sách giọng đọc. Hãy nhấn Làm mới.":"Đang chờ trình duyệt cung cấp danh sách giọng đọc...";
+      }
+      this.scheduleRetry();return;
+    }
+    this.clearRetry();this.retryAttempt=0;
+    const unique=new Map();available.forEach(voice=>{const key=this.identity(voice);if(key&&!unique.has(key))unique.set(key,voice);});
+    this.voices=Array.from(unique.values());
     this.render();
-    let index=this.voices.findIndex(v=>this.identity(v)===previous);
-    if(index<0)index=this.voices.findIndex(v=>/^vi(-|_)/i.test(v.lang));
-    if(index<0)index=this.voices.findIndex(v=>v.default);
-    if(index<0)index=0;
-    this.choose(String(index),false);
+    const currentIdentity=this.identity(this.selected);
+    let chosen=null;
+    if(!this.userSelected&&this.storedIdentity)chosen=this.voices.find(v=>this.identity(v)===this.storedIdentity)||null;
+    if(!chosen&&currentIdentity)chosen=this.voices.find(v=>this.identity(v)===currentIdentity)||null;
+    if(!chosen&&!this.hasInitialSelection){
+      chosen=this.voices.find(v=>/^vi(?:-|$)/i.test(v.lang))||this.voices.find(v=>v.default)||this.voices[0]||null;
+    }
+    if(!chosen)chosen=this.voices.find(v=>v.default)||this.voices[0]||null;
+    this.selected=chosen;
+    this.hasInitialSelection=!!chosen||this.hasInitialSelection;
+    this.syncSelection();
+    if(chosen)this.updateInfo(chosen);
+    else this.info.textContent="Đã tải "+this.voices.length+" giọng đọc. Hãy chọn giọng muốn dùng.";
   }
-  render(){const q=this.search.value.trim().toLocaleLowerCase();const old=this.select.value;this.select.replaceChildren();
-    this.voices.forEach((v,i)=>{if(q&&!((v.name+" "+v.lang).toLocaleLowerCase().includes(q)))return;const o=document.createElement("option");o.value=String(i);o.textContent=v.name+" ("+v.lang+")"+(v.default?" - Mặc định":"");this.select.append(o);});
-    if(old&&this.select.querySelector('option[value="'+old+'"]'))this.select.value=old;
-    if(!this.select.options.length){const o=document.createElement("option");o.value="";o.textContent="Không có kết quả";this.select.append(o);}
+  render(){
+    const query=this.search.value.trim().toLocaleLowerCase(),selectedIdentity=this.identity(this.selected);
+    this.select.replaceChildren();
+    this.voices.forEach(voice=>{
+      if(query&&!((voice.name+" "+voice.lang).toLocaleLowerCase().includes(query)))return;
+      const option=document.createElement("option");option.value=this.identity(voice);option.textContent=voice.name+" ("+voice.lang+")"+(voice.default?" - Mặc định":"");this.select.append(option);
+    });
+    if(!this.select.options.length){const option=document.createElement("option");option.value="";option.textContent="Không có kết quả";this.select.append(option);}
+    this.select.value=selectedIdentity&&Array.from(this.select.options).some(option=>option.value===selectedIdentity)?selectedIdentity:"";
   }
-  choose(index,persist=true){const v=this.voices[Number(index)];if(!v)return;this.selected=v;this.select.value=String(this.voices.indexOf(v));this.info.textContent="Đã chọn: "+v.name+" | "+v.lang+(v.localService?" | Trên thiết bị":" | Dịch vụ");if(persist){try{localStorage.setItem(this.storageKey,this.identity(v));}catch(_){}}this.onChange(v);}
+  syncSelection(){
+    const selectedIdentity=this.identity(this.selected);
+    this.select.value=selectedIdentity&&Array.from(this.select.options).some(option=>option.value===selectedIdentity)?selectedIdentity:"";
+  }
+  updateInfo(voice){this.info.textContent="Đã chọn: "+voice.name+" | "+voice.lang+(voice.localService?" | Trên thiết bị":" | Dịch vụ");}
+  choose(identity,persist=true){
+    const voice=this.voices.find(item=>this.identity(item)===identity);if(!voice)return;
+    this.selected=voice;this.hasInitialSelection=true;this.userSelected=true;this.syncSelection();this.updateInfo(voice);
+    if(persist){this.storedIdentity=this.identity(voice);try{localStorage.setItem(this.storageKey,this.storedIdentity);}catch(_){}}
+    this.onChange(voice);
+  }
 }
 
 /* READER MANAGER */
@@ -190,8 +236,8 @@ $("stopBtn").addEventListener("click",()=>speech.stop());
 $("prevBtn").addEventListener("click",()=>speech.move(-1));
 $("nextBtn").addEventListener("click",()=>speech.move(1));
 $("testVoiceBtn").addEventListener("click",()=>speech.test());
-$("refreshVoicesBtn").addEventListener("click",()=>voices.load());
-$("settingsBtn").addEventListener("click",()=> $("settingsPanel").classList.toggle("open"));
+$("refreshVoicesBtn").addEventListener("click",()=>voices.refresh());
+$("settingsBtn").addEventListener("click",()=>{const panel=$("settingsPanel");panel.classList.toggle("open");if(panel.classList.contains("open"))voices.refresh();});
 $("saveSettingsBtn").addEventListener("click",()=>{readSettingsForm();settings.save();$("status").textContent="Đã lưu cài đặt.";});
 $("resetSettingsBtn").addEventListener("click",()=>{settings.reset();applySettings();$("status").textContent="Đã khôi phục cài đặt mặc định.";});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&reader.root.classList.contains("open")){speech.stop(false);reader.close();}});
@@ -264,7 +310,15 @@ window.addEventListener("scroll",hideReaderContextMenu,true);
 voices.onChange=()=>{};
 applySettings();
 toolbar.update();
-if("speechSynthesis"in window){window.speechSynthesis.addEventListener?.("voiceschanged",()=>voices.load());voices.load();setTimeout(()=>voices.load(),500);}
+if("speechSynthesis"in window){
+  const synth=window.speechSynthesis;
+  if(typeof synth.addEventListener==="function")synth.addEventListener("voiceschanged",()=>voices.handleVoicesChanged());
+  else{
+    const previousHandler=synth.onvoiceschanged;
+    synth.onvoiceschanged=function(event){if(typeof previousHandler==="function")previousHandler.call(this,event);voices.handleVoicesChanged();};
+  }
+  voices.refresh();
+}
   initialized=true;
   return window.TTSWidget;
 }
