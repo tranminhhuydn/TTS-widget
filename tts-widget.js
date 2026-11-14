@@ -66,7 +66,9 @@ class VoiceManager {
       }
       this.scheduleRetry();return;
     }
-    this.clearRetry();this.retryAttempt=0;
+    // A non-empty list may still be incomplete: some browsers expose voices in stages.
+    // Keep the bounded retry sequence alive so late-arriving voices can be discovered
+    // even if the browser does not emit another voiceschanged event.
     const unique=new Map();available.forEach(voice=>{const key=this.identity(voice);if(key&&!unique.has(key))unique.set(key,voice);});
     this.voices=Array.from(unique.values());
     this.render();
@@ -83,6 +85,7 @@ class VoiceManager {
     this.syncSelection();
     if(chosen)this.updateInfo(chosen);
     else this.info.textContent="Đã tải "+this.voices.length+" giọng đọc. Hãy chọn giọng muốn dùng.";
+    this.scheduleRetry();
   }
   render(){
     const query=this.search.value.trim().toLocaleLowerCase(),selectedIdentity=this.identity(this.selected);
