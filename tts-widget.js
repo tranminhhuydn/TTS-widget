@@ -79,12 +79,12 @@ class HighlightManager {
   paragraph(index){this.reader.setActive(index,this.settings);}
   word(index,charIndex,charLength,utteranceText){const s=this.settings.value,block=this.reader.blocks[index];if(!s.wordSync||!s.highlight||!block||!window.CSS||!CSS.highlights||typeof Highlight!=="function")return;
     CSS.highlights.delete("tts-widget-word");
-    const spoken=(utteranceText||"").replace(/\\s+/g," ").trim();if(!spoken)return;
+    const spoken=(utteranceText||"").replace(/\s+/g," ").trim();if(!spoken)return;
     const chars=[],positions=[],walker=document.createTreeWalker(block.element,NodeFilter.SHOW_TEXT);let node;
-    while((node=walker.nextNode())){const value=node.textContent||"";for(let i=0;i<value.length;i++){const ch=value[i];if(/\\s/.test(ch)){if(chars.length&&chars[chars.length-1]!==" "){chars.push(" ");positions.push({node,offset:i});}}else{chars.push(ch);positions.push({node,offset:i});}}}
+    while((node=walker.nextNode())){const value=node.textContent||"";for(let i=0;i<value.length;i++){const ch=value[i];if(/\s/.test(ch)){if(chars.length&&chars[chars.length-1]!==" "){chars.push(" ");positions.push({node,offset:i});}}else{chars.push(ch);positions.push({node,offset:i});}}}
     const source=chars.join(""),base=source.indexOf(spoken);if(base<0)return;
     const start=base+Math.max(0,Number(charIndex)||0);if(start>=positions.length)return;
-    let length=Number(charLength)||0;if(length<=0){length=1;while(start+length<positions.length&&positions[start+length]!==" ")length++;}
+    let length=Number(charLength)||0;if(length<=0){length=1;while(start+length<positions.length&&chars[start+length]!==" ")length++;}
     const end=Math.min(positions.length,start+Math.max(1,length));const first=positions[start],last=positions[end-1];if(!first||!last)return;
     const range=document.createRange();range.setStart(first.node,first.offset);range.setEnd(last.node,last.offset+1);CSS.highlights.set("tts-widget-word",new Highlight(range));}
   applyColors(){const s=this.settings.value,style=widgetRoot.querySelector("#tts-widget-highlight-colors");if(style)style.textContent="html body .tts-widget-reading-active,html body [data-tts-widget-active=\"true\"]{background-color:"+s.highlightColor+" !important;background-image:linear-gradient("+s.highlightColor+","+s.highlightColor+") !important;color:"+s.textColor+" !important;outline:2px solid "+s.borderColor+" !important;outline-offset:3px;box-shadow:inset 0 0 0 1px "+s.borderColor+" !important;border-radius:5px}::highlight(tts-widget-word){background-color:#ffbd59 !important;color:#241500 !important;text-decoration:underline;text-decoration-color:#e0a800}";}
