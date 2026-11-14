@@ -82,7 +82,7 @@ class HighlightManager {
     const spoken=(utteranceText||"").replace(/\\s+/g," ").trim();if(!spoken)return;
     const chars=[],positions=[],walker=document.createTreeWalker(block.element,NodeFilter.SHOW_TEXT);let node;
     while((node=walker.nextNode())){const value=node.textContent||"";for(let i=0;i<value.length;i++){const ch=value[i];if(/\\s/.test(ch)){if(chars.length&&chars[chars.length-1]!==" "){chars.push(" ");positions.push({node,offset:i});}}else{chars.push(ch);positions.push({node,offset:i});}}}
-    const source=chars.join(" "),base=source.indexOf(spoken);if(base<0)return;
+    const source=chars.join(""),base=source.indexOf(spoken);if(base<0)return;
     const start=base+Math.max(0,Number(charIndex)||0);if(start>=positions.length)return;
     let length=Number(charLength)||0;if(length<=0){length=1;while(start+length<positions.length&&positions[start+length]!==" ")length++;}
     const end=Math.min(positions.length,start+Math.max(1,length));const first=positions[start],last=positions[end-1];if(!first||!last)return;
