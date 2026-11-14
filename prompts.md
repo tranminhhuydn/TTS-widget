@@ -480,3 +480,21 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
   3. Khi chuyển đoạn, highlight chuyển sang phần tử tương ứng; khi dừng/đóng, class và data attribute của widget được gỡ.
   4. Nếu onboundary và CSS Custom Highlight API được hỗ trợ, từ đang đọc được highlight; nếu không, highlight đoạn vẫn hoạt động.
   5. Kiểm tra với CSS host có selector toàn cục và `!important`; highlight vẫn phải nhìn thấy.
+
+
+## 19. Đồng bộ chính xác highlight đoạn và từng từ
+
+- Khi bắt đầu một utterance, phải highlight đoạn source tương ứng trên DOM gốc nếu cả tùy chọn highlight và theo dõi đoạn được bật.
+- Khi nhận sự kiện `onboundary` có `name === "word"`, phải highlight đúng từ đang được phát âm trên text node gốc.
+- `SpeechSynthesisEvent.charIndex` được tính tương đối từ đầu utterance hiện tại, không phải từ đầu đoạn văn. Không được dùng trực tiếp chỉ số này để đi bộ text node từ đầu đoạn.
+- Hàm highlight từ phải nhận nội dung utterance hiện tại, tìm đúng vị trí utterance trong văn bản DOM của đoạn, rồi ánh xạ vị trí ký tự về Range trên text node gốc. Cần xử lý khoảng trắng giữa các text node và inline element.
+- Mỗi sự kiện boundary phải thay thế highlight từ trước đó; không để từ cũ tiếp tục được đánh dấu.
+- Nếu trình duyệt/giọng đọc không phát `onboundary` hoặc không hỗ trợ CSS Custom Highlight API, highlight đoạn vẫn phải hoạt động độc lập.
+- Khi chuyển đoạn, dừng, đóng Reader hoặc kết thúc đọc, phải xóa highlight từ và gỡ highlight đoạn do widget tạo.
+- Acceptance test:
+  1. Bật cả “Theo dõi đoạn đang đọc”, “Highlight từ nếu API hỗ trợ” và “Bật highlight đoạn”.
+  2. Khi phát âm một utterance, đoạn chứa utterance có nền/viền highlight.
+  3. Khi phát âm, highlight từng từ lần lượt và đúng vị trí, kể cả khi một đoạn được chia thành nhiều utterance.
+  4. Kiểm tra đoạn có inline element như `strong`, `em`, `a`; Range vẫn trỏ đúng text node gốc.
+  5. Không tạo span/mark, không clone hoặc sửa nội dung DOM.
+  6. Nếu không có sự kiện boundary, highlight đoạn vẫn hoạt động và không báo lỗi.
