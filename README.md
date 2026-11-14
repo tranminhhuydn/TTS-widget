@@ -78,14 +78,15 @@ Khởi tạo lặp lại không tạo thêm bản sao widget.
 
 ## Các tính năng
 
-- Mở Reader riêng, giữ nội dung bài viết và cấu trúc tiêu đề/đoạn/danh sách.
+- Mở Reader riêng dạng lớp phủ cố định, giữ nội dung bài viết và cấu trúc tiêu đề/đoạn/danh sách.
+- Không sửa CSS, bố cục, style hoặc thuộc tính cuộn của website chủ; Reader có vùng cuộn riêng và không khóa cuộn `html`/`body`.
 - Đọc, tạm dừng, tiếp tục, dừng và chuyển đoạn.
 - Chọn, tìm kiếm, làm mới và thử giọng đọc.
 - Điều chỉnh tốc độ, cao độ và âm lượng.
 - Chủ đề giấy, sáng, tối; thay đổi phông, cỡ chữ, chiều cao dòng và chiều rộng.
 - Thanh công cụ ở Header hoặc Footer.
 - Theo dõi đoạn và từ khi trình duyệt/giọng đọc hỗ trợ sự kiện boundary.
-- Tự cuộn theo đoạn đang đọc.
+- Tự cuộn theo đoạn đang đọc trong vùng nội dung Reader, không cuộn trang chủ.
 - Menu chuột phải “Đọc từ đây” trong Reader.
 - Lưu cài đặt trong localStorage.
 - Nhận diện Web Speech API; nếu không hỗ trợ, Reader vẫn mở để đọc bằng mắt.
