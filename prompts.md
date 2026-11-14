@@ -498,3 +498,16 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
   4. Kiểm tra đoạn có inline element như `strong`, `em`, `a`; Range vẫn trỏ đúng text node gốc.
   5. Không tạo span/mark, không clone hoặc sửa nội dung DOM.
   6. Nếu không có sự kiện boundary, highlight đoạn vẫn hoạt động và không báo lỗi.
+
+
+## 20. Sửa stylesheet highlight và đồng bộ trạng thái launcher
+
+- Stylesheet `#tts-widget-highlight-colors` được tạo và gắn vào `document.head`; mọi lần cập nhật màu highlight phải tham chiếu đúng stylesheet này, không tìm bên trong `.tts-widget-root`.
+- Không được âm thầm bỏ qua cập nhật màu khi stylesheet không nằm trong widget root. Kiểm tra cả CSS highlight đoạn và `::highlight(tts-widget-word)` được ghi vào cùng stylesheet toàn cục của widget.
+- Acceptance test: khi bắt đầu đọc, stylesheet thực sự chứa rule cho `.tts-widget-reading-active`, data attribute tương ứng và `::highlight(tts-widget-word)`; class đoạn xuất hiện trên source element; Custom Highlight được đặt khi có boundary event.
+- Launcher và Reader có trạng thái loại trừ nhau:
+  - Khi Reader/toolbar mở thành công, thêm trạng thái mở vào widget root và ẩn launcher bằng CSS namespace.
+  - Khi Reader đóng, gỡ trạng thái mở và hiện launcher lại.
+  - Nếu không tìm thấy source hoặc Reader không mở được, launcher phải tiếp tục hiển thị.
+  - Không ẩn launcher chỉ vì trạng thái đọc là paused/ended; chỉ phụ thuộc trạng thái Reader đang mở hay đóng.
+- Acceptance test: tải trang thấy launcher; nhấn launcher thấy toolbar và launcher biến mất; nhấn nút đóng hoặc Escape thì toolbar biến mất và launcher xuất hiện lại.
