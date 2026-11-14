@@ -106,7 +106,7 @@ Giọng đọc được cung cấp bởi trình duyệt và hệ điều hành; 
 
 - **Không thấy nút mở Reader**: kiểm tra `data-content-selector` có trỏ đúng phần tử nội dung; kiểm tra Console có lỗi JavaScript; thử tải lại trang sau khi xác nhận script `tts-widget.js` đã tải thành công. Launcher được cố định ở góc dưới bên phải và có CSS ưu tiên để tránh bị CSS website chủ che hoặc ẩn.
 - **Không có âm thanh**: kiểm tra Web Speech API, âm lượng hệ thống và giọng đã chọn.
-- **Không có giọng tiếng Việt hoặc giọng mới chưa xuất hiện**: danh sách được đồng bộ khi mở Cài đặt, khi trình duyệt phát `voiceschanged` và khi nhấn Làm mới; nếu danh sách chưa sẵn sàng, widget tự thử tải lại với số lần giới hạn. Nếu vẫn thiếu, nhấn Làm mới hoặc kiểm tra giọng đã được cài/được Chrome cung cấp.
+- **Không có giọng tiếng Việt hoặc giọng mới chưa xuất hiện**: danh sách được đồng bộ khi mở Cài đặt, khi trình duyệt phát `voiceschanged` và khi nhấn Làm mới. Widget thử tải lại theo số lần giới hạn ngay cả khi trình duyệt đã trả về một phần danh sách, nhằm phát hiện giọng xuất hiện muộn. Nếu vẫn thiếu, cần xác minh Chrome có thực sự cung cấp giọng đó qua `speechSynthesis.getVoices()`.
 - **Không highlight từng từ**: giọng đọc hoặc trình duyệt có thể không phát `onboundary` hoặc không hỗ trợ CSS Custom Highlight API; khi đó highlight đoạn vẫn hoạt động. Vị trí từng từ được tính riêng trong từng utterance để tránh lệch khi một đoạn được chia thành nhiều lượt đọc. Nếu cả highlight đoạn cũng không hiển thị, hãy cập nhật phiên bản mới nhất vì stylesheet highlight phải được tham chiếu từ `document.head`.
 - **Đọc nền bị ngắt**: đây là giới hạn của trình duyệt/hệ điều hành; quay lại tab để widget thử khôi phục phiên nếu có thể.
 
