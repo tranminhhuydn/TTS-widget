@@ -70,37 +70,28 @@ class VoiceManager {
 
 /* READER MANAGER */
 class ReaderManager {
-  constructor(){this.root=widgetRoot.querySelector("#reader");this.content=widgetRoot.querySelector("#readerContent");this.blocks=[];this.active=-1;this.savedScrollStyles=null;}
-  lockPageScroll(){
-    if(!this.savedScrollStyles){
-      const html=document.documentElement,body=document.body;
-      this.savedScrollStyles={htmlOverflow:html.style.overflow,htmlOverflowY:html.style.overflowY,bodyOverflow:body.style.overflow,bodyOverflowY:body.style.overflowY};
-    }
-    document.documentElement.style.overflow="hidden";
-    document.body.style.overflow="hidden";
-  }
-  unlockPageScroll(){
-    if(!this.savedScrollStyles)return;
-    const s=this.savedScrollStyles,html=document.documentElement,body=document.body;
-    html.style.overflow=s.htmlOverflow;html.style.overflowY=s.htmlOverflowY;
-    body.style.overflow=s.bodyOverflow;body.style.overflowY=s.bodyOverflowY;
-    this.savedScrollStyles=null;
+  constructor(){this.root=widgetRoot.querySelector("#reader");this.content=widgetRoot.querySelector("#readerContent");this.blocks=[];this.active=-1;}
+  scrollToBlock(element){
+    if(!element)return;
+    const elementRect=element.getBoundingClientRect();
+    const readerRect=this.root.getBoundingClientRect();
+    const targetTop=this.root.scrollTop+elementRect.top-readerRect.top-(readerRect.height-elementRect.height)/2;
+    this.root.scrollTo({top:targetTop,behavior:"smooth"});
   }
   open(){const sourceContent=document.querySelector(config.contentSelector);if(!sourceContent){console.error("[TTSWidget] Không tìm thấy vùng nội dung:",config.contentSelector);return;}const clone=sourceContent.cloneNode(true);clone.querySelectorAll("script,style,noscript,iframe,nav,footer,form,button,input,select,textarea,aside").forEach(e=>e.remove());this.content.replaceChildren(clone);
     this.blocks=[];clone.querySelectorAll("p,h1,h2,h3,h4,li,blockquote").forEach(el=>{const text=(el.innerText||el.textContent||"").trim();if(!text)return;el.dataset.readerParagraph=String(this.blocks.length);this.blocks.push({element:el,text});});
-    this.active=-1;this.root.classList.add("open");this.lockPageScroll();mountReaderContextMenu();}
+    this.active=-1;this.root.classList.add("open");mountReaderContextMenu();}
   refreshActiveParagraph(){
     if(this.active<0||!this.blocks[this.active])return;
     const el=this.blocks[this.active].element;
     this.content.querySelectorAll(".tts-active").forEach(node=>node.classList.remove("tts-active"));
     if(settings.value.highlight&&settings.value.sync){
       el.classList.add("tts-active");
-      if(settings.value.autoScroll)el.scrollIntoView({behavior:"smooth",block:"center"});
+      if(settings.value.autoScroll)this.scrollToBlock(el);
     }
-    
   }
-  close(){unmountReaderContextMenu();this.root.classList.remove("open");this.unlockPageScroll();this.clearHighlight();this.content.replaceChildren();this.blocks=[];this.active=-1;}
-  setActive(index,settings){if(index<0||index>=this.blocks.length)return;this.active=index;this.clearHighlight();const el=this.blocks[index].element;if(settings.value.highlight&&settings.value.sync){el.classList.add("tts-active");if(settings.value.autoScroll)el.scrollIntoView({behavior:"smooth",block:"center"});}}
+  close(){unmountReaderContextMenu();this.root.classList.remove("open");this.clearHighlight();this.content.replaceChildren();this.blocks=[];this.active=-1;}
+  setActive(index,settings){if(index<0||index>=this.blocks.length)return;this.active=index;this.clearHighlight();const el=this.blocks[index].element;if(settings.value.highlight&&settings.value.sync){el.classList.add("tts-active");if(settings.value.autoScroll)this.scrollToBlock(el);}}
   clearHighlight(){this.content.querySelectorAll(".tts-active").forEach(el=>el.classList.remove("tts-active"));this.content.querySelectorAll("mark.tts-word").forEach(mark=>{mark.replaceWith(document.createTextNode(mark.textContent||""));});this.content.normalize();}
   getBlocks(){return this.blocks;}
 }
