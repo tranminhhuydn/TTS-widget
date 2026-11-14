@@ -384,7 +384,8 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 
 - `tts-widget.js`: mã JavaScript độc lập, chứa toàn bộ logic Reader, Speech, Voice, Highlight, Settings, Toolbar, Context Menu; tự tạo markup giao diện và inject CSS cần thiết.
 - `demo.html`: website minh họa có nội dung bài viết dài, nhúng `tts-widget.js` bằng thẻ `script`; nội dung phải đủ dài và chia thành nhiều tiêu đề/đoạn để kiểm tra chia utterance, chuyển đoạn và cuộn.
-- `index.html`: giữ làm điểm vào tương thích, chuyển hướng hoặc dẫn người dùng đến `demo.html`; không duy trì một bản sao mã nguồn widget.
+- `index.html`: giữ nguyên trang Web Reader độc lập theo phiên bản trước khi tách widget; đây là trang ứng dụng/điểm vào chính, không chuyển hướng sang `demo.html`.
+- `demo.html`: trang demo riêng để kiểm tra bản `tts-widget.js` có thể nhúng; không thay thế nội dung hoặc chức năng của `index.html`.
 - `prompts.md` và `README.md`: cập nhật cùng đợt khi có thay đổi kiến trúc/tích hợp.
 
 ### 14.2. Hợp đồng tích hợp
