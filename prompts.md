@@ -516,12 +516,12 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 
 - Đăng ký `voiceschanged` trước lần gọi `getVoices()` đầu tiên; dùng `addEventListener` khi có, nếu không thì nối handler cũ của `onvoiceschanged` mà không ghi đè hành vi trước đó.
 - Khi khởi tạo, khi mở Cài đặt, khi nhấn Làm mới và khi nhận `voiceschanged`, đồng bộ lại danh sách giọng từ Web Speech API.
-- Nếu danh sách ban đầu rỗng, retry theo lịch có giới hạn; không polling vô hạn. Khi có danh sách, hủy retry còn chờ.
+- Nếu danh sách ban đầu rỗng hoặc mới chỉ có một phần giọng, tiếp tục retry theo lịch có giới hạn để phát hiện giọng tải muộn; không polling vô hạn. Sự kiện `voiceschanged` đặt lại chu kỳ retry. Retry dừng sau số lần giới hạn hoặc khi chu kỳ được thay thế bởi sự kiện mới.
 - Loại bỏ giọng trùng theo định danh `voiceURI + name + lang`; dùng định danh ổn định làm value của option, không dùng chỉ số mảng có thể thay đổi giữa các lần tải.
 - Giữ lựa chọn của người dùng nếu giọng đó vẫn còn; khôi phục giọng đã lưu khi nó xuất hiện; nếu chưa có lựa chọn thì ưu tiên giọng tiếng Việt, sau đó giọng mặc định rồi giọng đầu tiên.
 - Giữ nguyên từ khóa tìm kiếm khi danh sách cập nhật; không tự đổi giọng người dùng đã chọn.
 - Không hard-code tên Google Tiếng Việt 4 (Natural); mọi giọng do trình duyệt cung cấp đều được xử lý theo cùng một cơ chế.
-- Acceptance test: giả lập `getVoices()` ban đầu rỗng rồi có dữ liệu; phát `voiceschanged`; xác nhận option xuất hiện, không trùng, search và lựa chọn được giữ; xác nhận retry dừng sau số lần giới hạn; kiểm tra mở Settings và nút Làm mới.
+- Acceptance test: giả lập `getVoices()` ban đầu rỗng rồi có dữ liệu; giả lập danh sách ban đầu có giọng nhưng Google voice xuất hiện muộn mà không có `voiceschanged`; phát `voiceschanged`; xác nhận option xuất hiện, không trùng, search và lựa chọn được giữ; xác nhận retry dừng sau số lần giới hạn; kiểm tra mở Settings và nút Làm mới.
 - Kiểm thử thực tế sau khi restart Chrome vẫn cần xác nhận trên thiết bị người dùng; không tuyên bố đã browser-test nếu chưa thực hiện.
 
 
