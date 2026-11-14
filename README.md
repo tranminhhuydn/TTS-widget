@@ -84,7 +84,7 @@ Khởi tạo lặp lại không tạo thêm bản sao widget.
 - Thanh điều khiển nổi độc lập, đặt ở Header hoặc Footer; nút mở Reader cố định ở góc màn hình, không chiếm chỗ trong luồng nội dung.
 - Đọc, tạm dừng, tiếp tục, dừng, chuyển đoạn và đọc từ đây.
 - Chọn/tìm/làm mới/thử giọng; điều chỉnh tốc độ, cao độ và âm lượng.
-- Reading Highlight cho đoạn; highlight từ dùng CSS Custom Highlight API nếu trình duyệt hỗ trợ.
+- Reading Highlight đồng thời cho đoạn và từng từ: đoạn được tô nền khi đọc, từng từ được đánh dấu theo sự kiện `onboundary` nếu giọng đọc/trình duyệt hỗ trợ; cả hai đều tác động trực tiếp lên DOM gốc.
 - Tùy chỉnh màu highlight, bật/tắt đồng bộ và lưu cài đặt.
 - Đọc nền best-effort; nhận diện Web Speech API.
 
@@ -107,7 +107,7 @@ Giọng đọc được cung cấp bởi trình duyệt và hệ điều hành; 
 - **Không thấy nút mở Reader**: kiểm tra `data-content-selector` có trỏ đúng phần tử nội dung; kiểm tra Console có lỗi JavaScript; thử tải lại trang sau khi xác nhận script `tts-widget.js` đã tải thành công. Launcher được cố định ở góc dưới bên phải và có CSS ưu tiên để tránh bị CSS website chủ che hoặc ẩn.
 - **Không có âm thanh**: kiểm tra Web Speech API, âm lượng hệ thống và giọng đã chọn.
 - **Không có giọng tiếng Việt**: cài giọng tiếng Việt ở hệ điều hành nếu có, sau đó nhấn Làm mới trong Settings.
-- **Không highlight từng từ**: giọng đọc hoặc trình duyệt có thể không phát `onboundary`; khi đó widget chỉ có thể theo dõi đoạn.
+- **Không highlight từng từ**: giọng đọc hoặc trình duyệt có thể không phát `onboundary` hoặc không hỗ trợ CSS Custom Highlight API; khi đó highlight đoạn vẫn hoạt động. Vị trí từng từ được tính riêng trong từng utterance để tránh lệch khi một đoạn được chia thành nhiều lượt đọc.
 - **Đọc nền bị ngắt**: đây là giới hạn của trình duyệt/hệ điều hành; quay lại tab để widget thử khôi phục phiên nếu có thể.
 
 
