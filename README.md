@@ -51,7 +51,7 @@ Ví dụ website có vùng nội dung:
 <script src="/assets/tts-widget.js" defer data-content-selector="#article"></script>
 ```
 
-Widget sẽ tự tìm phần tử theo selector, tạo nút mở Reader ngay sau nội dung và tự dựng giao diện đọc. Mặc định selector là `article` nếu không truyền `data-content-selector`.
+Widget sẽ tự tìm phần tử theo selector, tạo nút mở Reader cố định ở góc dưới bên phải viewport và tự dựng giao diện điều khiển. Khi mở, nội dung website gốc vẫn hiển thị và tương tác bình thường. Mặc định selector là `article` nếu không truyền `data-content-selector`.
 
 Không cần sao chép markup Reader, CSS hoặc JavaScript nội bộ vào website chủ.
 
