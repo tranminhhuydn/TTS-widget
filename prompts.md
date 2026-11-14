@@ -433,3 +433,13 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 - Gỡ highlight đoạn/từ khi dừng, đóng Reader, kết thúc đọc hoặc chuyển phiên đọc.
 - Loại bỏ các điều khiển font/cỡ chữ/line-height/chiều rộng/theme/tự cuộn; giữ giọng đọc, tốc độ/cao độ/âm lượng, Header/Footer và cài đặt highlight.
 - Kiểm thử chấp nhận: không tạo/xóa/thay thế node; không thay đổi style/typography/layout; class gốc còn nguyên sau khi gỡ highlight; highlight từ không sửa DOM; scroll position không đổi. Không tuyên bố browser test nếu chưa chạy thực tế.
+
+
+## 16. Đảm bảo launcher luôn hiển thị trên website nhúng
+
+- Launcher **📖 Mở chế độ đọc** phải luôn được hiển thị cố định ở góc dưới bên phải viewport, không phụ thuộc vị trí hoặc cấu trúc layout của website chủ.
+- CSS launcher phải có selector đủ đặc hiệu và reset các thuộc tính giao diện thiết yếu để tránh bị CSS toàn cục của website chủ (ví dụ quy tắc button, visibility, opacity, position hoặc z-index) làm ẩn hoặc đẩy khỏi màn hình.
+- Không dùng selector ID toàn cục để tìm nút; mọi truy vấn vẫn phải giới hạn trong `.tts-widget-root`.
+- Khi `document.currentScript` không khả dụng, bootstrap được phép tìm thẻ script có `data-content-selector` làm phương án dự phòng; vẫn chỉ khởi tạo một lần.
+- Không thay đổi CSS/layout của website chủ ngoài phần tử giao diện riêng của widget.
+- Acceptance test: nhúng widget vào trang có CSS toàn cục cho `button`, `#openReaderBtn` và layout grid/flex; xác nhận launcher vẫn hiện, nằm trong viewport, bấm được và mở Reader. Kiểm tra cả script `defer` và trường hợp fallback currentScript.
