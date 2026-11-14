@@ -290,10 +290,10 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 
 - Khi đóng Reader, phải dừng SpeechSynthesis trước khi xóa nội dung; không để utterance tiếp tục đọc nội dung đã bị gỡ khỏi DOM.
 - Phải xóa highlight, menu ngữ cảnh, mục tiêu đọc từ menu, nội dung clone và các trạng thái phiên đọc liên quan.
-- Phải khôi phục chính xác thuộc tính cuộn ban đầu của trang nguồn; không ghi đè các giá trị overflow đã tồn tại trước khi mở Reader.
-- Việc mở Reader nhiều lần liên tiếp không được nhân đôi event listener, menu, nội dung clone hoặc trạng thái khóa cuộn.
+- Không được ghi hoặc sửa bất kỳ thuộc tính cuộn nào trên `html`/`body`; đóng Reader không cần khôi phục style trang chủ vì widget không được phép thay đổi chúng.
+- Việc mở Reader nhiều lần liên tiếp không được nhân đôi event listener, menu hoặc nội dung clone; không có trạng thái khóa cuộn trang chủ.
 - Escape và nút Đóng phải có hành vi tương đương.
-- Acceptance test: đóng Reader trong lúc reading, paused và testing; mở/đóng liên tục nhiều lần; xác nhận trang nguồn cuộn bình thường, không còn menu trong DOM và không còn âm thanh.
+- Acceptance test: đóng Reader trong lúc reading, paused và testing; mở/đóng liên tục nhiều lần; xác nhận CSS và style inline của `html`/`body` không đổi, trang chủ vẫn cuộn độc lập, không còn menu trong DOM và không còn âm thanh.
 
 ### 9.5. Tính nhất quán của Settings và giao diện
 
@@ -397,7 +397,8 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 - Khởi tạo phải idempotent: gọi nhiều lần không tạo nhiều giao diện, launcher hoặc listener.
 - Nếu selector không hợp lệ hoặc không tìm thấy nội dung, ghi lỗi rõ ràng vào console và không tạo giao diện dang dở.
 - Tạo nút mở Reader tự động cạnh vùng nội dung; không yêu cầu website chủ phải dựng markup Reader, Settings hoặc Toolbar.
-- CSS của widget phải được inject từ `tts-widget.js`, hạn chế ảnh hưởng đến CSS của website chủ; không thay đổi style toàn cục của body, header, main, article hoặc button.
+- CSS của widget phải được inject từ `tts-widget.js` và toàn bộ selector phải nằm dưới `.tts-widget-root`; tuyệt đối không thay đổi CSS, class, thuộc tính style hoặc bố cục của website chủ, bao gồm `html`, `body`, `header`, `main`, `article` và các nút của website.
+- Không khóa cuộn trang chủ, không ghi/khôi phục `overflow` trên `html` hoặc `body`. Reader là lớp phủ cố định có vùng cuộn riêng; thao tác tự cuộn/highlight chỉ được cuộn bên trong Reader.
 - Chỉ clone nội dung được chọn; không sửa trực tiếp bài viết gốc.
 - Reader, context menu và các điều khiển phải được tạo trong một root riêng của widget.
 - Không tự tải thư viện hoặc tài nguyên bên ngoài.
@@ -405,7 +406,8 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 ### 14.3. Bảo toàn chức năng
 
 - Giữ các chức năng đã có: nhận diện Web Speech API, chọn/thử giọng, tốc độ/cao độ/âm lượng, pause/resume/stop, điều hướng đoạn, đồng bộ highlight, đọc nền best-effort, Settings, Header/Footer và context menu “Đọc từ đây”.
-- Không làm thay đổi nội dung hoặc hành vi cuộn của website chủ ngoài việc thêm launcher; khi mở Reader phải khóa cuộn và khi đóng phải khôi phục chính xác style cuộn ban đầu.
+- Không làm thay đổi nội dung, CSS, bố cục, thuộc tính style hoặc hành vi cuộn của website chủ ngoài việc thêm launcher. Không khóa cuộn trang chủ khi mở Reader.
+- Reader phải tự quản lý vùng cuộn bên trong lớp phủ; tính năng tự cuộn theo đoạn đang đọc chỉ được tác động lên vùng cuộn của Reader, không được làm trang chủ cuộn theo.
 - Cấu hình lưu trong localStorage cần có namespace riêng để tránh xung đột với website chủ; giữ khả năng đọc các thiết lập TTS đã lưu từ phiên bản cũ.
 - Nếu website không hỗ trợ Web Speech API, Reader vẫn mở để đọc bằng mắt và hiển thị trạng thái không hỗ trợ âm thanh.
 
