@@ -78,18 +78,20 @@ Khởi tạo lặp lại không tạo thêm bản sao widget.
 
 ## Các tính năng
 
-- Mở Reader riêng dạng lớp phủ cố định, giữ nội dung bài viết và cấu trúc tiêu đề/đoạn/danh sách.
-- Không sửa CSS, bố cục, style hoặc thuộc tính cuộn của website chủ; Reader có vùng cuộn riêng và không khóa cuộn `html`/`body`.
-- Đọc, tạm dừng, tiếp tục, dừng và chuyển đoạn.
-- Chọn, tìm kiếm, làm mới và thử giọng đọc.
-- Điều chỉnh tốc độ, cao độ và âm lượng.
-- Chủ đề giấy, sáng, tối; thay đổi phông, cỡ chữ, chiều cao dòng và chiều rộng.
-- Thanh công cụ ở Header hoặc Footer.
-- Theo dõi đoạn và từ khi trình duyệt/giọng đọc hỗ trợ sự kiện boundary.
-- Tự cuộn theo đoạn đang đọc trong vùng nội dung Reader, không cuộn trang chủ.
-- Menu chuột phải “Đọc từ đây” trong Reader.
-- Lưu cài đặt trong localStorage.
-- Nhận diện Web Speech API; nếu không hỗ trợ, Reader vẫn mở để đọc bằng mắt.
+- Đọc trực tiếp DOM website gốc, không tạo bản sao nội dung.
+- Thanh điều khiển nổi độc lập, đặt ở Header hoặc Footer.
+- Đọc, tạm dừng, tiếp tục, dừng, chuyển đoạn và đọc từ đây.
+- Chọn/tìm/làm mới/thử giọng; điều chỉnh tốc độ, cao độ và âm lượng.
+- Reading Highlight cho đoạn; highlight từ dùng CSS Custom Highlight API nếu trình duyệt hỗ trợ.
+- Tùy chỉnh màu highlight, bật/tắt đồng bộ và lưu cài đặt.
+- Đọc nền best-effort; nhận diện Web Speech API.
+
+## Nguyên tắc không can thiệp website
+
+- Không clone hoặc thay đổi cấu trúc DOM; không sửa CSS, class gốc, inline style, font, kích thước hoặc bố cục.
+- Không khóa hoặc tự cuộn trang; không thay đổi html/body.
+- Chỉ thêm/gỡ class highlight riêng; highlight từ không bọc hoặc sửa text node.
+- Giao diện nổi chỉ gồm toolbar và Settings, không phủ nền website.
 
 ## Giới hạn
 
