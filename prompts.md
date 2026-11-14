@@ -2,13 +2,13 @@
 
 ## 1. Mục tiêu
 
-Tiếp tục phát triển TTS-widget theo kiến trúc `tts-widget.js` nhúng vào `demo.html`; `index.html` chỉ là điểm vào tương thích.
+Tiếp tục phát triển TTS-widget theo kiến trúc dùng chung `tts-widget.js` nhúng vào cả `index.html` và `demo.html`; `index.html` giữ nội dung/bố cục Web Reader gốc, còn `demo.html` là trang demo nội dung dài.
 
 Xây dựng một trình đọc văn bản trên web sử dụng tối đa các khả năng mà Chrome Web Speech API cung cấp.
 
 **Nguyên tắc bắt buộc:**
 - Tách phần mã JavaScript của widget thành `tts-widget.js` độc lập để có thể nhúng vào website khác.
-- Cung cấp `demo.html` làm trang thử nghiệm, nhúng `tts-widget.js` bằng thẻ script và có bài viết dài để kiểm thử.
+- Cả `index.html` và `demo.html` đều phải nhúng trực tiếp `tts-widget.js`; `index.html` giữ lại nội dung và bố cục trang Web Reader gốc, `demo.html` cung cấp bài viết dài để thử nghiệm.
 - `tts-widget.js` tự tạo giao diện Reader, điều khiển, Settings và CSS cần thiết; website chủ chỉ cần cung cấp vùng nội dung cần đọc.
 - Không yêu cầu website chủ sao chép HTML/CSS nội bộ của Reader.
 - Không viết lại toàn bộ ứng dụng nếu không cần thiết.
@@ -411,7 +411,9 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 
 ### 14.4. Demo và kiểm thử
 
-- `demo.html` phải nhúng file JavaScript thực tế, không sao chép logic widget vào trang demo.
+- `index.html` và `demo.html` đều phải nhúng cùng file JavaScript thực tế, không sao chép logic widget vào hai trang.
+- `index.html` phải giữ nội dung và bố cục Web Reader gốc; không được biến thành redirect.
+- Cả hai trang phải bỏ markup/logic Reader cũ để tránh hai launcher, hai Reader hoặc listener trùng lặp.
 - Nội dung demo cần có tối thiểu 8 mục có tiêu đề và nhiều đoạn văn dài bằng tiếng Việt; có danh sách và trích dẫn.
 - Kiểm thử: tải demo, mở Reader, xác nhận nội dung được clone đầy đủ; chọn giọng, thử giọng, đọc từ đầu, pause/resume/stop, chuyển đoạn, đọc từ đây, đổi Header/Footer, thay đổi kiểu chữ/chủ đề, tải lại trang.
 - Kiểm tra nhúng trên một trang host tối giản có CSS riêng; xác nhận widget không làm thay đổi kiểu chữ, button, header, main và layout của host.
