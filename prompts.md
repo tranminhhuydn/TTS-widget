@@ -7,8 +7,10 @@ Tiếp tục phát triển TTS-widget dựa trên mã nguồn `index.html` hiệ
 Xây dựng một trình đọc văn bản trên web sử dụng tối đa các khả năng mà Chrome Web Speech API cung cấp.
 
 **Nguyên tắc bắt buộc:**
-- Chỉ duy trì một file `index.html`.
-- Không chia HTML, CSS, JavaScript thành các file riêng.
+- Tách phần mã JavaScript của widget thành `tts-widget.js` độc lập để có thể nhúng vào website khác.
+- Cung cấp `demo.html` làm trang thử nghiệm, nhúng `tts-widget.js` bằng thẻ script và có bài viết dài để kiểm thử.
+- `tts-widget.js` tự tạo giao diện Reader, điều khiển, Settings và CSS cần thiết; website chủ chỉ cần cung cấp vùng nội dung cần đọc.
+- Không yêu cầu website chủ sao chép HTML/CSS nội bộ của Reader.
 - Không viết lại toàn bộ ứng dụng nếu không cần thiết.
 - Bảo toàn các chức năng đang hoạt động.
 - Chỉ cập nhật những phần liên quan đến yêu cầu mới.
@@ -16,7 +18,7 @@ Xây dựng một trình đọc văn bản trên web sử dụng tối đa các 
 
 ## 2. Phân chia hệ thống chức năng
 
-Thiết kế hệ thống thành 5 nhóm cài đặt độc lập.
+Thiết kế hệ thống thành các nhóm cài đặt độc lập.
 
 ### 2.1. Giao diện (Interface)
 
@@ -193,7 +195,7 @@ Tách logic thành các nhóm chức năng có trách nhiệm rõ ràng:
 - SettingsManager.
 - ToolbarManager.
 
-Có thể tổ chức bằng class hoặc object thuần JavaScript, nhưng không tạo thêm file.
+Có thể tổ chức bằng class hoặc object thuần JavaScript; mã chạy của widget được đóng gói trong `tts-widget.js`.
 
 Tránh:
 - Trùng lặp event listener.
@@ -243,9 +245,10 @@ Không tuyên bố đã kiểm thử thành công nếu chưa thực sự chạy
 
 ## 8. Đầu ra
 
-- Chỉ cập nhật file `index.html` hiện tại.
-- Trả về một file hoàn chỉnh.
-- Không tạo file phụ.
+- Cập nhật `tts-widget.js` là mã nguồn JavaScript dùng để nhúng.
+- Cập nhật `demo.html` là trang demo độc lập, có nội dung dài và nhúng widget qua thẻ script.
+- Giữ `index.html` làm điểm vào tương thích, chuyển người dùng sang `demo.html`.
+- Cập nhật `prompts.md` và `README.md` trong cùng đợt khi kiến trúc hoặc cách tích hợp thay đổi.
 - Không thay đổi tên các thành phần đang được sử dụng nếu không cần thiết.
 - Giữ nguyên các chức năng cũ.
 - Báo cáo rõ tính năng nào đã hoàn thành, tính năng nào bị giới hạn bởi Chrome API và tính năng nào chưa kiểm thử.
@@ -311,11 +314,11 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 
 ## 10. Tài liệu hướng dẫn sử dụng (README)
 
-- Repository phải có `README.md` bằng tiếng Việt, mô tả cách khởi chạy và sử dụng các tính năng thực sự có trong `index.html`.
+- Repository phải có `README.md` bằng tiếng Việt, mô tả cách nhúng `tts-widget.js`, cấu hình vùng nội dung và chạy `demo.html`.
 - README cần có mục lục, yêu cầu môi trường, cách mở Reader, các nút điều khiển, Settings, chọn/thử giọng, đọc từ vị trí chuột phải, lưu cấu hình, đọc nền, giới hạn Web Speech API và hướng xử lý sự cố.
 - Không mô tả tính năng chưa được triển khai như thể đã hoạt động. Phải nêu rõ giới hạn của trình duyệt/hệ điều hành và những phần chỉ hoạt động best-effort.
 - Khi thay đổi hành vi hoặc giao diện người dùng, phải rà soát và cập nhật README trong cùng đợt nếu hướng dẫn hiện tại không còn chính xác.
-- Việc người dùng yêu cầu tạo/cập nhật README là ngoại lệ được cho phép đối với nguyên tắc chỉ duy trì một file mã nguồn `index.html`; không được vì vậy tự ý tách HTML/CSS/JavaScript thành nhiều file.
+- README phải phản ánh kiến trúc nhiều file theo yêu cầu mới; `tts-widget.js` là script nhúng, `demo.html` là trang demo và `index.html` là điểm vào tương thích.
 
 
 ## 11. Biểu tượng mở Reader và vị trí thanh điều khiển
@@ -373,3 +376,43 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
   3. Mở/đóng Settings, đổi Header/Footer và tải lại trang không làm ẩn điều khiển phụ.
   4. Cấu hình localStorage cũ có thuộc tính `compact` không gây lỗi hoặc làm thay đổi giao diện.
   5. Không còn selector, listener hoặc logic CSS/JavaScript điều khiển trạng thái thu gọn thanh công cụ.
+
+
+## 14. Đóng gói thành JavaScript widget có thể nhúng
+
+### 14.1. Cấu trúc file chuẩn
+
+- `tts-widget.js`: mã JavaScript độc lập, chứa toàn bộ logic Reader, Speech, Voice, Highlight, Settings, Toolbar, Context Menu; tự tạo markup giao diện và inject CSS cần thiết.
+- `demo.html`: website minh họa có nội dung bài viết dài, nhúng `tts-widget.js` bằng thẻ `script`; nội dung phải đủ dài và chia thành nhiều tiêu đề/đoạn để kiểm tra chia utterance, chuyển đoạn và cuộn.
+- `index.html`: giữ làm điểm vào tương thích, chuyển hướng hoặc dẫn người dùng đến `demo.html`; không duy trì một bản sao mã nguồn widget.
+- `prompts.md` và `README.md`: cập nhật cùng đợt khi có thay đổi kiến trúc/tích hợp.
+
+### 14.2. Hợp đồng tích hợp
+
+- Cách nhúng mặc định:
+  `<script src="./tts-widget.js" defer data-content-selector="#article"></script>`
+- Widget tự tìm phần tử theo `data-content-selector`; mặc định là `article`.
+- Công khai API `window.TTSWidget.init({ contentSelector: "#article" })` để website có thể khởi tạo bằng JavaScript khi cần.
+- Khởi tạo phải idempotent: gọi nhiều lần không tạo nhiều giao diện, launcher hoặc listener.
+- Nếu selector không hợp lệ hoặc không tìm thấy nội dung, ghi lỗi rõ ràng vào console và không tạo giao diện dang dở.
+- Tạo nút mở Reader tự động cạnh vùng nội dung; không yêu cầu website chủ phải dựng markup Reader, Settings hoặc Toolbar.
+- CSS của widget phải được inject từ `tts-widget.js`, hạn chế ảnh hưởng đến CSS của website chủ; không thay đổi style toàn cục của body, header, main, article hoặc button.
+- Chỉ clone nội dung được chọn; không sửa trực tiếp bài viết gốc.
+- Reader, context menu và các điều khiển phải được tạo trong một root riêng của widget.
+- Không tự tải thư viện hoặc tài nguyên bên ngoài.
+
+### 14.3. Bảo toàn chức năng
+
+- Giữ các chức năng đã có: nhận diện Web Speech API, chọn/thử giọng, tốc độ/cao độ/âm lượng, pause/resume/stop, điều hướng đoạn, đồng bộ highlight, đọc nền best-effort, Settings, Header/Footer và context menu “Đọc từ đây”.
+- Không làm thay đổi nội dung hoặc hành vi cuộn của website chủ ngoài việc thêm launcher; khi mở Reader phải khóa cuộn và khi đóng phải khôi phục chính xác style cuộn ban đầu.
+- Cấu hình lưu trong localStorage cần có namespace riêng để tránh xung đột với website chủ; giữ khả năng đọc các thiết lập TTS đã lưu từ phiên bản cũ.
+- Nếu website không hỗ trợ Web Speech API, Reader vẫn mở để đọc bằng mắt và hiển thị trạng thái không hỗ trợ âm thanh.
+
+### 14.4. Demo và kiểm thử
+
+- `demo.html` phải nhúng file JavaScript thực tế, không sao chép logic widget vào trang demo.
+- Nội dung demo cần có tối thiểu 8 mục có tiêu đề và nhiều đoạn văn dài bằng tiếng Việt; có danh sách và trích dẫn.
+- Kiểm thử: tải demo, mở Reader, xác nhận nội dung được clone đầy đủ; chọn giọng, thử giọng, đọc từ đầu, pause/resume/stop, chuyển đoạn, đọc từ đây, đổi Header/Footer, thay đổi kiểu chữ/chủ đề, tải lại trang.
+- Kiểm tra nhúng trên một trang host tối giản có CSS riêng; xác nhận widget không làm thay đổi kiểu chữ, button, header, main và layout của host.
+- Kiểm tra selector không tồn tại và khởi tạo lặp lại.
+- Không tuyên bố đã chạy kiểm thử trình duyệt nếu chưa thực sự thực hiện.
