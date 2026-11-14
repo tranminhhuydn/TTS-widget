@@ -78,18 +78,20 @@ Khởi tạo lặp lại không tạo thêm bản sao widget.
 
 ## Các tính năng
 
-- Mở Reader riêng dạng lớp phủ cố định, giữ nội dung bài viết và cấu trúc tiêu đề/đoạn/danh sách.
-- Không sửa CSS, bố cục, style hoặc thuộc tính cuộn của website chủ; Reader có vùng cuộn riêng và không khóa cuộn `html`/`body`.
-- Đọc, tạm dừng, tiếp tục, dừng và chuyển đoạn.
-- Chọn, tìm kiếm, làm mới và thử giọng đọc.
-- Điều chỉnh tốc độ, cao độ và âm lượng.
-- Chủ đề giấy, sáng, tối; thay đổi phông, cỡ chữ, chiều cao dòng và chiều rộng.
-- Thanh công cụ ở Header hoặc Footer.
-- Theo dõi đoạn và từ khi trình duyệt/giọng đọc hỗ trợ sự kiện boundary.
-- Tự cuộn theo đoạn đang đọc trong vùng nội dung Reader, không cuộn trang chủ.
-- Menu chuột phải “Đọc từ đây” trong Reader.
-- Lưu cài đặt trong localStorage.
-- Nhận diện Web Speech API; nếu không hỗ trợ, Reader vẫn mở để đọc bằng mắt.
+- Đọc trực tiếp DOM website gốc, không tạo bản sao nội dung.
+- Thanh điều khiển nổi độc lập, đặt ở Header hoặc Footer; nút mở Reader cố định ở góc màn hình, không chiếm chỗ trong luồng nội dung.
+- Đọc, tạm dừng, tiếp tục, dừng, chuyển đoạn và đọc từ đây.
+- Chọn/tìm/làm mới/thử giọng; điều chỉnh tốc độ, cao độ và âm lượng.
+- Reading Highlight cho đoạn; highlight từ dùng CSS Custom Highlight API nếu trình duyệt hỗ trợ.
+- Tùy chỉnh màu highlight, bật/tắt đồng bộ và lưu cài đặt.
+- Đọc nền best-effort; nhận diện Web Speech API.
+
+## Nguyên tắc không can thiệp website
+
+- Không clone hoặc thay đổi cấu trúc DOM; không sửa CSS, class gốc, inline style, font, kích thước hoặc bố cục.
+- Không khóa hoặc tự cuộn trang; không thay đổi html/body.
+- Chỉ thêm/gỡ class highlight riêng; highlight từ không bọc hoặc sửa text node.
+- Giao diện nổi chỉ gồm launcher, toolbar và Settings; không phủ nền website, không chiếm chỗ trong luồng nội dung.
 
 ## Giới hạn
 
@@ -99,8 +101,13 @@ Giọng đọc được cung cấp bởi trình duyệt và hệ điều hành; 
 
 ## Xử lý sự cố
 
-- **Không thấy nút mở Reader**: kiểm tra selector trong `data-content-selector` có trỏ đúng phần tử tồn tại khi script chạy hay không.
+- **Không thấy nút mở Reader**: kiểm tra `data-content-selector` có trỏ đúng phần tử nội dung; kiểm tra Console có lỗi JavaScript; thử tải lại trang sau khi xác nhận script `tts-widget.js` đã tải thành công. Launcher được cố định ở góc dưới bên phải và có CSS ưu tiên để tránh bị CSS website chủ che hoặc ẩn.
 - **Không có âm thanh**: kiểm tra Web Speech API, âm lượng hệ thống và giọng đã chọn.
 - **Không có giọng tiếng Việt**: cài giọng tiếng Việt ở hệ điều hành nếu có, sau đó nhấn Làm mới trong Settings.
 - **Không highlight từng từ**: giọng đọc hoặc trình duyệt có thể không phát `onboundary`; khi đó widget chỉ có thể theo dõi đoạn.
 - **Đọc nền bị ngắt**: đây là giới hạn của trình duyệt/hệ điều hành; quay lại tab để widget thử khôi phục phiên nếu có thể.
+
+
+### Khắc phục xung đột CSS với website chủ
+
+Launcher được tạo bên trong root riêng của widget, cố định ở góc dưới bên phải viewport và đặt z-index cao. CSS của launcher reset các thuộc tính hiển thị thiết yếu để hạn chế xung đột với quy tắc button toàn cục của website tích hợp.
