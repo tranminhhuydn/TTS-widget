@@ -421,3 +421,15 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 - Kiểm tra nhúng trên một trang host tối giản có CSS riêng; xác nhận widget không làm thay đổi kiểu chữ, button, header, main và layout của host.
 - Kiểm tra selector không tồn tại và khởi tạo lặp lại.
 - Không tuyên bố đã chạy kiểm thử trình duyệt nếu chưa thực sự thực hiện.
+
+## 15. Đọc trực tiếp trên website gốc – chỉ can thiệp Reading Highlight
+
+- Đọc trực tiếp các node trong `contentSelector`; tuyệt đối không dùng `cloneNode()`, không tạo bản sao nội dung.
+- Thanh điều khiển là lớp nổi độc lập, đặt ở Header hoặc Footer; không có lớp nền che trang.
+- Không thay đổi font, cỡ chữ, line-height, chiều rộng, margin, padding, theme, inline style, class gốc hoặc bố cục website.
+- Chỉ thêm/gỡ class riêng `tts-widget-reading-active` trên phần tử đang đọc; không ghi đè thuộc tính class và không xóa class khác.
+- Highlight từ dùng CSS Custom Highlight API (`CSS.highlights`/`Highlight`), không bọc text bằng `span`/`mark`, không sửa text node. Nếu API không hỗ trợ thì chỉ highlight đoạn.
+- Không tự cuộn, không khóa scroll, không thay đổi overflow trên `html`/`body`.
+- Gỡ highlight đoạn/từ khi dừng, đóng Reader, kết thúc đọc hoặc chuyển phiên đọc.
+- Loại bỏ các điều khiển font/cỡ chữ/line-height/chiều rộng/theme/tự cuộn; giữ giọng đọc, tốc độ/cao độ/âm lượng, Header/Footer và cài đặt highlight.
+- Kiểm thử chấp nhận: không tạo/xóa/thay thế node; không thay đổi style/typography/layout; class gốc còn nguyên sau khi gỡ highlight; highlight từ không sửa DOM; scroll position không đổi. Không tuyên bố browser test nếu chưa chạy thực tế.
