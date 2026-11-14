@@ -241,7 +241,7 @@ function showReaderContextMenu(event,index){
   readerContextMenu.style.left=Math.max(margin,Math.min(event.clientX,window.innerWidth-rect.width-margin))+"px";
   readerContextMenu.style.top=Math.max(margin,Math.min(event.clientY,window.innerHeight-rect.height-margin))+"px";
 }
-reader.source?.addEventListener("contextmenu",event=>{
+document.addEventListener("contextmenu",event=>{
   if(!reader.root.classList.contains("open")||!reader.source?.contains(event.target))return;
   const target=event.target.nodeType===Node.TEXT_NODE?event.target.parentElement:event.target;
   const index=reader.blocks.findIndex(block=>block.element===target||block.element.contains(target));
