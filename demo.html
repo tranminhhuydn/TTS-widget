@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo TTS Widget - Bài viết dài</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f1f5f9;color:#263238;font:17px/1.85 system-ui,Arial,sans-serif}
+header{background:#203b5b;color:#fff;padding:24px max(22px,calc((100% - 980px)/2))}
+main{max-width:980px;margin:34px auto;padding:0 22px}
+article{background:#fff;padding:clamp(22px,5vw,54px);border-radius:14px;box-shadow:0 5px 24px #0f172a0c}
+h1,h2{line-height:1.35;color:#173b60}h1{font-size:clamp(30px,4vw,42px)}h2{margin-top:2em}
+.lead{font-size:1.15em;color:#475569}
+.meta{color:#64748b;font-size:.9em}
+aside{background:#e2e8f0;padding:20px;border-radius:10px;margin-top:24px;font-size:.92em}
+footer{text-align:center;color:#64748b;padding:30px}
+</style>
+</head>
+<body>
+<header><strong>TRANG DEMO TÍCH HỢP TTS WIDGET</strong></header>
+<main>
+<article id="article">
+<h1>Hành trình của tri thức: Từ trang sách đến thế giới số</h1>
+<p class="meta">Bài viết thử nghiệm · Nội dung dài dùng để kiểm tra đọc thành tiếng, chuyển đoạn và đồng bộ văn bản</p>
+<p class="lead">Tri thức không chỉ được lưu giữ trong những trang sách. Qua từng thời đại, con người luôn tìm cách ghi lại kinh nghiệm, truyền đạt hiểu biết và mở rộng khả năng tiếp cận thông tin. Ngày nay, công nghệ web giúp văn bản có thể được trình bày, tìm kiếm, chuyển đổi và đọc thành tiếng ngay trong trình duyệt.</p>
+<h2>1. Nhu cầu tiếp cận thông tin trong đời sống hiện đại</h2>
+<p>Mỗi ngày, chúng ta tiếp xúc với một lượng thông tin rất lớn. Tin tức, tài liệu học tập, hướng dẫn kỹ thuật, báo cáo và những cuộc trao đổi chuyên môn xuất hiện liên tục trên nhiều nền tảng khác nhau. Việc đọc toàn bộ nội dung trên màn hình trong thời gian dài có thể gây mỏi mắt, giảm tập trung và khiến người đọc khó duy trì nhịp tiếp nhận thông tin.</p>
+<p>Đọc thành tiếng là một phương thức bổ trợ hữu ích. Khi văn bản được chuyển thành âm thanh, người dùng có thể nghe trong lúc nghỉ mắt, làm việc nhà hoặc thực hiện những hoạt động không đòi hỏi sự tập trung thị giác cao. Đây không phải là phương pháp thay thế hoàn toàn việc đọc, mà là một kênh tiếp nhận thông tin bổ sung.</p>
+<p>Một hệ thống đọc tốt cần cho phép người dùng chủ động kiểm soát tốc độ, âm lượng, giọng đọc và vị trí bắt đầu. Khả năng tạm dừng, tiếp tục, chuyển đoạn và theo dõi nội dung đang phát cũng rất quan trọng, bởi chúng giúp người nghe không bị mất mạch khi có việc cần ngắt quãng.</p>
+<h2>2. Từ văn bản HTML đến nội dung có thể đọc</h2>
+<p>Trang web được xây dựng từ những phần tử HTML có cấu trúc. Một bài viết thường bao gồm tiêu đề, đoạn văn, danh sách, trích dẫn và hình ảnh. Nếu xác định đúng vùng nội dung chính, một tiện ích đọc có thể sao chép phần cần thiết sang giao diện riêng, đồng thời loại bỏ các thành phần không liên quan như biểu mẫu, nút bấm hoặc khu vực quảng cáo.</p>
+<p>Việc giữ lại cấu trúc của văn bản có ý nghĩa lớn. Tiêu đề giúp phân chia chủ đề, danh sách thể hiện các ý cùng cấp, còn trích dẫn làm nổi bật một nhận định quan trọng. Khi chuyển nội dung sang Reader, những cấu trúc này cần được bảo toàn để người đọc vẫn hiểu được mối quan hệ giữa các phần.</p>
+<blockquote>Khả năng đọc tốt không chỉ phụ thuộc vào âm thanh rõ ràng, mà còn phụ thuộc vào cách nội dung được tổ chức và trình bày.</blockquote>
+<p>Trong trường hợp bài viết chứa nhiều đoạn dài, hệ thống đọc cần chia văn bản thành các phần nhỏ hơn. Việc chia này giúp tránh giới hạn độ dài của từng utterance và tạo điều kiện theo dõi tiến trình. Tuy nhiên, điểm bắt đầu của mỗi phần phải được liên kết với vị trí tương ứng trong đoạn gốc để việc đánh dấu từ không bị lệch.</p>
+<h2>3. Web Speech API và giọng nói của trình duyệt</h2>
+<p>Web Speech API cung cấp giao diện lập trình để trang web sử dụng khả năng tổng hợp giọng nói có sẵn trong trình duyệt. Đối tượng SpeechSynthesis quản lý hàng đợi phát âm thanh, còn SpeechSynthesisUtterance đại diện cho một nội dung cần được đọc với các tham số như ngôn ngữ, tốc độ, cao độ và âm lượng.</p>
+<p>Danh sách giọng đọc không giống nhau trên mọi thiết bị. Một máy tính có thể cung cấp nhiều giọng tiếng Anh nhưng không có giọng tiếng Việt; một thiết bị khác có thể cài đặt thêm giọng địa phương. Vì vậy, ứng dụng không nên tự tạo danh sách giả mà phải truy vấn trực tiếp các giọng mà trình duyệt cung cấp.</p>
+<p>Danh sách giọng đôi khi chỉ xuất hiện sau khi trang đã tải xong. Sự kiện voiceschanged giúp ứng dụng biết khi nào danh sách thay đổi. Ngoài ra, thao tác làm mới thủ công là một phương án dự phòng hữu ích khi trình duyệt trả về danh sách rỗng ở lần truy vấn đầu tiên.</p>
+<p>Các sự kiện của utterance cũng cần được xử lý cẩn thận. Sự kiện bắt đầu, kết thúc và lỗi giúp quản lý trạng thái phiên đọc. Sự kiện boundary có thể cung cấp vị trí từ đang được phát, nhưng mức độ hỗ trợ phụ thuộc vào trình duyệt và giọng đọc. Nếu không có dữ liệu ranh giới đáng tin cậy, tiện ích chỉ nên đánh dấu đoạn hiện tại thay vì tạo ra vị trí từ không chính xác.</p>
+<h2>4. Thiết kế giao diện đọc tập trung</h2>
+<p>Một giao diện Reader nên giảm tối đa những yếu tố gây xao nhãng. Nội dung được đặt trong một vùng có chiều rộng phù hợp, cỡ chữ dễ đọc và khoảng cách dòng thoáng. Người dùng có thể chọn nền sáng, nền tối hoặc màu giấy tùy theo điều kiện ánh sáng và sở thích cá nhân.</p>
+<p>Các nút điều khiển cần có ý nghĩa rõ ràng. Đọc bắt đầu một phiên mới; tạm dừng giữ lại trạng thái hiện tại; tiếp tục nối lại phiên đã tạm dừng; còn dừng kết thúc phiên và giải phóng hàng đợi. Không nên gộp những thao tác này thành một nút duy nhất nếu điều đó khiến trạng thái khó hiểu.</p>
+<p>Thanh công cụ có thể được đặt ở đầu hoặc cuối vùng Reader. Khi nội dung dài, vị trí sticky giúp người dùng tiếp cận các lệnh điều khiển mà không phải cuộn ngược về đầu trang. Các thiết lập chi tiết được gom trong bảng Settings, còn những thao tác phổ biến vẫn luôn hiển thị trực tiếp.</p>
+<p>Việc hỗ trợ bàn phím và trình đọc màn hình cũng cần được quan tâm. Nút bấm nên có nhãn hoặc tooltip mô tả, trạng thái không khả dụng cần được thể hiện bằng thuộc tính disabled, và thông báo tiến trình nên sử dụng vùng aria-live phù hợp.</p>
+<h2>5. Đồng bộ âm thanh với văn bản</h2>
+<p>Khi một đoạn văn được đọc, việc làm nổi bật đoạn đó giúp người dùng biết hệ thống đang ở đâu. Nếu trình duyệt phát sự kiện boundary với thông tin vị trí chính xác, ứng dụng có thể đánh dấu từ tương ứng. Khi utterance được chia thành nhiều phần, vị trí tương đối trong từng phần phải được cộng với offset ban đầu để tìm đúng ký tự trong văn bản gốc.</p>
+<p>Đánh dấu từ trong HTML phức tạp hơn việc cắt một chuỗi đơn giản. Một đoạn có thể chứa nhiều node văn bản, thẻ in đậm, liên kết hoặc dấu câu. Do đó, việc xác định từ cần dựa trên cây văn bản và Range API. Sau khi đánh dấu, ứng dụng phải có cách gỡ dấu an toàn để không làm thay đổi nội dung hoặc thứ tự văn bản ban đầu.</p>
+<p>Tự cuộn theo đoạn đang đọc là một tính năng hỗ trợ quan trọng đối với bài viết dài. Tuy nhiên, chuyển động cuộn cần đủ nhẹ nhàng để không gây khó chịu. Người dùng cũng nên có quyền tắt tính năng này nếu muốn tự điều khiển vị trí đọc.</p>
+<h2>6. Đọc nền và những giới hạn thực tế</h2>
+<p>Nhiều người muốn âm thanh tiếp tục phát khi chuyển sang tab khác hoặc mở một ứng dụng khác. Tiện ích có thể theo dõi sự kiện visibilitychange, blur và focus để nhận biết trạng thái cửa sổ. Khi người dùng quay lại, ứng dụng có thể kiểm tra phiên đọc và thử khôi phục nếu utterance bị gián đoạn ngoài ý muốn.</p>
+<p>Dù vậy, JavaScript không thể bảo đảm âm thanh luôn tiếp tục trong mọi tình huống. Trình duyệt có thể đóng băng tab, loại bỏ tab khỏi bộ nhớ, hệ điều hành có thể dừng tiến trình âm thanh hoặc thiết bị chuyển sang trạng thái ngủ. Vì thế, cơ chế đọc nền chỉ nên được mô tả là nỗ lực tốt nhất trong giới hạn nền tảng.</p>
+<p>Điều quan trọng là phân biệt sự kiện bị tạm dừng với sự kiện đã bị hủy. Nếu utterance còn tồn tại và chỉ đang paused, gọi resume có thể phù hợp. Nếu utterance đã bị canceled hoặc interrupted, ứng dụng cần phát lại đúng phần tử hiện tại trong hàng đợi, tránh nhảy sang câu tiếp theo hoặc phát chồng âm thanh.</p>
+<h2>7. Tích hợp tiện ích vào website khác</h2>
+<p>Một widget nhúng tốt cần giảm yêu cầu đối với website chủ. Quản trị viên chỉ cần xác định phần tử chứa bài viết và thêm một thẻ script. Phần giao diện Reader, các nút điều khiển và bảng cài đặt nên do widget tự tạo, tránh yêu cầu website phải sao chép hàng trăm dòng HTML hoặc CSS.</p>
+<p>Việc đóng gói thành một tệp JavaScript độc lập giúp quá trình triển khai đơn giản hơn. Website có thể lưu tệp cùng thư mục với trang của mình hoặc cung cấp qua một máy chủ tĩnh. Cấu hình chọn vùng nội dung cần đọc nên được truyền qua thuộc tính data trên thẻ script hoặc thông qua một hàm khởi tạo công khai.</p>
+<p>Trong một hệ thống nhiều bài viết, bộ chọn nội dung cần đủ linh hoạt để nhắm đúng phần tử của từng trang. Nếu bộ chọn không tồn tại, widget phải thông báo lỗi rõ ràng và không để lại giao diện dở dang. Việc khởi tạo lặp lại cũng cần được ngăn chặn để tránh tạo nhiều nút mở Reader hoặc gắn trùng các sự kiện.</p>
+<h2>8. Khả năng tiếp cận và quyền kiểm soát của người dùng</h2>
+<p>Không phải ai cũng sử dụng web theo cùng một cách. Có người cần chữ lớn, có người cần nền tối, có người muốn nghe thay vì đọc, và cũng có người chỉ muốn nghe một phần cụ thể. Một tiện ích tốt phải cung cấp những tùy chọn này mà không áp đặt một cách sử dụng duy nhất.</p>
+<p>Các lựa chọn cá nhân nên được lưu trong trình duyệt để người dùng không phải thiết lập lại sau mỗi lần tải trang. Tuy nhiên, dữ liệu lưu trữ cần có phiên bản và giá trị mặc định an toàn. Khi cấu trúc cấu hình thay đổi, ứng dụng phải bỏ qua những thuộc tính cũ không còn được sử dụng và không để dữ liệu lỗi làm hỏng quá trình khởi tạo.</p>
+<p>Người dùng cũng cần biết rõ giới hạn của công nghệ. Nếu trình duyệt không hỗ trợ Web Speech API, Reader vẫn có thể hiển thị nội dung để đọc bằng mắt, nhưng không nên giả vờ rằng âm thanh sẽ được phát. Thông báo trạng thái cần ngắn gọn, chính xác và không gây hiểu nhầm.</p>
+<h2>9. Kết luận</h2>
+<p>Việc đưa khả năng đọc thành tiếng vào website không chỉ là thêm một nút phát âm thanh. Đó là sự kết hợp giữa cấu trúc nội dung, quản lý hàng đợi, giao diện đọc, đồng bộ văn bản, khả năng tiếp cận và xử lý các giới hạn của trình duyệt.</p>
+<p>Khi được đóng gói thành một widget độc lập, những chức năng này có thể được tái sử dụng trên nhiều website. Một kiến trúc rõ ràng, cấu hình đơn giản và tài liệu tích hợp đầy đủ sẽ giúp tiện ích dễ bảo trì, kiểm thử và mở rộng trong tương lai.</p>
+<aside><strong>Gợi ý kiểm thử:</strong> Hãy mở Reader, thử chọn giọng tiếng Việt, thay đổi tốc độ, tạm dừng và tiếp tục, chuyển đoạn, đổi vị trí thanh công cụ rồi kiểm tra đọc từ một đoạn ở giữa bài.</aside>
+</article>
+</main>
+<footer>Demo TTS Widget · Nội dung dài phục vụ kiểm thử đọc văn bản</footer>
+<script src="./tts-widget.js" defer data-content-selector="#article"></script>
+</body>
+</html>
