@@ -25,7 +25,7 @@ TTS Widget là tiện ích đọc nội dung website thành tiếng bằng Web S
 1. Tải hoặc clone repository.
 2. Mở `index.html` để sử dụng trang Web Reader chính với nội dung/bố cục gốc.
 3. Mở `demo.html` để thử widget trên bài viết dài.
-4. Cả hai trang đều tải cùng `tts-widget.js`; widget tự thêm nút **📖 Mở chế độ đọc** ngay sau vùng bài viết.
+4. Cả hai trang đều tải cùng `tts-widget.js`; widget tự thêm nút **🔊 Đọc nội dung này** cố định ở góc dưới bên phải viewport.
 5. Chọn giọng đọc trong **Cài đặt → Giọng đọc**, sau đó nhấn Đọc.
 
 Để tránh các giới hạn bảo mật của một số trình duyệt với file cục bộ, nên chạy bằng static server, ví dụ:
