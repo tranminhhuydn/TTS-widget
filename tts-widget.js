@@ -86,7 +86,7 @@ class ReaderManager {
     body.style.overflow=s.bodyOverflow;body.style.overflowY=s.bodyOverflowY;
     this.savedScrollStyles=null;
   }
-  open(){const sourceContent=document.querySelector(config.contentSelector);if(!sourceContent){this.emit("Không tìm thấy vùng nội dung: "+config.contentSelector);return;}const clone=sourceContent.cloneNode(true);clone.querySelectorAll("script,style,noscript,iframe,nav,footer,form,button,input,select,textarea,aside").forEach(e=>e.remove());this.content.replaceChildren(clone);
+  open(){const sourceContent=document.querySelector(config.contentSelector);if(!sourceContent){console.error("[TTSWidget] Không tìm thấy vùng nội dung:",config.contentSelector);return;}const clone=sourceContent.cloneNode(true);clone.querySelectorAll("script,style,noscript,iframe,nav,footer,form,button,input,select,textarea,aside").forEach(e=>e.remove());this.content.replaceChildren(clone);
     this.blocks=[];clone.querySelectorAll("p,h1,h2,h3,h4,li,blockquote").forEach(el=>{const text=(el.innerText||el.textContent||"").trim();if(!text)return;el.dataset.readerParagraph=String(this.blocks.length);this.blocks.push({element:el,text});});
     this.active=-1;this.root.classList.add("open");this.lockPageScroll();mountReaderContextMenu();}
   refreshActiveParagraph(){
