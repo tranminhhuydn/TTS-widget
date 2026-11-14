@@ -398,8 +398,8 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 - Nếu selector không hợp lệ hoặc không tìm thấy nội dung, ghi lỗi rõ ràng vào console và không tạo giao diện dang dở.
 - Tạo nút mở Reader tự động cạnh vùng nội dung; không yêu cầu website chủ phải dựng markup Reader, Settings hoặc Toolbar.
 - CSS của widget phải được inject từ `tts-widget.js` và toàn bộ selector phải nằm dưới `.tts-widget-root`; tuyệt đối không thay đổi CSS, class, thuộc tính style hoặc bố cục của website chủ, bao gồm `html`, `body`, `header`, `main`, `article` và các nút của website.
-- Không khóa cuộn trang chủ, không ghi/khôi phục `overflow` trên `html` hoặc `body`. Reader là lớp phủ cố định có vùng cuộn riêng; thao tác tự cuộn/highlight chỉ được cuộn bên trong Reader.
-- Chỉ clone nội dung được chọn; không sửa trực tiếp bài viết gốc.
+- Không khóa cuộn trang chủ, không ghi/khôi phục `overflow` trên `html` hoặc `body`. Không tạo lớp phủ toàn màn hình, backdrop hoặc vùng cuộn riêng che nội dung website.
+- Đọc và highlight trực tiếp các phần tử trong DOM gốc; tuyệt đối không clone, di chuyển, ẩn hoặc thay thế nội dung được chọn.
 - Reader, context menu và các điều khiển phải được tạo trong một root riêng của widget.
 - Không tự tải thư viện hoặc tài nguyên bên ngoài.
 
@@ -407,7 +407,7 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 
 - Giữ các chức năng đã có: nhận diện Web Speech API, chọn/thử giọng, tốc độ/cao độ/âm lượng, pause/resume/stop, điều hướng đoạn, đồng bộ highlight, đọc nền best-effort, Settings, Header/Footer và context menu “Đọc từ đây”.
 - Không làm thay đổi nội dung, CSS, bố cục, thuộc tính style hoặc hành vi cuộn của website chủ ngoài việc thêm launcher. Không khóa cuộn trang chủ khi mở Reader.
-- Reader phải tự quản lý vùng cuộn bên trong lớp phủ; tính năng tự cuộn theo đoạn đang đọc chỉ được tác động lên vùng cuộn của Reader, không được làm trang chủ cuộn theo.
+- Không có vùng cuộn Reader riêng và không tự cuộn trang. Nội dung website gốc luôn hiển thị, tương tác và giữ nguyên vị trí khi Reader mở.
 - Cấu hình lưu trong localStorage cần có namespace riêng để tránh xung đột với website chủ; giữ khả năng đọc các thiết lập TTS đã lưu từ phiên bản cũ.
 - Nếu website không hỗ trợ Web Speech API, Reader vẫn mở để đọc bằng mắt và hiển thị trạng thái không hỗ trợ âm thanh.
 
@@ -443,3 +443,24 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 - Khi `document.currentScript` không khả dụng, bootstrap được phép tìm thẻ script có `data-content-selector` làm phương án dự phòng; vẫn chỉ khởi tạo một lần.
 - Không thay đổi CSS/layout của website chủ ngoài phần tử giao diện riêng của widget.
 - Acceptance test: nhúng widget vào trang có CSS toàn cục cho `button`, `#openReaderBtn` và layout grid/flex; xác nhận launcher vẫn hiện, nằm trong viewport, bấm được và mở Reader. Kiểm tra cả script `defer` và trường hợp fallback currentScript.
+
+
+## 17. Reader không được che hoặc ẩn website gốc
+
+- Khi mở Reader, toàn bộ nội dung website gốc phải tiếp tục hiển thị nguyên vẹn. Không đặt một lớp phủ toàn màn hình có nền, không ẩn source, không thay đổi `display`, `visibility`, `opacity`, `position` hoặc `overflow` của source hay ancestor.
+- Không sử dụng class/ID chung chung như `.reader` hoặc `#reader` có thể xung đột CSS của website host. Dùng tên định danh riêng có namespace, ví dụ `.tts-widget-reader` và `#ttsWidgetReader`.
+- Wrapper Reader chỉ là wrapper logic, không được chiếm viewport, không có `position:fixed; inset:0` và không tạo backdrop. Khi mở, wrapper có thể dùng `display:contents`; chỉ toolbar, Settings, status và context menu của widget được định vị nổi độc lập.
+- Không chặn pointer events trên nội dung website. Chỉ các thành phần điều khiển thực sự của widget nhận pointer events.
+- Reading Highlight phải tương tác trực tiếp trên DOM gốc:
+  - Đoạn đang đọc: chỉ thêm/gỡ class namespace riêng trên đúng phần tử source.
+  - Từ đang đọc: dùng CSS Custom Highlight API với Range tham chiếu trực tiếp text node gốc; không clone node, không wrap text, không tạo bản nội dung khác.
+  - Không thay đổi text, cấu trúc DOM, inline style, class gốc khác hoặc thuộc tính layout.
+- Khi đóng Reader, dừng đọc hoặc kết thúc phiên, gỡ toàn bộ highlight do widget tạo ra nhưng giữ nguyên mọi class và nội dung vốn có của website.
+- Context menu “Đọc từ đây” phải hoạt động trên chính các phần tử source khi Reader đang mở.
+- Acceptance test:
+  1. Mở Reader: nội dung website gốc vẫn nhìn thấy đầy đủ, không có backdrop/lớp phủ che, vẫn chọn/click/scroll tương tác được.
+  2. Kiểm tra computed style và thuộc tính của source/ancestor trước-sau khi mở: widget không sửa display, visibility, opacity, position, overflow hoặc inline style.
+  3. Khi đọc, class highlight xuất hiện trên đúng node gốc; khi chuyển đoạn, highlight chuyển theo; khi dừng/đóng, class được gỡ.
+  4. Nếu trình duyệt hỗ trợ CSS Custom Highlight API và onboundary, highlight từ phủ đúng Range trong text node gốc, không phát sinh span/mark hoặc node clone.
+  5. Kiểm tra trang host có CSS toàn cục cho `.reader`, `#reader` và `button`: không gây xung đột với wrapper widget.
+  6. Nội dung website vẫn tương tác và cuộn bình thường trong toàn bộ thời gian Reader mở.
