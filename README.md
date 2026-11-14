@@ -16,15 +16,17 @@ TTS Widget là tiện ích đọc nội dung website thành tiếng bằng Web S
 
 - `tts-widget.js`: mã nguồn widget; tự tạo giao diện Reader, thanh công cụ, Settings và CSS.
 - `demo.html`: trang mẫu có bài viết dài để thử đọc.
-- `index.html`: điểm vào tương thích, dẫn đến trang demo.
+- `index.html`: trang Web Reader độc lập được giữ lại từ phiên bản trước khi tách widget.
+- `demo.html`: trang demo riêng cho bản widget JavaScript có thể nhúng.
 - `prompts.md`: đặc tả phát triển và tiêu chí nghiệm thu.
 
 ## Chạy demo
 
 1. Tải hoặc clone repository.
-2. Mở `demo.html` bằng trình duyệt hoặc chạy static server trong thư mục repository.
-3. Nhấn **📖 Mở chế độ đọc** được widget tự thêm ngay sau vùng bài viết.
-4. Chọn giọng đọc trong **Cài đặt → Giọng đọc**, sau đó nhấn Đọc.
+2. Mở `index.html` để sử dụng trang Web Reader độc lập phiên bản gốc.
+3. Mở `demo.html` để thử bản `tts-widget.js` có thể nhúng vào website.
+4. Trong trang demo, nhấn **📖 Mở chế độ đọc** được widget tự thêm ngay sau vùng bài viết.
+5. Chọn giọng đọc trong **Cài đặt → Giọng đọc**, sau đó nhấn Đọc.
 
 Để tránh các giới hạn bảo mật của một số trình duyệt với file cục bộ, nên chạy bằng static server, ví dụ:
 
@@ -32,7 +34,7 @@ TTS Widget là tiện ích đọc nội dung website thành tiếng bằng Web S
 python -m http.server 8000
 ```
 
-Sau đó mở `http://localhost:8000/demo.html`.
+Sau đó mở `http://localhost:8000/index.html` để dùng Reader độc lập hoặc `http://localhost:8000/demo.html` để thử widget nhúng.
 
 ## Nhúng vào website
 
