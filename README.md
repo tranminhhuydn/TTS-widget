@@ -1,99 +1,103 @@
-# TTS Widget – Web Reader
+# TTS Widget – JavaScript Reader
 
-Trình đọc nội dung trang web có giao diện Reader riêng, hỗ trợ đọc thành tiếng bằng Web Speech API của trình duyệt.
+TTS Widget là tiện ích đọc nội dung website thành tiếng bằng Web Speech API có sẵn trong trình duyệt. Phiên bản này được đóng gói thành JavaScript có thể nhúng vào nhiều website mà không cần sao chép HTML/CSS của Reader.
 
 ## Mục lục
 
-- [Giới thiệu](#giới-thiệu)
-- [Yêu cầu môi trường](#yêu-cầu-môi-trường)
-- [Khởi chạy](#khởi-chạy)
-- [Mở và sử dụng Reader](#mở-và-sử-dụng-reader)
-- [Điều khiển thanh công cụ](#điều-khiển-thanh-công-cụ)
-- [Cài đặt](#cài-đặt)
-- [Chọn và thử giọng đọc](#chọn-và-thử-giọng-đọc)
-- [Đọc từ vị trí chuột phải](#đọc-từ-vị-trí-chuột-phải)
-- [Lưu cấu hình](#lưu-cấu-hình)
-- [Đọc nền và giới hạn](#đọc-nền-và-giới-hạn)
+- [Cấu trúc repository](#cấu-trúc-repository)
+- [Chạy demo](#chạy-demo)
+- [Nhúng vào website](#nhúng-vào-website)
+- [API JavaScript](#api-javascript)
+- [Các tính năng](#các-tính-năng)
+- [Giới hạn](#giới-hạn)
 - [Xử lý sự cố](#xử-lý-sự-cố)
 
-## Giới thiệu
+## Cấu trúc repository
 
-TTS Widget trích xuất nội dung từ phần tử bài viết `article#article` trong trang demo và hiển thị trong Reader toàn màn hình. Reader hỗ trợ chủ đề sáng/tối/màu giấy, tùy chỉnh kiểu chữ, điều khiển SpeechSynthesis, đánh dấu đoạn/từ khi API phát sự kiện phù hợp và menu “Đọc từ đây”.
+- `tts-widget.js`: mã nguồn widget; tự tạo giao diện Reader, thanh công cụ, Settings và CSS.
+- `demo.html`: trang mẫu có bài viết dài để thử đọc.
+- `index.html`: điểm vào tương thích, dẫn đến trang demo.
+- `prompts.md`: đặc tả phát triển và tiêu chí nghiệm thu.
 
-Đây là bản demo chạy phía trình duyệt; không có máy chủ TTS riêng.
-
-## Yêu cầu môi trường
-
-- Trình duyệt hiện đại có JavaScript và DOM API.
-- Để đọc thành tiếng, trình duyệt cần hỗ trợ Web Speech API (`speechSynthesis` và `SpeechSynthesisUtterance`) và có giọng đọc được cài đặt.
-- Giọng tiếng Việt phụ thuộc hệ điều hành, trình duyệt và gói giọng đã cài.
-
-## Khởi chạy
+## Chạy demo
 
 1. Tải hoặc clone repository.
-2. Mở `index.html` bằng trình duyệt.
-3. Với môi trường kiểm thử, có thể phục vụ thư mục bằng một static web server; ứng dụng không yêu cầu bước build.
+2. Mở `demo.html` bằng trình duyệt hoặc chạy static server trong thư mục repository.
+3. Nhấn **📖 Mở chế độ đọc** được widget tự thêm ngay sau vùng bài viết.
+4. Chọn giọng đọc trong **Cài đặt → Giọng đọc**, sau đó nhấn Đọc.
 
-## Mở và sử dụng Reader
+Để tránh các giới hạn bảo mật của một số trình duyệt với file cục bộ, nên chạy bằng static server, ví dụ:
 
-Nhấn **📖 Mở chế độ đọc**. Nếu trình duyệt không hỗ trợ Web Speech API, nhãn nút sẽ hiển thị **Mở chế độ đọc [ không hỗ trợ ]**; Reader vẫn mở để đọc bằng mắt.
+```bash
+python -m http.server 8000
+```
 
-Reader chỉ có một trạng thái hiển thị bình thường. Đóng bằng nút ✕ hoặc phím Escape.
+Sau đó mở `http://localhost:8000/demo.html`.
 
-## Điều khiển thanh công cụ
+## Nhúng vào website
 
-- **Đóng**: đóng Reader.
-- **Đoạn trước / Đoạn tiếp**: chuyển đến đoạn liền trước hoặc liền sau.
-- **Đọc**: bắt đầu đọc từ đầu nội dung.
-- **Tạm dừng / Tiếp tục**: điều khiển phiên đọc hiện tại.
-- **Dừng**: dừng đọc và xóa trạng thái phiên.
-- **Cài đặt**: mở hoặc đóng bảng Settings.
-- **A− / A+**: giảm hoặc tăng cỡ chữ nhanh.
-- **Phông chữ**: chọn nhanh phông chữ.
-- **Đổi nền**: luân phiên màu giấy, tối và sáng.
+Đặt `tts-widget.js` trên máy chủ của website hoặc trong thư mục tài nguyên tĩnh, sau đó thêm thẻ script ở cuối body hoặc dùng thuộc tính `defer`.
 
-Tất cả điều khiển phụ luôn hiển thị. Không có chế độ thu gọn/mở rộng thanh công cụ.
+Ví dụ website có vùng nội dung:
 
-Thanh công cụ có thể đặt ở **Header - Đầu trang** hoặc **Footer - Chân trang** trong Settings → Giao diện.
+```html
+<article id="article">
+  <h1>Tiêu đề bài viết</h1>
+  <p>Nội dung cần đọc...</p>
+</article>
 
-## Cài đặt
+<script src="/assets/tts-widget.js" defer data-content-selector="#article"></script>
+```
 
-Bảng Settings có các nhóm:
+Widget sẽ tự tìm phần tử theo selector, tạo nút mở Reader ngay sau nội dung và tự dựng giao diện đọc. Mặc định selector là `article` nếu không truyền `data-content-selector`.
 
-- **Giao diện**: chủ đề, vị trí Header/Footer, tự cuộn theo đoạn đang đọc và tiếp tục đọc khi chuyển tab/mất focus.
-- **Kiểu chữ**: phông, cỡ chữ, chiều cao dòng và chiều rộng nội dung.
-- **Giọng đọc**: tìm/lọc giọng, làm mới danh sách, thử giọng, tốc độ, cao độ và âm lượng.
-- **Đồng bộ đọc**: theo dõi đoạn đang đọc và highlight từ nếu API hỗ trợ.
-- **Highlight**: bật/tắt highlight đoạn và chọn màu nền, màu chữ, màu viền.
+Không cần sao chép markup Reader, CSS hoặc JavaScript nội bộ vào website chủ.
 
-Nút **Mặc định** khôi phục các thiết lập về giá trị mặc định. Nút **Lưu cài đặt** lưu cấu hình hiện tại.
+## API JavaScript
 
-## Chọn và thử giọng đọc
+Có thể khởi tạo chủ động khi cần:
 
-Mở Settings → Giọng đọc. Chọn giọng trong danh sách; có thể nhập từ khóa để lọc, nhấn **Làm mới** để yêu cầu đọc lại danh sách giọng hoặc **Thử giọng** để nghe câu mẫu.
+```html
+<script src="/assets/tts-widget.js" defer></script>
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    window.TTSWidget.init({ contentSelector: ".post-content" });
+  });
+</script>
+```
 
-Danh sách giọng có thể tải trễ. Nếu chưa thấy giọng, thử nhấn Làm mới hoặc kiểm tra cài đặt giọng đọc của hệ điều hành.
+`init(options)` hiện hỗ trợ:
 
-## Đọc từ vị trí chuột phải
+| Thuộc tính | Mặc định | Ý nghĩa |
+|---|---|---|
+| `contentSelector` | `article` | CSS selector của phần tử chứa nội dung cần đọc |
 
-Khi Reader đang mở, nhấn chuột phải trên một đoạn văn hoặc tiêu đề trong vùng nội dung, sau đó chọn **Đọc từ đây**. Menu này chỉ được tạo trong thời gian Reader mở; trang nguồn vẫn dùng menu chuột phải mặc định khi Reader đóng.
+Khởi tạo lặp lại không tạo thêm bản sao widget.
 
-## Lưu cấu hình
+## Các tính năng
 
-Các thiết lập giao diện và đọc được lưu trong `localStorage` của trình duyệt. Cấu hình được khôi phục khi tải lại trang trên cùng trình duyệt và cùng origin. Dữ liệu giọng đọc được lưu riêng dưới dạng thông tin định danh; nếu giọng không còn được cung cấp, widget sẽ chọn giọng phù hợp khác hoặc giọng mặc định.
+- Mở Reader riêng, giữ nội dung bài viết và cấu trúc tiêu đề/đoạn/danh sách.
+- Đọc, tạm dừng, tiếp tục, dừng và chuyển đoạn.
+- Chọn, tìm kiếm, làm mới và thử giọng đọc.
+- Điều chỉnh tốc độ, cao độ và âm lượng.
+- Chủ đề giấy, sáng, tối; thay đổi phông, cỡ chữ, chiều cao dòng và chiều rộng.
+- Thanh công cụ ở Header hoặc Footer.
+- Theo dõi đoạn và từ khi trình duyệt/giọng đọc hỗ trợ sự kiện boundary.
+- Tự cuộn theo đoạn đang đọc.
+- Menu chuột phải “Đọc từ đây” trong Reader.
+- Lưu cài đặt trong localStorage.
+- Nhận diện Web Speech API; nếu không hỗ trợ, Reader vẫn mở để đọc bằng mắt.
 
-Xóa dữ liệu trang web hoặc dùng hồ sơ/trình duyệt khác có thể làm mất cấu hình đã lưu.
+## Giới hạn
 
-## Đọc nền và giới hạn
+Giọng đọc được cung cấp bởi trình duyệt và hệ điều hành; danh sách và chất lượng giọng tiếng Việt tùy thiết bị. Sự kiện đồng bộ từ `onboundary` không được hỗ trợ đồng nhất.
 
-Tùy chọn tiếp tục đọc khi chuyển tab hoặc cửa sổ mất focus hoạt động theo cơ chế best-effort. Widget không chủ động pause/cancel chỉ vì tab mất focus và thử khôi phục phiên khi người dùng quay lại.
-
-Web Speech API do trình duyệt và hệ điều hành quản lý. Widget không thể đảm bảo âm thanh tiếp tục trong mọi tình huống, chẳng hạn tab bị loại khỏi bộ nhớ, trình duyệt bị đóng băng, thiết bị ngủ, hệ điều hành dừng âm thanh hoặc engine giọng đọc tự ngắt. Sự kiện ranh giới từ (`onboundary`) cũng không được mọi giọng/trình duyệt hỗ trợ đồng nhất; khi thiếu sự kiện, widget chỉ có thể theo dõi đoạn hiện tại.
+Đọc nền khi chuyển tab hoặc cửa sổ là best-effort. Trình duyệt hoặc hệ điều hành vẫn có thể đóng băng tab, hủy utterance, dừng âm thanh hoặc đưa thiết bị vào chế độ ngủ.
 
 ## Xử lý sự cố
 
-- **Không có âm thanh**: kiểm tra âm lượng thiết bị, quyền âm thanh, giọng đã chọn và khả năng hỗ trợ Web Speech API.
-- **Không thấy giọng tiếng Việt**: cài thêm giọng tiếng Việt trong hệ điều hành (nếu có), sau đó nhấn Làm mới.
-- **Danh sách giọng trống lúc mới mở**: chờ một chút rồi nhấn Làm mới.
-- **Không highlight được từng từ**: giọng đọc hoặc trình duyệt có thể không phát sự kiện `onboundary`; bật theo dõi đoạn để vẫn nhận biết vị trí đang đọc.
-- **Đọc nền bị ngắt**: quay lại tab để widget thử khôi phục; giới hạn nền tảng có thể khiến không thể khôi phục hoàn toàn.
+- **Không thấy nút mở Reader**: kiểm tra selector trong `data-content-selector` có trỏ đúng phần tử tồn tại khi script chạy hay không.
+- **Không có âm thanh**: kiểm tra Web Speech API, âm lượng hệ thống và giọng đã chọn.
+- **Không có giọng tiếng Việt**: cài giọng tiếng Việt ở hệ điều hành nếu có, sau đó nhấn Làm mới trong Settings.
+- **Không highlight từng từ**: giọng đọc hoặc trình duyệt có thể không phát `onboundary`; khi đó widget chỉ có thể theo dõi đoạn.
+- **Đọc nền bị ngắt**: đây là giới hạn của trình duyệt/hệ điều hành; quay lại tab để widget thử khôi phục phiên nếu có thể.
