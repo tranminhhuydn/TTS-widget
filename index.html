@@ -18,6 +18,9 @@ button.active{outline:2px solid #fbbf24;outline-offset:2px}
 header{padding:18px max(20px,calc((100% - 1050px)/2));background:#263b55;color:#fff}
 main{max-width:1050px;margin:35px auto;padding:0 20px}
 .layout{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:25px}
+/* Widget launcher is inserted after #article; keep the sidebar beside the article. */
+.layout > .tts-widget-root{grid-column:1}
+.layout > aside{grid-column:2;grid-row:1 / span 2}
 article,aside{padding:28px;border-radius:12px;background:#fff}
 h1{line-height:1.35}
 .open-button{text-align:center;margin:30px}
