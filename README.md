@@ -101,8 +101,13 @@ Giọng đọc được cung cấp bởi trình duyệt và hệ điều hành; 
 
 ## Xử lý sự cố
 
-- **Không thấy nút mở Reader**: kiểm tra selector trong `data-content-selector` có trỏ đúng phần tử tồn tại khi script chạy hay không.
+- **Không thấy nút mở Reader**: kiểm tra `data-content-selector` có trỏ đúng phần tử nội dung; kiểm tra Console có lỗi JavaScript; thử tải lại trang sau khi xác nhận script `tts-widget.js` đã tải thành công. Launcher được cố định ở góc dưới bên phải và có CSS ưu tiên để tránh bị CSS website chủ che hoặc ẩn.
 - **Không có âm thanh**: kiểm tra Web Speech API, âm lượng hệ thống và giọng đã chọn.
 - **Không có giọng tiếng Việt**: cài giọng tiếng Việt ở hệ điều hành nếu có, sau đó nhấn Làm mới trong Settings.
 - **Không highlight từng từ**: giọng đọc hoặc trình duyệt có thể không phát `onboundary`; khi đó widget chỉ có thể theo dõi đoạn.
 - **Đọc nền bị ngắt**: đây là giới hạn của trình duyệt/hệ điều hành; quay lại tab để widget thử khôi phục phiên nếu có thể.
+
+
+### Khắc phục xung đột CSS với website chủ
+
+Launcher được tạo bên trong root riêng của widget, cố định ở góc dưới bên phải viewport và đặt z-index cao. CSS của launcher reset các thuộc tính hiển thị thiết yếu để hạn chế xung đột với quy tắc button toàn cục của website tích hợp.
