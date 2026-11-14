@@ -512,16 +512,17 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
   - Không ẩn launcher chỉ vì trạng thái đọc là paused/ended; chỉ phụ thuộc trạng thái Reader đang mở hay đóng.
 - Acceptance test: tải trang thấy launcher; nhấn launcher thấy toolbar và launcher biến mất; nhấn nút đóng hoặc Escape thì toolbar biến mất và launcher xuất hiện lại.
 
-## 21. Công việc để lại: tải danh sách giọng đọc bất đồng bộ
+## 21. Tải và đồng bộ danh sách giọng đọc bất đồng bộ — đã triển khai
 
-- Chưa triển khai trong lần cập nhật hiện tại; để dành cho lượt sửa và kiểm thử sau khi khởi động lại trình duyệt.
-- Điều tra hiện tượng giọng **Google Tiếng Việt 4 (Natural)** không xuất hiện trong danh sách ở lần mở Cài đặt đầu tiên nhưng xuất hiện sau một số thao tác.
-- Kiểm tra thời điểm đăng ký sự kiện `speechSynthesis.voiceschanged`, kết quả ban đầu của `speechSynthesis.getVoices()` và khả năng sự kiện phát ra trước khi VoiceManager đăng ký listener.
-- Thiết kế VoiceManager đồng bộ danh sách giọng khi khởi tạo, khi nhận `voiceschanged`, khi mở Cài đặt và khi người dùng yêu cầu làm mới; nếu cần retry thì phải có giới hạn, không polling vô hạn.
-- Khi danh sách được cập nhật, giữ nguyên giọng đã chọn nếu còn tồn tại, giữ từ khóa tìm kiếm, không tạo option trùng lặp và không tự ý đổi giọng người dùng.
-- Không hard-code riêng tên Google Tiếng Việt 4 (Natural); phải xử lý tổng quát cho mọi giọng do trình duyệt cung cấp.
-- Kiểm thử thực tế sau khi restart Chrome: lần mở Cài đặt đầu tiên, danh sách giọng ban đầu, thời điểm Google Tiếng Việt 4 (Natural) xuất hiện, thao tác mở/đóng Cài đặt, Làm mới, chọn giọng và tải lại trang.
-- Không tuyên bố đã xác minh hành vi trình duyệt nếu chưa thực hiện kiểm thử thực tế.
+- Đăng ký `voiceschanged` trước lần gọi `getVoices()` đầu tiên; dùng `addEventListener` khi có, nếu không thì nối handler cũ của `onvoiceschanged` mà không ghi đè hành vi trước đó.
+- Khi khởi tạo, khi mở Cài đặt, khi nhấn Làm mới và khi nhận `voiceschanged`, đồng bộ lại danh sách giọng từ Web Speech API.
+- Nếu danh sách ban đầu rỗng, retry theo lịch có giới hạn; không polling vô hạn. Khi có danh sách, hủy retry còn chờ.
+- Loại bỏ giọng trùng theo định danh `voiceURI + name + lang`; dùng định danh ổn định làm value của option, không dùng chỉ số mảng có thể thay đổi giữa các lần tải.
+- Giữ lựa chọn của người dùng nếu giọng đó vẫn còn; khôi phục giọng đã lưu khi nó xuất hiện; nếu chưa có lựa chọn thì ưu tiên giọng tiếng Việt, sau đó giọng mặc định rồi giọng đầu tiên.
+- Giữ nguyên từ khóa tìm kiếm khi danh sách cập nhật; không tự đổi giọng người dùng đã chọn.
+- Không hard-code tên Google Tiếng Việt 4 (Natural); mọi giọng do trình duyệt cung cấp đều được xử lý theo cùng một cơ chế.
+- Acceptance test: giả lập `getVoices()` ban đầu rỗng rồi có dữ liệu; phát `voiceschanged`; xác nhận option xuất hiện, không trùng, search và lựa chọn được giữ; xác nhận retry dừng sau số lần giới hạn; kiểm tra mở Settings và nút Làm mới.
+- Kiểm thử thực tế sau khi restart Chrome vẫn cần xác nhận trên thiết bị người dùng; không tuyên bố đã browser-test nếu chưa thực hiện.
 
 
 
