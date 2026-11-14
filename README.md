@@ -79,7 +79,7 @@ Khởi tạo lặp lại không tạo thêm bản sao widget.
 ## Các tính năng
 
 - Đọc trực tiếp DOM website gốc, không tạo bản sao nội dung.
-- Thanh điều khiển nổi độc lập, đặt ở Header hoặc Footer.
+- Thanh điều khiển nổi độc lập, đặt ở Header hoặc Footer; nút mở Reader cố định ở góc màn hình, không chiếm chỗ trong luồng nội dung.
 - Đọc, tạm dừng, tiếp tục, dừng, chuyển đoạn và đọc từ đây.
 - Chọn/tìm/làm mới/thử giọng; điều chỉnh tốc độ, cao độ và âm lượng.
 - Reading Highlight cho đoạn; highlight từ dùng CSS Custom Highlight API nếu trình duyệt hỗ trợ.
@@ -91,7 +91,7 @@ Khởi tạo lặp lại không tạo thêm bản sao widget.
 - Không clone hoặc thay đổi cấu trúc DOM; không sửa CSS, class gốc, inline style, font, kích thước hoặc bố cục.
 - Không khóa hoặc tự cuộn trang; không thay đổi html/body.
 - Chỉ thêm/gỡ class highlight riêng; highlight từ không bọc hoặc sửa text node.
-- Giao diện nổi chỉ gồm toolbar và Settings, không phủ nền website.
+- Giao diện nổi chỉ gồm launcher, toolbar và Settings; không phủ nền website, không chiếm chỗ trong luồng nội dung.
 
 ## Giới hạn
 
