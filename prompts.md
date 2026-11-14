@@ -2,7 +2,7 @@
 
 ## 1. Mục tiêu
 
-Tiếp tục phát triển TTS-widget dựa trên mã nguồn `index.html` hiện tại.
+Tiếp tục phát triển TTS-widget theo kiến trúc `tts-widget.js` nhúng vào `demo.html`; `index.html` chỉ là điểm vào tương thích.
 
 Xây dựng một trình đọc văn bản trên web sử dụng tối đa các khả năng mà Chrome Web Speech API cung cấp.
 
@@ -305,7 +305,7 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 
 ### 9.6. Quy tắc đối chiếu trước khi kết thúc mỗi lần sửa
 
-- Đối chiếu từng yêu cầu trong prompt với phần triển khai thực tế trong `index.html`; không chỉ kiểm tra sự tồn tại của selector, class, hàm hoặc nút.
+- Đối chiếu từng yêu cầu trong prompt với phần triển khai thực tế trong `tts-widget.js` và `demo.html`; không chỉ kiểm tra sự tồn tại của selector, class, hàm hoặc nút.
 - Ghi nhận rõ ba trạng thái: đã triển khai và có kiểm chứng; đã triển khai nhưng chưa kiểm chứng trên trình duyệt; chưa triển khai hoặc còn lỗi.
 - Mỗi lỗi phát hiện khi đối chiếu phải được chuyển thành acceptance test cụ thể trong prompt.
 - Không ghi một tiêu chí là hoàn thành chỉ vì mã có đoạn xử lý tương ứng; phải kiểm tra cả luồng thành công, luồng lỗi, trạng thái biên và tương tác giữa các tính năng.
@@ -367,7 +367,7 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 
 - Không cung cấp nút, checkbox, phím tắt, trạng thái hoặc thao tác nào để thu gọn/mở rộng các điều khiển phụ trên thanh công cụ.
 - Luôn hiển thị hàng điều khiển phụ (giảm/tăng cỡ chữ, chọn phông, đổi nền) cùng các điều khiển chính; không ẩn chúng bằng class CSS hoặc trạng thái JavaScript.
-- Xóa nút `collapseBtn`, tùy chọn `settingCompact`, class `toolbar-extra`/`toolbar-collapsed`, listener và logic áp dụng trạng thái compact khỏi `index.html`.
+- Xóa nút `collapseBtn`, tùy chọn `settingCompact`, class `toolbar-extra`/`toolbar-collapsed`, listener và logic áp dụng trạng thái compact khỏi `tts-widget.js`.
 - Không giữ thuộc tính `compact` trong cấu hình mặc định hoặc đồng bộ Settings. Nếu localStorage còn khóa `compact` từ phiên bản cũ, bỏ qua khóa dư thừa; không để nó ảnh hưởng giao diện.
 - Giữ nguyên các chức năng riêng biệt của Settings, điều khiển nhanh, vị trí Header/Footer và các chức năng đọc.
 - Acceptance test:
