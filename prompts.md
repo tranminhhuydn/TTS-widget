@@ -425,8 +425,8 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 ## 15. Đọc trực tiếp trên website gốc – chỉ can thiệp Reading Highlight
 
 - Đọc trực tiếp các node trong `contentSelector`; tuyệt đối không dùng `cloneNode()`, không tạo bản sao nội dung.
-- Thanh điều khiển là lớp nổi độc lập, đặt ở Header hoặc Footer; không có lớp nền che trang.
-- Không thay đổi font, cỡ chữ, line-height, chiều rộng, margin, padding, theme, inline style, class gốc hoặc bố cục website.
+- Thanh điều khiển là lớp nổi độc lập, đặt ở Header hoặc Footer; nút mở Reader cố định ở góc màn hình. Không chèn launcher vào luồng nội dung và không có lớp nền che trang.
+- Không thay đổi font, cỡ chữ, line-height, chiều rộng, margin, padding, theme, inline style, class gốc hoặc bố cục website. Gắn root widget vào body; launcher phải fixed để không chiếm chỗ trong luồng trang.
 - Chỉ thêm/gỡ class riêng `tts-widget-reading-active` trên phần tử đang đọc; không ghi đè thuộc tính class và không xóa class khác.
 - Highlight từ dùng CSS Custom Highlight API (`CSS.highlights`/`Highlight`), không bọc text bằng `span`/`mark`, không sửa text node. Nếu API không hỗ trợ thì chỉ highlight đoạn.
 - Không tự cuộn, không khóa scroll, không thay đổi overflow trên `html`/`body`.
