@@ -523,3 +523,18 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 - Kiểm thử thực tế sau khi restart Chrome: lần mở Cài đặt đầu tiên, danh sách giọng ban đầu, thời điểm Google Tiếng Việt 4 (Natural) xuất hiện, thao tác mở/đóng Cài đặt, Làm mới, chọn giọng và tải lại trang.
 - Không tuyên bố đã xác minh hành vi trình duyệt nếu chưa thực hiện kiểm thử thực tế.
 
+
+
+## 22. Chỉ hiển thị trạng thái sau khi người dùng bắt đầu đọc
+
+- Không hiển thị trạng thái mặc định “Sẵn sàng đọc” khi trang vừa tải hoặc khi người dùng chỉ mở bộ điều khiển.
+- Vùng trạng thái phải ẩn mặc định; chỉ bật hiển thị khi người dùng nhấn nút Đọc hoặc thực hiện lệnh bắt đầu đọc như “Đọc từ đây”.
+- Sau khi bắt đầu đọc, vùng trạng thái được phép hiển thị các thông báo tiến trình, tạm dừng, tiếp tục, lỗi hoặc hoàn tất.
+- Việc thử giọng, mở Cài đặt hoặc mở bộ điều khiển không tự kích hoạt vùng trạng thái.
+- Khi đóng/tắt bộ điều khiển, phải ẩn trạng thái ngay; lần mở bộ điều khiển tiếp theo vẫn tiếp tục ẩn cho đến khi người dùng bắt đầu đọc.
+- Acceptance test:
+  1. Tải trang: không thấy “Sẵn sàng đọc” hoặc vùng trạng thái.
+  2. Mở bộ điều khiển: vùng trạng thái vẫn ẩn.
+  3. Nhấn Đọc hoặc “Đọc từ đây”: vùng trạng thái xuất hiện và cập nhật tiến trình.
+  4. Thử giọng khi chưa bắt đầu đọc: vùng trạng thái không xuất hiện.
+  5. Đóng bộ điều khiển: vùng trạng thái biến mất ngay; mở lại không tự xuất hiện.
