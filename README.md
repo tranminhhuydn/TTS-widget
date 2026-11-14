@@ -81,7 +81,7 @@ Khởi tạo lặp lại không tạo thêm bản sao widget.
 - Đọc trực tiếp DOM website gốc, không tạo bản sao nội dung.
 - Khi mở Reader, website gốc vẫn hiển thị và tương tác bình thường; không có lớp phủ toàn màn hình hoặc vùng nội dung Reader che trang.
 - Reading Highlight đánh dấu trực tiếp phần tử và text node gốc; không clone hoặc bọc văn bản.
-- Thanh điều khiển nổi độc lập, đặt ở Header hoặc Footer; nút mở Reader cố định ở góc màn hình, không chiếm chỗ trong luồng nội dung. Khi Reader mở, nút launcher tự ẩn; khi đóng Reader, nút launcher xuất hiện lại.
+- Thanh điều khiển nổi độc lập, đặt ở Header hoặc Footer; nút mở Reader cố định ở góc màn hình, không chiếm chỗ trong luồng nội dung. Khi Reader mở, nút launcher tự ẩn; khi đóng Reader, nút launcher xuất hiện lại. Trạng thái thông báo mặc định được ẩn, chỉ xuất hiện sau khi bắt đầu đọc và tự ẩn khi đóng bộ điều khiển.
 - Đọc, tạm dừng, tiếp tục, dừng, chuyển đoạn và đọc từ đây.
 - Chọn/tìm/làm mới/thử giọng; điều chỉnh tốc độ, cao độ và âm lượng.
 - Reading Highlight đồng thời cho đoạn và từng từ: đoạn được tô nền khi đọc, từng từ được đánh dấu theo sự kiện `onboundary` nếu giọng đọc/trình duyệt hỗ trợ; cả hai đều tác động trực tiếp lên DOM gốc.
