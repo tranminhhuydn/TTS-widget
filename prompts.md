@@ -464,3 +464,19 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
   4. Nếu trình duyệt hỗ trợ CSS Custom Highlight API và onboundary, highlight từ phủ đúng Range trong text node gốc, không phát sinh span/mark hoặc node clone.
   5. Kiểm tra trang host có CSS toàn cục cho `.reader`, `#reader` và `button`: không gây xung đột với wrapper widget.
   6. Nội dung website vẫn tương tác và cuộn bình thường trong toàn bộ thời gian Reader mở.
+
+
+## 18. Launcher và Reading Highlight trên DOM gốc
+
+- Launcher là hành động trực tiếp bắt đầu đọc vùng nội dung đã cấu hình, vì vậy nhãn mặc định phải là `Đọc nội dung này` và biểu tượng loa `🔊`, không dùng “Mở chế độ đọc” hoặc biểu tượng sách.
+- Khi Web Speech API không được hỗ trợ, giữ nhãn `Đọc nội dung này` và biểu tượng loa; chỉ thêm trạng thái `[ không hỗ trợ ]`.
+- Reading Highlight đoạn phải luôn đánh dấu trực tiếp phần tử gốc hiện đang được đọc khi tùy chọn highlight và đồng bộ đoạn được bật.
+- CSS highlight phải đủ đặc hiệu và có `!important` cần thiết để chống CSS website chủ ghi đè; không thay đổi layout, không thêm padding/margin hoặc di chuyển phần tử.
+- Khi đánh dấu đoạn, thêm class namespace riêng và data attribute namespace riêng; khi bỏ highlight chỉ gỡ đúng class/data attribute do widget thêm, không xóa class hay thuộc tính vốn có.
+- Highlight từ dùng CSS Custom Highlight API với Range trên text node gốc, không wrap text node.
+- Acceptance test:
+  1. Launcher hiển thị biểu tượng loa và nhãn “Đọc nội dung này”.
+  2. Khi bắt đầu đọc, phần tử source hiện tại có class `tts-widget-reading-active` và highlight nền/viền nhìn thấy rõ.
+  3. Khi chuyển đoạn, highlight chuyển sang phần tử tương ứng; khi dừng/đóng, class và data attribute của widget được gỡ.
+  4. Nếu onboundary và CSS Custom Highlight API được hỗ trợ, từ đang đọc được highlight; nếu không, highlight đoạn vẫn hoạt động.
+  5. Kiểm tra với CSS host có selector toàn cục và `!important`; highlight vẫn phải nhìn thấy.
