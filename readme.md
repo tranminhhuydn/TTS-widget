@@ -25,7 +25,7 @@ TTS Widget là tiện ích đọc nội dung website thành tiếng bằng Web S
 1. Tải hoặc clone repository.
 2. Mở `index.html` để sử dụng trang Web Reader chính với nội dung/bố cục gốc.
 3. Mở `demo.html` để thử widget trên bài viết dài.
-4. Cả hai trang đều tải cùng `tts-widget.js`; widget tự thêm nút **📖 Mở chế độ đọc** ngay sau vùng bài viết.
+4. Cả hai trang đều tải cùng `tts-widget.js`; widget tự thêm nút **🔊 Đọc nội dung này** cố định ở góc dưới bên phải viewport.
 5. Chọn giọng đọc trong **Cài đặt → Giọng đọc**, sau đó nhấn Đọc.
 
 Để tránh các giới hạn bảo mật của một số trình duyệt với file cục bộ, nên chạy bằng static server, ví dụ:
@@ -51,7 +51,7 @@ Ví dụ website có vùng nội dung:
 <script src="/assets/tts-widget.js" defer data-content-selector="#article"></script>
 ```
 
-Widget sẽ tự tìm phần tử theo selector, tạo nút mở Reader ngay sau nội dung và tự dựng giao diện đọc. Mặc định selector là `article` nếu không truyền `data-content-selector`.
+Widget sẽ tự tìm phần tử theo selector, tạo nút mở Reader cố định ở góc dưới bên phải viewport và tự dựng giao diện điều khiển. Khi mở, nội dung website gốc vẫn hiển thị và tương tác bình thường. Mặc định selector là `article` nếu không truyền `data-content-selector`.
 
 Không cần sao chép markup Reader, CSS hoặc JavaScript nội bộ vào website chủ.
 
@@ -79,10 +79,12 @@ Khởi tạo lặp lại không tạo thêm bản sao widget.
 ## Các tính năng
 
 - Đọc trực tiếp DOM website gốc, không tạo bản sao nội dung.
-- Thanh điều khiển nổi độc lập, đặt ở Header hoặc Footer; nút mở Reader cố định ở góc màn hình, không chiếm chỗ trong luồng nội dung.
+- Khi mở Reader, website gốc vẫn hiển thị và tương tác bình thường; không có lớp phủ toàn màn hình hoặc vùng nội dung Reader che trang.
+- Reading Highlight đánh dấu trực tiếp phần tử và text node gốc; không clone hoặc bọc văn bản.
+- Thanh điều khiển nổi độc lập, đặt ở Header hoặc Footer; nút mở Reader cố định ở góc màn hình, không chiếm chỗ trong luồng nội dung. Khi Reader mở, nút launcher tự ẩn; khi đóng Reader, nút launcher xuất hiện lại. Trạng thái thông báo mặc định được ẩn, chỉ xuất hiện sau khi bắt đầu đọc và tự ẩn khi đóng bộ điều khiển.
 - Đọc, tạm dừng, tiếp tục, dừng, chuyển đoạn và đọc từ đây.
 - Chọn/tìm/làm mới/thử giọng; điều chỉnh tốc độ, cao độ và âm lượng.
-- Reading Highlight cho đoạn; highlight từ dùng CSS Custom Highlight API nếu trình duyệt hỗ trợ.
+- Reading Highlight đồng thời cho đoạn và từng từ: đoạn được tô nền khi đọc, từng từ được đánh dấu theo sự kiện `onboundary` nếu giọng đọc/trình duyệt hỗ trợ; cả hai đều tác động trực tiếp lên DOM gốc.
 - Tùy chỉnh màu highlight, bật/tắt đồng bộ và lưu cài đặt.
 - Đọc nền best-effort; nhận diện Web Speech API.
 
@@ -91,7 +93,8 @@ Khởi tạo lặp lại không tạo thêm bản sao widget.
 - Không clone hoặc thay đổi cấu trúc DOM; không sửa CSS, class gốc, inline style, font, kích thước hoặc bố cục.
 - Không khóa hoặc tự cuộn trang; không thay đổi html/body.
 - Chỉ thêm/gỡ class highlight riêng; highlight từ không bọc hoặc sửa text node.
-- Giao diện nổi chỉ gồm launcher, toolbar và Settings; không phủ nền website, không chiếm chỗ trong luồng nội dung.
+- Giao diện nổi chỉ gồm launcher, toolbar, Settings, status và context menu; không tạo backdrop/lớp phủ toàn màn hình, không che nội dung và không chiếm chỗ trong luồng nội dung.
+- Wrapper Reader dùng tên class/ID có namespace riêng để tránh xung đột với CSS của website host.
 
 ## Giới hạn
 
@@ -103,8 +106,8 @@ Giọng đọc được cung cấp bởi trình duyệt và hệ điều hành; 
 
 - **Không thấy nút mở Reader**: kiểm tra `data-content-selector` có trỏ đúng phần tử nội dung; kiểm tra Console có lỗi JavaScript; thử tải lại trang sau khi xác nhận script `tts-widget.js` đã tải thành công. Launcher được cố định ở góc dưới bên phải và có CSS ưu tiên để tránh bị CSS website chủ che hoặc ẩn.
 - **Không có âm thanh**: kiểm tra Web Speech API, âm lượng hệ thống và giọng đã chọn.
-- **Không có giọng tiếng Việt**: cài giọng tiếng Việt ở hệ điều hành nếu có, sau đó nhấn Làm mới trong Settings.
-- **Không highlight từng từ**: giọng đọc hoặc trình duyệt có thể không phát `onboundary`; khi đó widget chỉ có thể theo dõi đoạn.
+- **Không có giọng tiếng Việt hoặc giọng mới chưa xuất hiện**: danh sách được đồng bộ khi mở Cài đặt, khi trình duyệt phát `voiceschanged` và khi nhấn Làm mới. Widget thử tải lại theo số lần giới hạn ngay cả khi trình duyệt đã trả về một phần danh sách, nhằm phát hiện giọng xuất hiện muộn. Nếu vẫn thiếu, cần xác minh Chrome có thực sự cung cấp giọng đó qua `speechSynthesis.getVoices()`.
+- **Không highlight từng từ**: giọng đọc hoặc trình duyệt có thể không phát `onboundary` hoặc không hỗ trợ CSS Custom Highlight API; khi đó highlight đoạn vẫn hoạt động. Vị trí từng từ được tính riêng trong từng utterance để tránh lệch khi một đoạn được chia thành nhiều lượt đọc. Nếu cả highlight đoạn cũng không hiển thị, hãy cập nhật phiên bản mới nhất vì stylesheet highlight phải được tham chiếu từ `document.head`.
 - **Đọc nền bị ngắt**: đây là giới hạn của trình duyệt/hệ điều hành; quay lại tab để widget thử khôi phục phiên nếu có thể.
 
 
