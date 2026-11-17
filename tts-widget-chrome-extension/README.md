@@ -2,23 +2,25 @@
 
 ## Trạng thái
 
-**Bản khởi tạo 0.1.0** – Extension Manifest V3 với cơ chế kích hoạt theo tab.
+**Bản khởi tạo 0.1.0** – Extension Manifest V3 với cơ chế bật/tắt theo tab.
 
 ## Cách hoạt động
 
 1. Người dùng mở website cần đọc.
 2. Nhấn biểu tượng TTS-widget trên thanh công cụ Chrome.
-3. Chọn **Kích hoạt trên trang này**.
-4. Extension nạp lõi TTS-widget vào isolated world của content script.
+3. Popup tự kiểm tra trạng thái của tab hiện tại.
+4. Chọn **Kích hoạt trên trang này** để nạp lõi TTS-widget.
 5. Nhấn nút **🔊 Đọc nội dung này** xuất hiện ở góc dưới bên phải trang.
 6. Mở Cài đặt trong bộ điều khiển để chọn giọng, tốc độ, cao độ, âm lượng và tùy chọn highlight.
+7. Chọn **Tắt trên trang này** để dừng đọc, đóng cửa sổ đọc và ẩn bộ điều khiển trên tab hiện tại. Có thể kích hoạt lại mà không cần tải lại trang.
 
-Extension hiện chọn vùng nội dung theo thứ tự: `article`, `main`, rồi `body` (chỉ khi tìm được ít nhất hai khối văn bản phù hợp).
+Extension chọn vùng nội dung theo thứ tự: `article`, `main`, rồi `body` (chỉ khi tìm được ít nhất hai khối văn bản phù hợp).
 
 ## Cấu trúc
 
-- `manifest.json`: cấu hình Manifest V3.
-- `popup.html`, `popup.css`, `popup.js`: giao diện bật bộ đọc cho tab hiện tại.
+- `manifest.json`: cấu hình Manifest V3 và icon.
+- `icons/`: icon 16, 48 và 128 px.
+- `popup.html`, `popup.css`, `popup.js`: giao diện bật/tắt bộ đọc cho tab hiện tại.
 - `content.js`: tìm vùng nội dung và khởi tạo widget.
 - `lib/tts-widget.js`: bản đóng gói của lõi TTS-widget dùng trong Extension.
 
@@ -50,16 +52,16 @@ Không khai báo quyền truy cập tất cả website và không cần service 
 - Trên ChatGPT, bộ chọn `main` có thể lấy nhiều khối nội dung trong vùng hội thoại; chưa có bộ điều khiển riêng cho từng phản hồi assistant.
 - Extension dùng Web Speech API của trình duyệt. Nó không truy cập hoặc điều khiển giao diện Chrome Read Aloud và không thể bảo đảm danh sách giọng đọc giống Chrome Read Aloud.
 - Các trang nội bộ của Chrome, Chrome Web Store và một số trang có chính sách bảo mật đặc biệt không cho phép Extension chèn script.
-- Đọc nền và sự kiện highlight từ phụ thuộc vào trình duyệt, hệ điều hành và giọng đọc.
+- Đọc nền và sự kiện highlight phụ thuộc vào trình duyệt, hệ điều hành và giọng đọc.
+- Khi tắt, widget được ẩn và phiên đọc hiện tại bị dừng; tài nguyên và listeners đã đăng ký bởi lõi vẫn còn trong trang để hỗ trợ bật lại mà không phải tải lại trang.
 
 ## Kiểm thử
 
-Kiểm tra tối thiểu sau khi nạp Extension:
-
-- Popup mở và nút kích hoạt hiển thị.
+- Popup mở và tự nhận diện trạng thái đang bật/tắt.
 - Kích hoạt trên trang bài viết có `article`.
 - Kích hoạt trên trang chỉ có `main`.
-- Không tạo hai bộ điều khiển khi bấm kích hoạt nhiều lần.
+- Bật → tắt: âm thanh dừng và bộ điều khiển biến mất.
+- Tắt → bật lại: bộ điều khiển xuất hiện mà không nhân đôi.
 - Mở Reader, chọn giọng, thử giọng, đọc, tạm dừng, tiếp tục và dừng.
 - Xác nhận trang nội bộ Chrome bị từ chối với thông báo dễ hiểu.
 
