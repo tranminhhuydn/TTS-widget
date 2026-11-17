@@ -1,0 +1,43 @@
+# Prompts – TTS-widget Chrome Extension
+
+## Vai trò
+
+Bạn đang phát triển phiên bản **TTS-widget Chrome Extension** trong thư mục `tts-widget-chrome-extension/` của repository.
+
+## Quy tắc bắt buộc về phạm vi
+
+1. Chỉ tạo mới hoặc chỉnh sửa tệp bên trong `tts-widget-chrome-extension/`, trừ khi người dùng yêu cầu rõ ràng khác.
+2. Không tự ý chỉnh sửa, di chuyển, đổi tên hoặc xóa bất kỳ tệp nào trong `tts-widget-embeding-web/`.
+3. Không chỉnh sửa `tts-widget-embeding-web/prompts.md`. Tệp đó là bộ yêu cầu độc lập của phiên bản nhúng website.
+4. Không thay đổi `.gitignore` hoặc README tổng quan ở root nếu không có yêu cầu.
+5. Trước mỗi thay đổi, xác định rõ phiên bản đang làm việc và liệt kê các tệp dự kiến bị tác động.
+
+## Tái sử dụng lõi TTS
+
+- Ưu tiên tái sử dụng mã nguồn và hành vi đã có của phiên bản nhúng website; không viết lại lõi chỉ để phù hợp với cấu trúc Extension.
+- Không sao chép mã nguồn một cách tùy tiện hoặc tạo hai bản lõi lệch nhau.
+- Không giả định Chrome Extension có thể truy cập hoặc điều khiển giao diện Chrome Read Aloud hay danh sách giọng đọc riêng của tính năng đó. Phải phân biệt rõ Web Speech API với Chrome Read Aloud.
+- Nếu việc tích hợp đòi hỏi sửa đổi lõi trong `tts-widget-embeding-web/`, hãy dừng trước khi sửa và trình bày:
+  - lý do kỹ thuật;
+  - tệp và API bị ảnh hưởng;
+  - tác động ngược đến phiên bản nhúng website;
+  - phương án thay thế không sửa lõi;
+  - đề xuất cần người dùng phê duyệt.
+
+## Nguyên tắc triển khai
+
+- Tuân thủ Manifest V3 và các giới hạn hiện hành của Chrome Extensions.
+- Tách biệt content script, service worker, popup/options và tài nguyên dùng chung khi kiến trúc thực tế yêu cầu.
+- Chỉ thêm quyền Extension tối thiểu cần thiết; giải thích mục đích từng quyền.
+- Không thêm thư viện hoặc phụ thuộc nếu chưa có lý do rõ ràng.
+- Bảo toàn các tính năng hiện có khi tích hợp; không tuyên bố tính năng hoạt động nếu chưa kiểm thử.
+- Khi báo cáo hoàn thành, nêu tệp đã thay đổi, cách cài thử bằng chế độ Developer mode, các bước kiểm thử và giới hạn còn lại.
+
+## Quy trình làm việc
+
+1. Đọc README và prompts này trước khi thực hiện.
+2. Kiểm tra cấu trúc và mã nguồn hiện có trong thư mục Extension.
+3. Đề xuất thiết kế ngắn gọn trước các thay đổi có ảnh hưởng kiến trúc.
+4. Triển khai theo từng bước nhỏ, giữ phạm vi thay đổi trong thư mục Extension.
+5. Kiểm tra cú pháp, manifest và luồng hoạt động liên quan.
+6. Báo cáo rõ những gì đã làm và những gì chưa được xác minh.
