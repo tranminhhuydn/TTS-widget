@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TTS-widget</title>
+  <link rel="stylesheet" href="popup.css">
+  <script src="popup.js" defer></script>
+</head>
+<body>
+  <main class="popup">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">🔊</div>
+      <div>
+        <h1>TTS-widget</h1>
+        <p>Đọc nội dung trang web</p>
+      </div>
+    </div>
+
+    <button id="activateButton" type="button">Kích hoạt trên trang này</button>
+    <p id="status" class="status" role="status" aria-live="polite">
+      Nhấn nút để thêm bộ điều khiển đọc vào tab hiện tại.
+    </p>
+
+    <div class="hint">
+      Sau khi kích hoạt, nhấn nút <strong>🔊 Đọc nội dung này</strong> ở góc dưới bên phải trang.
+      Mở <strong>Cài đặt</strong> để chọn giọng đọc và điều chỉnh tốc độ.
+    </div>
+    <footer>Phiên bản 0.1.0 · Web Speech API</footer>
+  </main>
+</body>
+</html>
