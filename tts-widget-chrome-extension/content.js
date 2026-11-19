@@ -21,9 +21,9 @@
   function findContentSelector() {
     if (document.querySelector("article")) return "article";
     const main = document.querySelector("main");
-    if (main && main.querySelector("p, h1, h2, h3, li, blockquote")) return "main";
+    if (main && main.querySelector("p, h1, h2, h3, li, blockquote, pre")) return "main";
     const bodyBlocks = document.body
-      ? document.body.querySelectorAll("p, h1, h2, h3, li, blockquote")
+      ? document.body.querySelectorAll("p, h1, h2, h3, li, blockquote, pre")
       : [];
     if (bodyBlocks.length >= 2) return "body";
     return null;
