@@ -46,6 +46,10 @@ Không khai báo quyền truy cập tất cả website và không cần service 
 5. Chọn thư mục `tts-widget-chrome-extension`.
 6. Mở một trang web có bài viết và kích hoạt Extension từ biểu tượng trên thanh công cụ.
 
+## Phát hiện nội dung động
+
+Extension theo dõi thay đổi DOM của vùng nội dung bằng `MutationObserver`. Khi ChatGPT, Gemini hoặc website SPA thêm/thay thế nội dung mà không tải lại trang, Reader sẽ cập nhật danh sách đoạn đọc sau một khoảng debounce ngắn. Tính năng này chỉ cập nhật nội dung, **không tự động bắt đầu đọc**. Nếu Reader đang phát âm thanh, việc cập nhật được hoãn đến khi phiên đọc kết thúc hoặc dừng để không làm thay đổi hàng đợi đang phát.
+
 ## Giới hạn hiện tại
 
 - Đây là nút đọc cho vùng nội dung của trang, không phải nút riêng trên từng câu trả lời ChatGPT.
