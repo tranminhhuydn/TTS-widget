@@ -143,7 +143,40 @@ class HighlightManager {
 class SpeechManager {
   constructor(reader,voices,settings,highlight){this.reader=reader;this.voices=voices;this.settings=settings;this.highlight=highlight;this.synth=window.speechSynthesis;this.queue=[];this.position=0;this.state="idle";this.session=0;this.current=null;this.currentStarted=false;this.backgroundInterrupted=false;this.onState=()=>{};}
   emit(message){widgetRoot.querySelector("#status").textContent=message;this.onState();}
-  makeQueue(){this.queue=[];this.reader.blocks.forEach((b,paragraph)=>{const sentences=b.text.match(/[^.!?。！？]+[.!?。！？]?/g)||[b.text];let part="";sentences.forEach(sentence=>{if(part.length+sentence.length>220&&part){this.queue.push({text:part.trim(),paragraph});part="";}part+=sentence;if(part.length>=220){this.queue.push({text:part.trim(),paragraph});part="";}});if(part.trim())this.queue.push({text:part.trim(),paragraph});});}
+  makeQueue(){
+    this.queue=[];
+    this.reader.blocks.forEach((b,paragraph)=>{
+      // Code blocks are not prose: sentence punctuation such as "." in
+      // console.log or file paths must not split them into misleading pieces.
+      if(b.element&&b.element.tagName==="PRE"){
+        const words=b.text.replace(/\s+/g," ").trim().split(" ");
+        let part="";
+        words.forEach(word=>{
+          if(part&&part.length+word.length+1>220){
+            this.queue.push({text:part,paragraph});
+            part="";
+          }
+          part+=(part?" ":"")+word;
+        });
+        if(part)this.queue.push({text:part,paragraph});
+        return;
+      }
+      const sentences=b.text.match(/[^.!?。！？]+[.!?。！？]?/g)||[b.text];
+      let part="";
+      sentences.forEach(sentence=>{
+        if(part.length+sentence.length>220&&part){
+          this.queue.push({text:part.trim(),paragraph});
+          part="";
+        }
+        part+=sentence;
+        if(part.length>=220){
+          this.queue.push({text:part.trim(),paragraph});
+          part="";
+        }
+      });
+      if(part.trim())this.queue.push({text:part.trim(),paragraph});
+    });
+  }
   start(paragraph=0){widgetRoot.querySelector("#status").classList.add("visible");if(!isSpeechSynthesisSupported()){this.emit("Trình duyệt không hỗ trợ Web Speech API (SpeechSynthesis).");return;}if(!this.reader.blocks.length){this.emit("Không có nội dung để đọc.");return;}this.stop(false);this.makeQueue();this.position=this.queue.findIndex(x=>x.paragraph>=paragraph);if(this.position<0)this.position=0;this.state="reading";const id=this.session;this.emit("Đang chuẩn bị đọc...");this.next(id);}
   next(id){if(id!==this.session||this.state!=="reading")return;if(this.position>=this.queue.length){this.state="ended";this.current=null;this.currentStarted=false;this.reader.clearHighlight();this.emit("Đã đọc xong.");return;}this.speakCurrent(id);}
   speakCurrent(id){
