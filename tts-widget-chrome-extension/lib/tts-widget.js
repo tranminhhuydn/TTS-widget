@@ -137,7 +137,7 @@ class ReaderManager {
         if(list){
           let seen=seenListItems.get(list);
           if(!seen){seen=new Set();seenListItems.set(list,seen);}
-          const key=text.replace(/\\s+/g," ").trim();
+          const key=text.replace(/\s+/g," ").trim();
           if(key&&seen.has(key))return;
           if(key)seen.add(key);
         }
