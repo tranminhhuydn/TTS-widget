@@ -41,3 +41,12 @@ Bạn đang phát triển phiên bản **TTS-widget Chrome Extension** trong th�
 4. Triển khai theo từng bước nhỏ, giữ phạm vi thay đổi trong thư mục Extension.
 5. Kiểm tra cú pháp, manifest và luồng hoạt động liên quan.
 6. Báo cáo rõ những gì đã làm và những gì chưa được xác minh.
+
+
+## Hỗ trợ khối mã nguồn (pre/code)
+
+- Bộ nhận diện vùng nội dung và bộ trích xuất đoạn đọc phải hỗ trợ khối mã nguồn hiển thị trong thẻ `pre`.
+- Khi lấy nội dung, ưu tiên xử lý mỗi `pre` như một đoạn đọc duy nhất; không đồng thời lấy các `code` con riêng lẻ vì sẽ gây đọc trùng.
+- Dùng văn bản hiển thị (`innerText`) để giữ nội dung người dùng thực sự nhìn thấy; kiểm tra các trang SPA như Gemini khi nội dung được render động.
+- Không đưa nút sao chép, nút thao tác hoặc nhãn giao diện bên ngoài `pre` vào nội dung đọc.
+- Khi sửa logic trích xuất, phải kiểm tra cả văn bản thường và khối mã để tránh hồi quy.
