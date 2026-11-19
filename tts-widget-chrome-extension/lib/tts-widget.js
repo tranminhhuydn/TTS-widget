@@ -113,19 +113,19 @@ class VoiceManager {
 /* READER MANAGER */
 class ReaderManager {
   constructor(){this.root=widgetRoot.querySelector("#ttsWidgetReader");this.content=widgetRoot.querySelector("#readerContent");this.source=null;this.blocks=[];this.active=-1;}
-  open(){this.source=document.querySelector(config.contentSelector);if(!this.source){console.error("[TTSWidget] Không tìm thấy vùng nội dung:",config.contentSelector);return;}
-    this.blocks=[];
+  refreshContent(){
+    // Re-resolve the selector every time: SPA frameworks can replace the
+    // original main/article node without reloading the document.
+    this.source=document.querySelector(config.contentSelector);
+    if(!this.source){this.blocks=[];this.active=-1;return false;}
+    const nextBlocks=[];
     const candidates=Array.from(this.source.querySelectorAll("p,h1,h2,h3,h4,h5,h6,li,blockquote,pre"));
     // Some dynamic pages keep duplicate/hidden renderings of the same list.
     // Track exact list-item text per list container to avoid enqueuing both copies.
     const seenListItems=new WeakMap();
     candidates.forEach(el=>{
-      // Ignore elements that are not rendered; hidden accessibility/transition
-      // copies must not become separate speech blocks.
       const style=window.getComputedStyle(el);
       if(style.display==="none"||style.visibility==="hidden"||el.getClientRects().length===0)return;
-      // Parent list items and blockquotes already contain descendant text.
-      // Skip nested candidates so the same visible text is not queued twice.
       if(!["LI","BLOCKQUOTE","PRE"].includes(el.tagName)&&el.closest("li,blockquote,pre"))return;
       if(el.tagName==="LI"&&el.parentElement?.closest("blockquote,pre"))return;
       let text;
@@ -144,9 +144,16 @@ class ReaderManager {
       }else{
         text=(el.innerText||el.textContent||"").trim();
       }
-      if(text)this.blocks.push({element:el,text});
+      if(text)nextBlocks.push({element:el,text});
     });
-    this.active=-1;this.root.classList.add("open");widgetRoot.classList.add("reader-open");widgetRoot.querySelector("#status").classList.remove("visible");mountReaderContextMenu();}
+    this.blocks=nextBlocks;
+    this.active=-1;
+    return true;
+  }
+  open(){
+    if(!this.refreshContent()){console.error("[TTSWidget] Không tìm thấy vùng nội dung:",config.contentSelector);return;}
+    this.root.classList.add("open");widgetRoot.classList.add("reader-open");widgetRoot.querySelector("#status").classList.remove("visible");mountReaderContextMenu();
+  }
   close(){unmountReaderContextMenu();this.root.classList.remove("open");widgetRoot.classList.remove("reader-open");widgetRoot.querySelector("#status").classList.remove("visible");this.clearHighlight();this.blocks=[];this.source=null;this.active=-1;}
   setActive(index,settings){if(index<0||index>=this.blocks.length)return;this.clearHighlight();this.active=index;if(settings.value.highlight&&settings.value.sync){this.blocks[index].element.classList.add("tts-widget-reading-active");this.blocks[index].element.setAttribute("data-tts-widget-active","true");}}
   clearHighlight(){this.blocks.forEach(block=>{block.element.classList.remove("tts-widget-reading-active");block.element.removeAttribute("data-tts-widget-active");});if(window.CSS&&CSS.highlights)CSS.highlights.delete("tts-widget-word");}
@@ -309,7 +316,62 @@ $("saveSettingsBtn").addEventListener("click",()=>{readSettingsForm();settings.s
 $("resetSettingsBtn").addEventListener("click",()=>{settings.reset();applySettings();$("status").textContent="Đã khôi phục cài đặt mặc định.";});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&reader.root.classList.contains("open")){speech.stop(false);reader.close();}});
 const toolbar=new ToolbarManager(speech,reader);
-speech.onState=()=>toolbar.update();
+let contentRefreshPending=false;
+function refreshVisibleReaderContent(){
+  if(!reader.root.classList.contains("open"))return;
+  // Never mutate the active reading snapshot. Apply deferred DOM changes after
+  // speech has stopped or completed; opening Reader also always takes a fresh snapshot.
+  if(["reading","paused","testing"].includes(speech.state)){contentRefreshPending=true;return;}
+  if(reader.refreshContent()){
+    contentRefreshPending=false;
+    toolbar.update();
+    const status=$("status");
+    status.textContent="Đã cập nhật nội dung trang. Bạn có thể nhấn Đọc để đọc nội dung mới.";
+    status.classList.add("visible");
+  }
+}
+speech.onState=()=>{
+  toolbar.update();
+  if(contentRefreshPending&&!["reading","paused","testing"].includes(speech.state)){
+    refreshVisibleReaderContent();
+  }
+};
+
+// Observe page mutations for ChatGPT/Gemini and other SPA websites. This only
+// refreshes the Reader's content snapshot; it deliberately never starts speech.
+let contentMutationTimer=null;
+function mutationTouchesContent(mutation){
+  const target=mutation.target&&mutation.target.nodeType===Node.ELEMENT_NODE
+    ?mutation.target
+    :mutation.target?.parentElement;
+  if(!target||widgetRoot.contains(target))return false;
+  const source=document.querySelector(config.contentSelector);
+  if(source&&(target===source||source.contains(target)||target.contains(source)))return true;
+  try{
+    if(target.matches(config.contentSelector)||target.closest(config.contentSelector))return true;
+    for(const node of [...mutation.addedNodes,...mutation.removedNodes]){
+      if(node.nodeType!==Node.ELEMENT_NODE)continue;
+      if(node.matches(config.contentSelector)||node.querySelector(config.contentSelector))return true;
+    }
+  }catch(_){}
+  return false;
+}
+function scheduleContentRefresh(){
+  if(contentMutationTimer!==null)clearTimeout(contentMutationTimer);
+  // Coalesce token-level streaming mutations into one refresh after a short quiet period.
+  contentMutationTimer=setTimeout(()=>{
+    contentMutationTimer=null;
+    refreshVisibleReaderContent();
+  },700);
+}
+const pageContentObserver=new MutationObserver(mutations=>{
+  if(mutations.some(mutationTouchesContent))scheduleContentRefresh();
+});
+if(document.documentElement){
+  pageContentObserver.observe(document.documentElement,{subtree:true,childList:true,characterData:true});
+}
+window.addEventListener("popstate",scheduleContentRefresh);
+window.addEventListener("hashchange",scheduleContentRefresh);
 // Keep the speech session independent from window focus and tab visibility.
 // Losing focus must never cancel or explicitly pause the current utterance.
 function handleReaderFocusChange(){
