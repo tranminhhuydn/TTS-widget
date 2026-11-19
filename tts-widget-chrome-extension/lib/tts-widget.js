@@ -357,8 +357,10 @@ function mutationTouchesContent(mutation){
   return false;
 }
 function scheduleContentRefresh(){
-  if(contentMutationTimer!==null)clearTimeout(contentMutationTimer);
-  // Coalesce token-level streaming mutations into one refresh after a short quiet period.
+  // Throttle rather than debounce: continuous DOM mutations during AI
+  // streaming must not keep resetting the timer and starve Reader refreshes.
+  // Further mutations can schedule another refresh after this one completes.
+  if(contentMutationTimer!==null)return;
   contentMutationTimer=setTimeout(()=>{
     contentMutationTimer=null;
     refreshVisibleReaderContent();
