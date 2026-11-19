@@ -4,8 +4,7 @@
 (function () {
   "use strict";
 
-  // If the widget was previously created and then hidden, restore it without
-  // calling init again (the shared core intentionally exposes a singleton).
+  // If the widget already exists, restore it without creating a second instance.
   const existingRoot = document.querySelector(".tts-widget-root");
   if (existingRoot) {
     existingRoot.style.removeProperty("display");
@@ -19,11 +18,32 @@
   }
 
   function findContentSelector() {
-    if (document.querySelector("article")) return "article";
+    const host = location.hostname.toLowerCase();
+    const isAiConversation =
+      host === "chatgpt.com" ||
+      host.endsWith(".chatgpt.com") ||
+      host === "chat.openai.com" ||
+      host === "gemini.google.com" ||
+      host.endsWith(".gemini.google.com");
+
+    const hasReadableBlocks = (element) =>
+      !!element && !!element.querySelector("p, h1, h2, h3, h4, h5, h6, li, blockquote, pre");
+
+    // AI chat interfaces commonly create one <article> per message.
+    // Observe the stable conversation container instead of the first message.
+    if (isAiConversation) {
+      const main = document.querySelector("main");
+      if (hasReadableBlocks(main)) return "main";
+    }
+
+    // For ordinary article-oriented sites, retain the narrower article scope.
+    if (hasReadableBlocks(document.querySelector("article"))) return "article";
+
     const main = document.querySelector("main");
-    if (main && main.querySelector("p, h1, h2, h3, li, blockquote, pre")) return "main";
+    if (hasReadableBlocks(main)) return "main";
+
     const bodyBlocks = document.body
-      ? document.body.querySelectorAll("p, h1, h2, h3, li, blockquote, pre")
+      ? document.body.querySelectorAll("p, h1, h2, h3, h4, h5, h6, li, blockquote, pre")
       : [];
     if (bodyBlocks.length >= 2) return "body";
     return null;
@@ -39,6 +59,7 @@
   const root = document.querySelector(".tts-widget-root");
   if (root && widget) {
     root.dataset.extensionActive = "true";
-    console.info("[TTS-widget Extension] Đã kích hoạt trên:", location.href);
+    root.dataset.contentSelector = selector;
+    console.info("[TTS-widget Extension] Đã kích hoạt trên:", location.href, "| vùng nội dung:", selector);
   }
 })();
