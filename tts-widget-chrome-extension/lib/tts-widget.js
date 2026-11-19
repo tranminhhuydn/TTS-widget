@@ -116,7 +116,14 @@ class ReaderManager {
   open(){this.source=document.querySelector(config.contentSelector);if(!this.source){console.error("[TTSWidget] Không tìm thấy vùng nội dung:",config.contentSelector);return;}
     this.blocks=[];
     const candidates=Array.from(this.source.querySelectorAll("p,h1,h2,h3,h4,h5,h6,li,blockquote,pre"));
+    // Some dynamic pages keep duplicate/hidden renderings of the same list.
+    // Track exact list-item text per list container to avoid enqueuing both copies.
+    const seenListItems=new WeakMap();
     candidates.forEach(el=>{
+      // Ignore elements that are not rendered; hidden accessibility/transition
+      // copies must not become separate speech blocks.
+      const style=window.getComputedStyle(el);
+      if(style.display==="none"||style.visibility==="hidden"||el.getClientRects().length===0)return;
       // Parent list items and blockquotes already contain descendant text.
       // Skip nested candidates so the same visible text is not queued twice.
       if(!["LI","BLOCKQUOTE","PRE"].includes(el.tagName)&&el.closest("li,blockquote,pre"))return;
@@ -126,6 +133,14 @@ class ReaderManager {
         const clone=el.cloneNode(true);
         clone.querySelectorAll("ul,ol").forEach(list=>list.remove());
         text=(clone.innerText||clone.textContent||"").trim();
+        const list=el.parentElement;
+        if(list){
+          let seen=seenListItems.get(list);
+          if(!seen){seen=new Set();seenListItems.set(list,seen);}
+          const key=text.replace(/\\s+/g," ").trim();
+          if(key&&seen.has(key))return;
+          if(key)seen.add(key);
+        }
       }else{
         text=(el.innerText||el.textContent||"").trim();
       }
