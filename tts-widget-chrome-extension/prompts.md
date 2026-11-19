@@ -50,3 +50,6 @@ Bạn đang phát triển phiên bản **TTS-widget Chrome Extension** trong th�
 - Dùng văn bản hiển thị (`innerText`) để giữ nội dung người dùng thực sự nhìn thấy; kiểm tra các trang SPA như Gemini khi nội dung được render động.
 - Không đưa nút sao chép, nút thao tác hoặc nhãn giao diện bên ngoài `pre` vào nội dung đọc.
 - Khi sửa logic trích xuất, phải kiểm tra cả văn bản thường và khối mã để tránh hồi quy.
+
+- Khi trích xuất danh sách, không được đọc trùng nội dung giữa `li` và các phần tử con như `p`; với `li` lồng nhau, chỉ giữ nội dung riêng của từng mục và loại phần danh sách con khỏi văn bản của mục cha.
+- Với `blockquote` hoặc `pre` chứa các phần tử con có thể đọc, tránh đưa đồng thời cả phần tử cha và các phần tử con vào hàng đợi.
