@@ -114,7 +114,7 @@ class VoiceManager {
 class ReaderManager {
   constructor(){this.root=widgetRoot.querySelector("#ttsWidgetReader");this.content=widgetRoot.querySelector("#readerContent");this.source=null;this.blocks=[];this.active=-1;}
   open(){this.source=document.querySelector(config.contentSelector);if(!this.source){console.error("[TTSWidget] Không tìm thấy vùng nội dung:",config.contentSelector);return;}
-    this.blocks=[];this.source.querySelectorAll("p,h1,h2,h3,h4,h5,h6,li,blockquote").forEach(el=>{const text=(el.innerText||el.textContent||"").trim();if(text)this.blocks.push({element:el,text});});
+    this.blocks=[];this.source.querySelectorAll("p,h1,h2,h3,h4,h5,h6,li,blockquote,pre").forEach(el=>{const text=(el.innerText||el.textContent||"").trim();if(text)this.blocks.push({element:el,text});});
     this.active=-1;this.root.classList.add("open");widgetRoot.classList.add("reader-open");widgetRoot.querySelector("#status").classList.remove("visible");mountReaderContextMenu();}
   close(){unmountReaderContextMenu();this.root.classList.remove("open");widgetRoot.classList.remove("reader-open");widgetRoot.querySelector("#status").classList.remove("visible");this.clearHighlight();this.blocks=[];this.source=null;this.active=-1;}
   setActive(index,settings){if(index<0||index>=this.blocks.length)return;this.clearHighlight();this.active=index;if(settings.value.highlight&&settings.value.sync){this.blocks[index].element.classList.add("tts-widget-reading-active");this.blocks[index].element.setAttribute("data-tts-widget-active","true");}}
