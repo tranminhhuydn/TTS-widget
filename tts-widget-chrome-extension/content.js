@@ -14,6 +14,7 @@
     existingRoot.querySelector("#ttsWidgetReader")?.classList.remove("open");
     existingRoot.style.removeProperty("display");
     existingRoot.dataset.extensionActive = "true";
+    window.TTSWidget?.applyAppearance?.();
     const launcher = existingRoot.querySelector("#openReaderBtn");
     if (launcher) {
       launcher.style.setProperty("display", "inline-flex", "important");
