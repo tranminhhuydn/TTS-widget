@@ -141,24 +141,24 @@ class HighlightManager {
 
 /* SPEECH MANAGER */
 class SpeechManager {
-  constructor(reader,voices,settings,highlight){this.reader=reader;this.voices=voices;this.settings=settings;this.highlight=highlight;this.synth=window.speechSynthesis;this.queue=[];this.position=0;this.state="idle";this.session=0;this.current=null;this.currentStarted=false;this.backgroundInterrupted=false;this.onState=()=>{};}
+  constructor(reader,voices,settings,highlight){this.reader=reader;this.voices=voices;this.settings=settings;this.highlight=highlight;this.synth=window.speechSynthesis;this.queue=[];this.position=0;this.state="idle";this.session=0;this.current=null;this.currentStarted=false;this.currentCharIndex=0;this.backgroundInterrupted=false;this.onState=()=>{};}
   emit(message){widgetRoot.querySelector("#status").textContent=message;this.onState();}
   makeQueue(){this.queue=[];this.reader.blocks.forEach((b,paragraph)=>{const sentences=b.text.match(/[^.!?。！？]+[.!?。！？]?/g)||[b.text];let part="";sentences.forEach(sentence=>{if(part.length+sentence.length>220&&part){this.queue.push({text:part.trim(),paragraph});part="";}part+=sentence;if(part.length>=220){this.queue.push({text:part.trim(),paragraph});part="";}});if(part.trim())this.queue.push({text:part.trim(),paragraph});});}
   start(paragraph=0){widgetRoot.querySelector("#status").classList.add("visible");if(!isSpeechSynthesisSupported()){this.emit("Trình duyệt không hỗ trợ Web Speech API (SpeechSynthesis).");return;}if(!this.reader.blocks.length){this.emit("Không có nội dung để đọc.");return;}this.stop(false);this.makeQueue();this.position=this.queue.findIndex(x=>x.paragraph>=paragraph);if(this.position<0)this.position=0;this.state="reading";const id=this.session;this.emit("Đang chuẩn bị đọc...");this.next(id);}
   next(id){if(id!==this.session||this.state!=="reading")return;if(this.position>=this.queue.length){this.state="ended";this.current=null;this.currentStarted=false;this.reader.clearHighlight();this.emit("Đã đọc xong.");return;}this.speakCurrent(id);}
-  speakCurrent(id){
+  speakCurrent(id,startOffset=0){
     if(id!==this.session||this.state!=="reading")return;
     const item=this.queue[this.position];if(!item)return;
-    const utterance=new SpeechSynthesisUtterance(item.text);const s=this.settings.value;
+    const utterance=new SpeechSynthesisUtterance(item.text.slice(startOffset));const s=this.settings.value;
     utterance.lang=this.voices.selected?.lang||"vi-VN";if(this.voices.selected)utterance.voice=this.voices.selected;
     utterance.rate=Number(s.rate);utterance.pitch=Number(s.pitch);utterance.volume=Number(s.volume);
-    this.current=utterance;this.currentStarted=false;this.backgroundInterrupted=false;
+    this.current=utterance;this.currentStarted=false;this.currentCharIndex=startOffset;this.backgroundInterrupted=false;
     // Cập nhật tiến trình khi utterance bắt đầu; setActive tiếp tục đồng bộ mỗi khi đổi đoạn.
-    utterance.onstart=()=>{if(id!==this.session)return;this.currentStarted=true;this.highlight.paragraph(item.paragraph);this.emit("Đang đọc đoạn "+(item.paragraph+1)+"/"+this.reader.blocks.length);};
-    utterance.onboundary=e=>{if(id!==this.session||e.name!=="word")return;this.highlight.boundarySupported=true;this.highlight.word(item.paragraph,e.charIndex,e.charLength,item.text);};
-    utterance.onend=()=>{if(id!==this.session||this.state!=="reading")return;this.current=null;this.currentStarted=false;this.position++;this.next(id);};
+    utterance.onstart=()=>{if(id!==this.session||this.current!==utterance)return;this.currentStarted=true;this.highlight.paragraph(item.paragraph);this.emit("Đang đọc đoạn "+(item.paragraph+1)+"/"+this.reader.blocks.length);};
+    utterance.onboundary=e=>{if(id!==this.session||this.current!==utterance||e.name!=="word")return;this.currentCharIndex=Math.max(this.currentCharIndex,startOffset+Number(e.charIndex||0)+Math.max(1,Number(e.charLength)||1));this.highlight.boundarySupported=true;this.highlight.word(item.paragraph,startOffset+e.charIndex,e.charLength,item.text);};
+    utterance.onend=()=>{if(id!==this.session||this.current!==utterance||this.state!=="reading")return;this.current=null;this.currentStarted=false;this.position++;this.next(id);};
     utterance.onerror=e=>{
-      if(id!==this.session)return;
+      if(id!==this.session||this.current!==utterance)return;
       if(e.error==="canceled"||e.error==="interrupted"){if(this.state==="reading")this.backgroundInterrupted=true;return;}
       this.state="error";this.current=null;this.currentStarted=false;this.emit("Lỗi đọc: "+e.error);
     };
@@ -173,8 +173,8 @@ class SpeechManager {
     }
   }
   pause(){if(this.state!=="reading")return;this.synth.pause();this.state="paused";this.emit("Đã tạm dừng.");}
-  resume(){if(this.state!=="paused")return;this.synth.resume();this.state="reading";this.emit("Đang tiếp tục đọc.");}
-  stop(show=true){this.session++;if("speechSynthesis"in window)this.synth.cancel();this.state="idle";this.current=null;this.currentStarted=false;this.backgroundInterrupted=false;this.queue=[];this.position=0;this.reader.clearHighlight();if(show)this.emit("Đã dừng đọc.");}
+  resume(){if(this.state!=="paused")return;const offset=Math.min(this.currentCharIndex||0,this.queue[this.position]?.text.length||0);this.current=null;this.synth.cancel();this.backgroundInterrupted=false;this.state="reading";this.speakCurrent(this.session,offset);this.emit("Đang tiếp tục đọc.");}
+  stop(show=true){this.session++;if("speechSynthesis"in window)this.synth.cancel();this.state="idle";this.current=null;this.currentStarted=false;this.currentCharIndex=0;this.backgroundInterrupted=false;this.queue=[];this.position=0;this.reader.clearHighlight();if(show)this.emit("Đã dừng đọc.");}
   move(delta){if(!this.reader.blocks.length)return;const current=this.queue[this.position]?.paragraph??this.reader.active;let target=Math.max(0,Math.min(this.reader.blocks.length-1,(current<0?0:current)+delta));this.start(target);}
   test(){if(!this.voices.selected){this.emit("Vui lòng chọn giọng đọc.");return;}this.stop(false);const id=this.session;const u=new SpeechSynthesisUtterance("Xin chào. Đây là phần thử nghiệm giọng đọc.");const s=this.settings.value;u.voice=this.voices.selected;u.lang=u.voice.lang;u.rate=Number(s.rate);u.pitch=Number(s.pitch);u.volume=Number(s.volume);u.onstart=()=>{if(id===this.session)this.emit("Đang thử giọng: "+u.voice.name);};u.onend=()=>{if(id===this.session)this.emit("Đã thử giọng xong.");};u.onerror=e=>{if(id===this.session)this.emit("Lỗi thử giọng: "+e.error);};this.synth.speak(u);this.state="testing";}
 }
