@@ -508,7 +508,7 @@ if("speechSynthesis"in window){
   initialized=true;
   return window.TTSWidget;
 }
-window.TTSWidget={init,version:"1.0.0"};
+window.TTSWidget={init,applyAppearance:()=>{if(initialized)applyAppearanceSettings();},version:"1.0.0"};
 const script=document.currentScript||document.querySelector("script[data-content-selector]");
 const autoConfig={};
 if(script&&script.dataset.contentSelector)autoConfig.contentSelector=script.dataset.contentSelector;
