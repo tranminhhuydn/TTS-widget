@@ -71,6 +71,7 @@ toggleButton.addEventListener("click", async () => {
           root.querySelector("#ttsWidgetReader")?.classList.remove("open");
           root.style.removeProperty("display");
           root.dataset.extensionActive = "true";
+          window.TTSWidget?.applyAppearance?.();
           const launcher = root.querySelector("#openReaderBtn");
           if (launcher) {
             launcher.style.setProperty("display", "inline-flex", "important");
