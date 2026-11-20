@@ -66,16 +66,16 @@ Bạn đang phát triển phiên bản **TTS-widget Chrome Extension** trong th�
 - Không tạo lại nút Tiếp tục riêng.
 
 
-## Chế độ tối và cỡ chữ giao diện
+## Chế độ giao diện website và cỡ chữ
 
-- Phạm vi tính năng này chỉ thuộc Chrome/Edge Extension, triển khai trong `tts-widget-chrome-extension/`; không sửa phiên bản nhúng website.
-- Trong Cài đặt cung cấp chế độ giao diện **Sáng / Tối / Theo hệ thống**. Chế độ Theo hệ thống phải theo dõi thay đổi `prefers-color-scheme` khi trang đang mở.
-- Cung cấp thanh trượt cỡ chữ giao diện từ 12 đến 24 px, hiển thị giá trị hiện tại.
-- Lưu `theme` và `fontSize` trong `tts-widget-settings-v2`, giữ tương thích với các thiết lập hiện có; không xóa các khóa mới này khi tải cài đặt.
-- Áp dụng theme và cỡ chữ chỉ lên giao diện do Extension tạo: launcher, toolbar, Settings, status và context menu. Tuyệt đối không thay đổi typography, theme hoặc bố cục website chủ hay nội dung DOM đang đọc.
-- Nút reset phải đưa theme về Theo hệ thống và cỡ chữ về 16 px.
-- Kiểm tra theme sáng/tối/theo hệ thống, thay đổi theme hệ thống khi đang mở trang, cỡ chữ nhỏ/lớn, lưu và tải lại trang; kiểm tra cả Chrome và Edge. Không tuyên bố đã kiểm thử trình duyệt nếu chưa thực hiện.
-
+- Phạm vi chỉ thuộc Chrome/Edge Extension, triển khai trong `tts-widget-chrome-extension/`; không sửa phiên bản nhúng website.
+- Trong Cài đặt cung cấp chế độ giao diện **Sáng / Tối / Theo hệ thống**; áp dụng lên toàn bộ website hiện tại (nền, chữ, bề mặt nội dung) và giao diện TTS-widget.
+- Cung cấp cỡ chữ toàn trang từ 12 đến 24 px; áp dụng nhất quán lên các phần tử văn bản website, nhưng loại trừ toàn bộ giao diện TTS-widget, SVG/icon và nội dung media.
+- Chế độ Theo hệ thống phải theo dõi thay đổi `prefers-color-scheme` khi trang đang mở.
+- Lưu `theme` và `fontSize` trong `tts-widget-settings-v2`, giữ tương thích các thiết lập hiện có.
+- Khi tắt Extension trên tab, phải gỡ stylesheet và thuộc tính CSS do Extension thêm vào để khôi phục giao diện website; khi bật lại, áp dụng lại thiết lập đã lưu.
+- Không dùng bộ lọc đảo màu toàn trang vì sẽ làm sai màu ảnh/video; giữ nguyên ảnh, video, canvas, SVG và iframe.
+- Kiểm thử trên trang sáng/tối, trang có nền màu riêng, biểu mẫu, nội dung mã nguồn, ảnh/video, cỡ chữ 12/16/24 px, chuyển theme hệ thống, tắt/bật lại; kiểm tra cả Chrome và Edge. Không tuyên bố đã kiểm thử trình duyệt nếu chưa thực hiện.
 
 ## Kích hoạt và hiển thị launcher
 
