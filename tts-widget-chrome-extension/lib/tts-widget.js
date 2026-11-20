@@ -190,7 +190,9 @@ class SpeechManager {
   emit(message){widgetRoot.querySelector("#status").textContent=message;this.onState();}
   makeQueue(){
     this.queue=[];
+    let paragraphVoiceIndex=0;
     this.reader.blocks.forEach((b,paragraph)=>{
+      const voiceRotationIndex=b.element?.tagName==="P"?paragraphVoiceIndex++:null;
       // Code blocks are not prose: sentence punctuation such as "." in
       // console.log or file paths must not split them into misleading pieces.
       if(b.element&&b.element.tagName==="PRE"){
@@ -198,28 +200,28 @@ class SpeechManager {
         let part="";
         words.forEach(word=>{
           if(part&&part.length+word.length+1>220){
-            this.queue.push({text:part,paragraph});
+            this.queue.push({text:part,paragraph,voiceRotationIndex});
             part="";
           }
           part+=(part?" ":"")+word;
         });
-        if(part)this.queue.push({text:part,paragraph});
+        if(part)this.queue.push({text:part,paragraph,voiceRotationIndex});
         return;
       }
       const sentences=b.text.match(/[^.!?。！？]+[.!?。！？]?/g)||[b.text];
       let part="";
       sentences.forEach(sentence=>{
         if(part.length+sentence.length>220&&part){
-          this.queue.push({text:part.trim(),paragraph});
+          this.queue.push({text:part.trim(),paragraph,voiceRotationIndex});
           part="";
         }
         part+=sentence;
         if(part.length>=220){
-          this.queue.push({text:part.trim(),paragraph});
+          this.queue.push({text:part.trim(),paragraph,voiceRotationIndex});
           part="";
         }
       });
-      if(part.trim())this.queue.push({text:part.trim(),paragraph});
+      if(part.trim())this.queue.push({text:part.trim(),paragraph,voiceRotationIndex});
     });
   }
   start(paragraph=0){widgetRoot.querySelector("#status").classList.add("visible");if(!isSpeechSynthesisSupported()){this.emit("Trình duyệt không hỗ trợ Web Speech API (SpeechSynthesis).");return;}if(!this.reader.blocks.length){this.emit("Không có nội dung để đọc.");return;}this.stop(false);this.makeQueue();this.position=this.queue.findIndex(x=>x.paragraph>=paragraph);if(this.position<0)this.position=0;this.state="reading";const id=this.session;this.emit("Đang chuẩn bị đọc...");this.next(id);}
@@ -229,7 +231,7 @@ class SpeechManager {
     const item=this.queue[this.position];if(!item)return;
     const utterance=new SpeechSynthesisUtterance(item.text);const s=this.settings.value;
     const rotation=this.settings.value.voiceRotationEnabled?this.voices.getRotationVoices():[];
-    const voice=rotation.length?rotation[item.paragraph%rotation.length]:this.voices.selected;
+    const voice=rotation.length&&item.voiceRotationIndex!==null&&item.voiceRotationIndex!==undefined?rotation[item.voiceRotationIndex%rotation.length]:this.voices.selected;
     utterance.lang=voice?.lang||"vi-VN";if(voice)utterance.voice=voice;
     utterance.rate=Number(s.rate);utterance.pitch=Number(s.pitch);utterance.volume=Number(s.volume);
     this.current=utterance;this.currentStarted=false;this.backgroundInterrupted=false;
