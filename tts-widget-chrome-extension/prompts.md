@@ -54,3 +54,13 @@ Bạn đang phát triển phiên bản **TTS-widget Chrome Extension** trong th�
 - Khi trích xuất danh sách, không được đọc trùng nội dung giữa `li` và các phần tử con như `p`; với `li` lồng nhau, chỉ giữ nội dung riêng của từng mục và loại phần danh sách con khỏi văn bản của mục cha.
 - Với `blockquote` hoặc `pre` chứa các phần tử con có thể đọc, tránh đưa đồng thời cả phần tử cha và các phần tử con vào hàng đợi.
 - Khi trích xuất danh sách động, bỏ qua phần tử không hiển thị (`display:none`, `visibility:hidden` hoặc không có bounding client rect); phát hiện mục `li` trùng văn bản trong cùng một list container để tránh đọc hai bản DOM của cùng mục.
+
+
+## Điều khiển Đọc/Tiếp tục dùng chung
+
+- Chỉ sử dụng một nút điều khiển cho hai hành động **Đọc** và **Tiếp tục**.
+- Khi trạng thái là `paused`, nút hiển thị biểu tượng/nhãn **Tiếp tục** và gọi `SpeechManager.resume()` để tiếp tục đúng vị trí.
+- Với các trạng thái còn lại có nội dung để đọc, nút hiển thị **Đọc** và bắt đầu phiên đọc từ đầu bằng `SpeechManager.start(0)`.
+- Khi trạng thái là `reading` hoặc `testing`, vô hiệu hóa nút Đọc/Tiếp tục để tránh khởi động chồng hoặc khởi động lại ngoài ý muốn.
+- Giữ nút **Tạm dừng** riêng; cập nhật nhãn, tiêu đề và trạng thái disabled của nút dùng chung theo trạng thái SpeechManager.
+- Không tạo lại nút Tiếp tục riêng.
