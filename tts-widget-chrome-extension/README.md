@@ -11,7 +11,7 @@
 3. Popup tự kiểm tra trạng thái của tab hiện tại.
 4. Chọn **Kích hoạt trên trang này** để nạp lõi TTS-widget.
 5. Nhấn nút **🔊 Đọc nội dung này** xuất hiện ở góc dưới bên phải trang.
-6. Mở Cài đặt trong bộ điều khiển để chọn giọng, tốc độ, cao độ, âm lượng và tùy chọn highlight.
+6. Mở Cài đặt trong bộ điều khiển để chọn giọng, tốc độ, cao độ, âm lượng và tùy chọn highlight. Có thể chọn giao diện Sáng/Tối/Theo hệ thống và tùy chỉnh cỡ chữ giao diện từ 12–24 px.
 7. Chọn **Tắt trên trang này** để dừng đọc, đóng cửa sổ đọc và ẩn bộ điều khiển trên tab hiện tại. Có thể kích hoạt lại mà không cần tải lại trang.
 
 Extension chọn vùng nội dung theo thứ tự: `article`, `main`, rồi `body` (chỉ khi tìm được ít nhất hai khối văn bản phù hợp).
