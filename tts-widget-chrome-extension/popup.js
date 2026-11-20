@@ -52,6 +52,9 @@ toggleButton.addEventListener("click", async () => {
           root.querySelector("#closeBtn")?.click();
           root.dataset.extensionActive = "false";
           root.style.setProperty("display", "none", "important");
+          document.documentElement.removeAttribute("data-tts-widget-page-theme");
+          document.documentElement.style.removeProperty("--tts-widget-page-font-size");
+          document.getElementById("tts-widget-page-appearance")?.remove();
           return true;
         }
       });
