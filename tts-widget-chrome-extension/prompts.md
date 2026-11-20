@@ -75,3 +75,13 @@ Bạn đang phát triển phiên bản **TTS-widget Chrome Extension** trong th�
 - Áp dụng theme và cỡ chữ chỉ lên giao diện do Extension tạo: launcher, toolbar, Settings, status và context menu. Tuyệt đối không thay đổi typography, theme hoặc bố cục website chủ hay nội dung DOM đang đọc.
 - Nút reset phải đưa theme về Theo hệ thống và cỡ chữ về 16 px.
 - Kiểm tra theme sáng/tối/theo hệ thống, thay đổi theme hệ thống khi đang mở trang, cỡ chữ nhỏ/lớn, lưu và tải lại trang; kiểm tra cả Chrome và Edge. Không tuyên bố đã kiểm thử trình duyệt nếu chưa thực hiện.
+
+
+## Kích hoạt và hiển thị launcher
+
+- Popup chỉ được báo đã kích hoạt sau khi xác minh .tts-widget-root, #openReaderBtn, trạng thái data-extension-active và kích thước/visibility thực tế của launcher trong tab.
+- Không được coi việc chrome.scripting.executeScript hoàn tất là bằng chứng widget đã khởi tạo thành công; content.js có thể từ chối khởi tạo nếu không tìm thấy vùng nội dung.
+- Khi bật lại một root đã tồn tại, phải khôi phục launcher và xóa trạng thái Reader đang mở còn sót lại; không tạo root hoặc listeners trùng lặp.
+- Bộ dò nội dung có thể dùng body khi có ít nhất một khối văn bản đọc được; không đặt ngưỡng cứng hai khối khiến trang ngắn không thể khởi tạo.
+- Khi chỉnh CSS giao diện, kiểm tra cú pháp toàn bộ stylesheet được gán qua style.textContent, đặc biệt dấu ngoặc nhọn; xác nhận launcher vẫn có rule hiển thị độc lập với Settings.
+- Khi kiểm thử, xác minh cả popup state và launcher thật trên trang, không chỉ dựa vào thông báo popup.
