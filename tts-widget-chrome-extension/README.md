@@ -11,7 +11,7 @@
 3. Popup tự kiểm tra trạng thái của tab hiện tại.
 4. Chọn **Kích hoạt trên trang này** để nạp lõi TTS-widget.
 5. Nhấn nút **🔊 Đọc nội dung này** xuất hiện ở góc dưới bên phải trang.
-6. Mở Cài đặt trong bộ điều khiển để chọn giọng, tốc độ, cao độ, âm lượng và tùy chọn highlight. Có thể chọn giao diện Sáng/Tối/Theo hệ thống và tùy chỉnh cỡ chữ giao diện từ 12–24 px.
+6. Mở Cài đặt trong bộ điều khiển để chọn giọng, tốc độ, cao độ, âm lượng và tùy chọn highlight. Có thể chọn giao diện Sáng/Tối/Theo hệ thống cho toàn bộ website và tùy chỉnh cỡ chữ trang từ 12–24 px; ảnh, video, SVG và iframe được giữ nguyên.
 7. Chọn **Tắt trên trang này** để dừng đọc, đóng cửa sổ đọc và ẩn bộ điều khiển trên tab hiện tại. Có thể kích hoạt lại mà không cần tải lại trang.
 
 Extension chọn vùng nội dung theo thứ tự: `article`, `main`, rồi `body` (khi tìm được ít nhất một khối văn bản phù hợp). Popup xác minh nút loa đã được tạo và hiển thị trước khi báo kích hoạt thành công.
@@ -53,6 +53,7 @@ Extension theo dõi thay đổi DOM của vùng nội dung bằng `MutationObser
 ## Giới hạn hiện tại
 
 - Đây là nút đọc cho vùng nội dung của trang, không phải nút riêng trên từng câu trả lời ChatGPT.
+- Chế độ tối/sáng toàn trang dùng các quy tắc CSS tổng quát; website có CSS nền/kiểu chữ đặc thù hoặc shadow DOM có thể cần tinh chỉnh riêng. Ảnh, video, SVG và iframe được loại trừ khỏi tác động font/filter.
 - Trên ChatGPT, bộ chọn `main` có thể lấy nhiều khối nội dung trong vùng hội thoại; chưa có bộ điều khiển riêng cho từng phản hồi assistant.
 - Extension dùng Web Speech API của trình duyệt. Nó không truy cập hoặc điều khiển giao diện Chrome Read Aloud và không thể bảo đảm danh sách giọng đọc giống Chrome Read Aloud.
 - Các trang nội bộ của Chrome, Chrome Web Store và một số trang có chính sách bảo mật đặc biệt không cho phép Extension chèn script.
