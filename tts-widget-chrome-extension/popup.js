@@ -75,6 +75,28 @@ toggleButton.addEventListener("click", async () => {
           files: ["lib/tts-widget.js", "content.js"]
         });
       }
+
+      // Verify the actual launcher before reporting a successful activation.
+      const [verification] = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+          const root = document.querySelector(".tts-widget-root");
+          const launcher = root?.querySelector("#openReaderBtn");
+          if (!root || !launcher || root.dataset.extensionActive !== "true") {
+            return { active: false, reason: "Không tạo được nút loa trên trang này." };
+          }
+          const style = getComputedStyle(launcher);
+          const rect = launcher.getBoundingClientRect();
+          const visible = style.display !== "none" && style.visibility !== "hidden" &&
+            Number(style.opacity) > 0 && rect.width > 0 && rect.height > 0;
+          return { active: visible, reason: visible ? "" : "Widget đã tạo nhưng nút loa đang bị ẩn." };
+        }
+      });
+      if (!verification?.result?.active) {
+        toggleButton.textContent = "Kích hoạt trên trang này";
+        showStatus(verification?.result?.reason || "Không xác minh được nút loa.", "error");
+        return;
+      }
       toggleButton.textContent = "Tắt trên trang này";
       showStatus("Đã kích hoạt TTS-widget trên tab hiện tại.", "success");
     }
