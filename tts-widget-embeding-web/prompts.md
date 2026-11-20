@@ -539,3 +539,13 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
   3. Nhấn Đọc hoặc “Đọc từ đây”: vùng trạng thái xuất hiện và cập nhật tiến trình.
   4. Thử giọng khi chưa bắt đầu đọc: vùng trạng thái không xuất hiện.
   5. Đóng bộ điều khiển: vùng trạng thái biến mất ngay; mở lại không tự xuất hiện.
+
+
+## Điều khiển Đọc/Tiếp tục dùng chung
+
+- Chỉ sử dụng một nút điều khiển cho hai hành động **Đọc** và **Tiếp tục**.
+- Khi trạng thái là `paused`, nút hiển thị biểu tượng/nhãn **Tiếp tục** và gọi `SpeechManager.resume()` để tiếp tục đúng vị trí.
+- Với các trạng thái còn lại có nội dung để đọc, nút hiển thị **Đọc** và bắt đầu phiên đọc từ đầu bằng `SpeechManager.start(0)`.
+- Khi trạng thái là `reading` hoặc `testing`, vô hiệu hóa nút Đọc/Tiếp tục để tránh khởi động chồng hoặc khởi động lại ngoài ý muốn.
+- Giữ nút **Tạm dừng** riêng; cập nhật nhãn, tiêu đề và trạng thái disabled của nút dùng chung theo trạng thái SpeechManager.
+- Không tạo lại nút Tiếp tục riêng.
