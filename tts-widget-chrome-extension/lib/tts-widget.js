@@ -320,7 +320,36 @@ function applyToolbarPosition(){
   reader.root.classList.toggle("toolbar-at-footer",isFooter);
 }
 function applySettings(){applyToolbarPosition();applyAppearanceSettings();highlight.applyColors();syncSettingsForm();}
-function applyAppearanceSettings(){const theme=settings.value.theme;const dark=theme==="dark"||(theme==="system"&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);widgetRoot.dataset.theme=dark?"dark":"light";widgetRoot.style.setProperty("--tts-ui-font-size",settings.value.fontSize+"px");}
+function applyAppearanceSettings(){
+  const theme=settings.value.theme;
+  const dark=theme==="dark"||(theme==="system"&&window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const effectiveTheme=dark?"dark":"light";
+  widgetRoot.dataset.theme=effectiveTheme;
+  widgetRoot.style.setProperty("--tts-ui-font-size",settings.value.fontSize+"px");
+  applyWebsiteAppearance(effectiveTheme,settings.value.fontSize);
+}
+function applyWebsiteAppearance(theme,fontSize){
+  let pageStyle=document.getElementById("tts-widget-page-appearance");
+  if(!pageStyle){pageStyle=document.createElement("style");pageStyle.id="tts-widget-page-appearance";(document.head||document.documentElement).append(pageStyle);}
+  document.documentElement.dataset.ttsWidgetPageTheme=theme;
+  document.documentElement.style.setProperty("--tts-widget-page-font-size",fontSize+"px");
+  pageStyle.textContent=`
+html[data-tts-widget-page-theme="dark"]{color-scheme:dark!important;background:#121821!important}
+html[data-tts-widget-page-theme="light"]{color-scheme:light!important;background:#fff!important}
+html[data-tts-widget-page-theme] body{background-color:var(--tts-widget-page-bg,#fff)!important;color:var(--tts-widget-page-fg,#202124)!important;font-size:var(--tts-widget-page-font-size)!important}
+html[data-tts-widget-page-theme="dark"] body{--tts-widget-page-bg:#121821;--tts-widget-page-fg:#e5eaf0}
+html[data-tts-widget-page-theme="light"] body{--tts-widget-page-bg:#fff;--tts-widget-page-fg:#202124}
+html[data-tts-widget-page-theme] body :not(.tts-widget-root):not(.tts-widget-root *){font-size:var(--tts-widget-page-font-size)!important;color:inherit}
+html[data-tts-widget-page-theme="dark"] body :not(.tts-widget-root):not(.tts-widget-root *){border-color:#465365}
+html[data-tts-widget-page-theme="dark"] body :is(header,main,article,section,nav,aside,footer,dialog,[role="dialog"],[role="main"],[role="article"],[role="region"]):not(.tts-widget-root):not(.tts-widget-root *){background-color:#1b2635}
+html[data-tts-widget-page-theme="dark"] body a:not(.tts-widget-root a){color:#8ab4f8!important}
+html[data-tts-widget-page-theme="light"] body a:not(.tts-widget-root a){color:#1558b0!important}
+html[data-tts-widget-page-theme] body img,html[data-tts-widget-page-theme] body video,html[data-tts-widget-page-theme] body canvas,html[data-tts-widget-page-theme] body svg,html[data-tts-widget-page-theme] body iframe{filter:none!important}
+html[data-tts-widget-page-theme] .tts-widget-root,html[data-tts-widget-page-theme] .tts-widget-root *{font-size:revert!important}
+`;
+}
+const appearanceMedia=window.matchMedia?window.matchMedia("(prefers-color-scheme: dark)"):null;
+if(appearanceMedia){const onSystemThemeChange=()=>{if(settings.value.theme==="system")applyAppearanceSettings();};if(appearanceMedia.addEventListener)appearanceMedia.addEventListener("change",onSystemThemeChange);else if(appearanceMedia.addListener)appearanceMedia.addListener(onSystemThemeChange);}
 function syncSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFontSize:"fontSize",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingBackgroundReading:"keepBackgroundReading",settingToolbarPosition:"toolbarPosition",settingVoiceRotation:"voiceRotationEnabled",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);if(el.type==="checkbox")el.checked=!!s[key];else el.value=s[key];});const output=$("settingFontSizeValue");if(output)output.textContent=s.fontSize+" px";}
 function readSettingsForm(){const s=settings.value;const map={settingTheme:"theme",settingFontSize:"fontSize",settingRate:"rate",settingPitch:"pitch",settingVolume:"volume",settingHighlight:"highlight",settingWordSync:"wordSync",settingSync:"sync",settingBackgroundReading:"keepBackgroundReading",settingToolbarPosition:"toolbarPosition",settingVoiceRotation:"voiceRotationEnabled",settingHighlightColor:"highlightColor",settingTextColor:"textColor",settingBorderColor:"borderColor"};Object.entries(map).forEach(([id,key])=>{const el=$(id);s[key]=el.type==="checkbox"?el.checked:el.type==="range"?Number(el.value):el.value;});applySettings();settings.save();}
 Object.keys({settingRate:1,settingPitch:1,settingVolume:1,settingHighlight:1,settingWordSync:1,settingSync:1,settingBackgroundReading:1,settingTheme:1,settingFontSize:1,settingToolbarPosition:1,settingVoiceRotation:1,settingHighlightColor:1,settingTextColor:1,settingBorderColor:1}).forEach(id=>{const el=$(id);el.addEventListener(el.type==="checkbox"?"change":"input",readSettingsForm);});
