@@ -7,8 +7,19 @@
   // If the widget already exists, restore it without creating a second instance.
   const existingRoot = document.querySelector(".tts-widget-root");
   if (existingRoot) {
+    // A previously hidden reader may retain its open-state class. Close it
+    // before restoring the launcher so reactivation always shows the speaker.
+    existingRoot.querySelector("#closeBtn")?.click();
+    existingRoot.classList.remove("reader-open");
+    existingRoot.querySelector("#ttsWidgetReader")?.classList.remove("open");
     existingRoot.style.removeProperty("display");
     existingRoot.dataset.extensionActive = "true";
+    const launcher = existingRoot.querySelector("#openReaderBtn");
+    if (launcher) {
+      launcher.style.setProperty("display", "inline-flex", "important");
+      launcher.style.setProperty("visibility", "visible", "important");
+      launcher.style.setProperty("opacity", "1", "important");
+    }
     return;
   }
 
@@ -45,7 +56,7 @@
     const bodyBlocks = document.body
       ? document.body.querySelectorAll("p, h1, h2, h3, h4, h5, h6, li, blockquote, pre")
       : [];
-    if (bodyBlocks.length >= 2) return "body";
+    if (bodyBlocks.length >= 1) return "body";
     return null;
   }
 
