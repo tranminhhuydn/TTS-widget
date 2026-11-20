@@ -73,7 +73,6 @@ class VoiceManager {
     // even if the browser does not emit another voiceschanged event.
     const unique=new Map();available.forEach(voice=>{const key=this.identity(voice);if(key&&!unique.has(key))unique.set(key,voice);});
     this.voices=Array.from(unique.values());
-    this.rotation=this.rotation.filter(identity=>this.voices.some(voice=>this.identity(voice)===identity));
     this.render();
     this.renderRotation();
     const currentIdentity=this.identity(this.selected);
