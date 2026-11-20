@@ -64,3 +64,14 @@ Bạn đang phát triển phiên bản **TTS-widget Chrome Extension** trong th�
 - Khi trạng thái là `reading` hoặc `testing`, vô hiệu hóa nút Đọc/Tiếp tục để tránh khởi động chồng hoặc khởi động lại ngoài ý muốn.
 - Giữ nút **Tạm dừng** riêng; cập nhật nhãn, tiêu đề và trạng thái disabled của nút dùng chung theo trạng thái SpeechManager.
 - Không tạo lại nút Tiếp tục riêng.
+
+
+## Chế độ tối và cỡ chữ giao diện
+
+- Phạm vi tính năng này chỉ thuộc Chrome/Edge Extension, triển khai trong `tts-widget-chrome-extension/`; không sửa phiên bản nhúng website.
+- Trong Cài đặt cung cấp chế độ giao diện **Sáng / Tối / Theo hệ thống**. Chế độ Theo hệ thống phải theo dõi thay đổi `prefers-color-scheme` khi trang đang mở.
+- Cung cấp thanh trượt cỡ chữ giao diện từ 12 đến 24 px, hiển thị giá trị hiện tại.
+- Lưu `theme` và `fontSize` trong `tts-widget-settings-v2`, giữ tương thích với các thiết lập hiện có; không xóa các khóa mới này khi tải cài đặt.
+- Áp dụng theme và cỡ chữ chỉ lên giao diện do Extension tạo: launcher, toolbar, Settings, status và context menu. Tuyệt đối không thay đổi typography, theme hoặc bố cục website chủ hay nội dung DOM đang đọc.
+- Nút reset phải đưa theme về Theo hệ thống và cỡ chữ về 16 px.
+- Kiểm tra theme sáng/tối/theo hệ thống, thay đổi theme hệ thống khi đang mở trang, cỡ chữ nhỏ/lớn, lưu và tải lại trang; kiểm tra cả Chrome và Edge. Không tuyên bố đã kiểm thử trình duyệt nếu chưa thực hiện.
