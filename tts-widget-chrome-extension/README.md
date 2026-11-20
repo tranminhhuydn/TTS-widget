@@ -14,7 +14,7 @@
 6. Mở Cài đặt trong bộ điều khiển để chọn giọng, tốc độ, cao độ, âm lượng và tùy chọn highlight. Có thể chọn giao diện Sáng/Tối/Theo hệ thống và tùy chỉnh cỡ chữ giao diện từ 12–24 px.
 7. Chọn **Tắt trên trang này** để dừng đọc, đóng cửa sổ đọc và ẩn bộ điều khiển trên tab hiện tại. Có thể kích hoạt lại mà không cần tải lại trang.
 
-Extension chọn vùng nội dung theo thứ tự: `article`, `main`, rồi `body` (chỉ khi tìm được ít nhất hai khối văn bản phù hợp).
+Extension chọn vùng nội dung theo thứ tự: `article`, `main`, rồi `body` (khi tìm được ít nhất một khối văn bản phù hợp). Popup xác minh nút loa đã được tạo và hiển thị trước khi báo kích hoạt thành công.
 
 ## Cấu trúc
 
@@ -63,6 +63,8 @@ Extension theo dõi thay đổi DOM của vùng nội dung bằng `MutationObser
 
 - Popup mở và tự nhận diện trạng thái đang bật/tắt.
 - Kích hoạt trên trang bài viết có `article`.
+- Kích hoạt trên trang ngắn chỉ có một khối văn bản đọc được.
+- Popup chỉ báo thành công khi launcher thực sự tồn tại và hiển thị.
 - Kích hoạt trên trang chỉ có `main`.
 - Bật → tắt: âm thanh dừng và bộ điều khiển biến mất.
 - Tắt → bật lại: bộ điều khiển xuất hiện mà không nhân đôi.
