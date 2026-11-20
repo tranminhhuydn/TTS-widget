@@ -63,8 +63,17 @@ toggleButton.addEventListener("click", async () => {
         func: () => {
           const root = document.querySelector(".tts-widget-root");
           if (!root) return false;
+          root.querySelector("#closeBtn")?.click();
+          root.classList.remove("reader-open");
+          root.querySelector("#ttsWidgetReader")?.classList.remove("open");
           root.style.removeProperty("display");
           root.dataset.extensionActive = "true";
+          const launcher = root.querySelector("#openReaderBtn");
+          if (launcher) {
+            launcher.style.setProperty("display", "inline-flex", "important");
+            launcher.style.setProperty("visibility", "visible", "important");
+            launcher.style.setProperty("opacity", "1", "important");
+          }
           return true;
         }
       });
