@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "TTS Subtitle YouTube",
+  "version": "0.1.0",
+  "description": "Đọc phụ đề YouTube bằng giọng đọc TTS và đồng bộ theo video.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://www.youtube.com/*"],
+  "action": {
+    "default_title": "TTS Subtitle YouTube",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
