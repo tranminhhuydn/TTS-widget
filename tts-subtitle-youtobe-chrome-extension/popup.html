@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TTS Subtitle YouTube</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <h1>TTS Subtitle YouTube</h1>
+    <label class="switch-row">
+      <span>Đọc phụ đề</span>
+      <input id="enabled" type="checkbox">
+    </label>
+    <p id="status" role="status">Đang kiểm tra trang...</p>
+    <label for="rate">Tốc độ đọc: <strong id="rateValue">1.0×</strong></label>
+    <input id="rate" type="range" min="0.5" max="2" step="0.1" value="1">
+    <label for="voice">Giọng đọc</label>
+    <select id="voice">
+      <option value="">Giọng mặc định của hệ thống</option>
+    </select>
+    <button id="stop" type="button">Dừng giọng đọc</button>
+    <p class="hint">Hãy bật CC trên trình phát YouTube để extension nhận được phụ đề.</p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
