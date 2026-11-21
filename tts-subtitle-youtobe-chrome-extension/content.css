@@ -1,0 +1,4 @@
+/* Trạng thái được dùng để kiểm tra nhanh extension đã kích hoạt trên tab. */
+html.tts-subtitle-enabled {
+  --tts-subtitle-extension-active: 1;
+}
