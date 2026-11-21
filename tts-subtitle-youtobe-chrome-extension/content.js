@@ -51,8 +51,12 @@
     const voices = getVoices();
     const language = detectLanguage(text, trackLanguage).toLowerCase();
     const selected = (settings.voiceURIs || []).map(uri => voices.find(v => v.voiceURI === uri)).filter(Boolean);
+    const languageMatches = list => list.filter(v =>
+      v.lang.toLowerCase() === language || v.lang.toLowerCase().startsWith(language + "-")
+    );
     if (settings.rotateVoices && selected.length) {
-      const voice = selected[rotationIndex % selected.length];
+      const rotationPool = settings.autoLanguage ? (languageMatches(selected).length ? languageMatches(selected) : selected) : selected;
+      const voice = rotationPool[rotationIndex % rotationPool.length];
       rotationIndex++;
       return voice;
     }
