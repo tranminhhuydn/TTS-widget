@@ -11,7 +11,8 @@
   "host_permissions": [
     "https://www.youtube.com/*",
     "https://youtube.com/*",
-    "http://127.0.0.1:8080/*"
+    "http://127.0.0.1:8080/*",
+    "http://127.0.0.1:8081/*"
   ],
   "icons": {
     "16": "icons/icon16.png",
