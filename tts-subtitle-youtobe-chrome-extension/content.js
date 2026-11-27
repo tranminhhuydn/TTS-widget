@@ -17,6 +17,30 @@
   });
   // Yêu cầu Network Listener phát lại JSON3 nếu YouTube đã tải phụ đề trước document_idle.
   window.postMessage({source:"tts-subtitle-content",type:"GET_TIMEDTEXT_CACHE"},location.origin);
+  let pronunciationEntries={},pronunciationPattern=null,pronunciationLoadPromise=null;
+  function loadPronunciationDictionary(){
+    if(pronunciationLoadPromise)return pronunciationLoadPromise;
+    pronunciationLoadPromise=new Promise(resolve=>{
+      chrome.runtime.sendMessage({target:"tts-pronunciation",type:"GET_DICTIONARY"},response=>{
+        if(chrome.runtime.lastError||!response?.ok||!response.data?.entries){resolve(false);return;}
+        pronunciationEntries=response.data.entries;
+        const keys=Object.keys(pronunciationEntries).sort((a,b)=>b.length-a.length);
+        if(keys.length){
+          const escaped=keys.map(key=>key.replace(/[.*+?^${}()|[\]\\]/g,"\\  const norm=s=>String(s||"").replace(/\s+/g," ").trim();"));
+          pronunciationPattern=new RegExp("(^|[^\\p{L}\\p{N}])("+escaped.join("|")+")(?=$|[^\\p{L}\\p{N}])","giu");
+        }
+        console.info("[TTS Subtitle] Đã nạp từ điển phát âm:",response.data.count||keys.length,"mục");
+        resolve(true);
+      });
+    });
+    return pronunciationLoadPromise;
+  }
+  function pronunciationText(text){
+    const source=String(text||"");
+    if(!pronunciationPattern)return source;
+    pronunciationPattern.lastIndex=0;
+    return source.replace(pronunciationPattern,(match,prefix,term)=>prefix+(pronunciationEntries[term]||pronunciationEntries[term.toLocaleLowerCase()]||term));
+  }
   const norm=s=>String(s||"").replace(/\s+/g," ").trim();
   function language(text,trackLang){if(trackLang)return trackLang;if(/[\u3040-\u30ff]/.test(text))return"ja";if(/[\u4e00-\u9fff]/.test(text))return"zh";if(/[\uac00-\ud7af]/.test(text))return"ko";if(/[\u0100-\u017f]/.test(text))return"vi";if(/[\u0400-\u04ff]/.test(text))return"ru";return"en";}
   function voices(){return speechSynthesis.getVoices();}
@@ -63,7 +87,7 @@
   function synthesizeBlob(text){
     const voice = selectedVieNeuVoice();
     return new Promise((resolve,reject)=>{
-      chrome.runtime.sendMessage({target:"vieneu-local-tts",type:"SYNTHESIZE",engine:settings.engine,text,voice},response=>{
+      chrome.runtime.sendMessage({target:"vieneu-local-tts",type:"SYNTHESIZE",engine:settings.engine,text:pronunciationText(text),voice},response=>{
         const runtimeError=chrome.runtime.lastError;
         if(runtimeError){reject(Error("Không kết nối được VieNeu Local API: "+runtimeError.message));return;}
         if(!response?.ok){reject(Error(response?.error||"VieNeu không trả về âm thanh."));return;}
@@ -125,10 +149,10 @@
       audio.play().catch(error=>{cleanup();reject(Error("Trình duyệt không phát được âm thanh VieNeu: "+error.message));});
     }));
   }
-  function speak(item){if(isVieNeuEngine(settings.engine))return playVieNeu(item);return new Promise((resolve,reject)=>{
+  async function speak(item){await loadPronunciationDictionary();if(isVieNeuEngine(settings.engine))return playVieNeu(item);return new Promise((resolve,reject)=>{
     // Chrome đôi khi bỏ lệnh speak ngay sau cancel(), đặc biệt với giọng đọc mạng.
     cancel();
-    const u=new SpeechSynthesisUtterance(item.text),v=chooseVoice(item.text,track?.languageCode||"");
+    const spokenText=pronunciationText(item.text);\n    const u=new SpeechSynthesisUtterance(spokenText),v=chooseVoice(spokenText,track?.languageCode||"");
     if(v){u.voice=v;u.lang=v.lang;}else u.lang=language(item.text,track?.languageCode);
     u.rate=Math.max(.5,Math.min(2,Number(settings.rate)||1));u.volume=Math.max(0,Math.min(1,Number(settings.volume)||0));
     utterance=u;
