@@ -1,6 +1,19 @@
 (() => {
   "use strict";
   const clean = value => String(value || "").replace(/\u200b/g, "").replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+  function parseText(raw) {
+    let text=String(raw ?? "").replace(/^\\uFEFF/, "").trim();
+    // Một số endpoint YouTube có tiền tố chống JSON hijacking.
+    text=text.replace(/^\\)\\]}'?,?\\s*/, "");
+    const value=JSON.parse(text);
+    // Chấp nhận cả trường hợp JSON được bọc trong một thuộc tính.
+    if(value && !Array.isArray(value.events)){
+      for(const key of ["transcript","data","response"]){
+        if(value[key] && Array.isArray(value[key].events)) return value[key];
+      }
+    }
+    return value;
+  }
   function parse(payload) {
     return (payload?.events || []).filter(e => Array.isArray(e.segs) && Number.isFinite(Number(e.tStartMs)))
       .map(e => ({ text: clean(e.segs.map(s => s?.utf8 || "").join("")), start: Number(e.tStartMs)/1000, end: (Number(e.tStartMs)+Number(e.dDurationMs||0))/1000 }))
@@ -23,5 +36,5 @@
     const timeAt=(pos,end)=>{const s=spans.find(x=>end?x.end>=pos:x.end>pos)||spans[spans.length-1]; if(!s)return 0; const ratio=Math.max(0,Math.min(1,(pos-s.start)/Math.max(1,s.end-s.start)));return s.time+(s.endTime-s.time)*ratio;};
     return ranges.map((r,id)=>({id,text:r.text,startTime:timeAt(r.start,false),endTime:timeAt(r.end,true)}));
   }
-  window.TTSSubtitleParser={parse,toSentences};
+  window.TTSSubtitleParser={parseText,parse,toSentences};
 })();
