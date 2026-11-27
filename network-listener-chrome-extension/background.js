@@ -121,6 +121,7 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
       method: req.method,
       requestHeaders: headersToObject(req.headers),
       startedAt: Date.now(),
+      initiator: params.initiator?.url || params.initiator?.type || "Other",
       resourceType: params.type || "Other"
     });
     return;
@@ -152,7 +153,14 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
   if (method === "Network.loadingFinished") {
     const req = tabRequests(tabId).get(params.requestId);
     if (!req?.item) return;
-    updateItem(tabId, { ...req.item, finished: true, encodedDataLength: params.encodedDataLength });
+    const finishedAt = Date.now();
+    updateItem(tabId, {
+      ...req.item,
+      finished: true,
+      finishedAt,
+      durationMs: Math.max(0, finishedAt - (req.item.startedAt || finishedAt)),
+      encodedDataLength: params.encodedDataLength
+    });
     getBody(tabId, params.requestId, req.item);
     tabRequests(tabId).delete(params.requestId);
     return;
@@ -160,7 +168,16 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
 
   if (method === "Network.loadingFailed") {
     const req = tabRequests(tabId).get(params.requestId);
-    if (req?.item) updateItem(tabId, { ...req.item, failed: true, failureText: params.errorText });
+    if (req?.item) {
+      const finishedAt = Date.now();
+      updateItem(tabId, {
+        ...req.item,
+        failed: true,
+        failureText: params.errorText,
+        finishedAt,
+        durationMs: Math.max(0, finishedAt - (req.item.startedAt || finishedAt))
+      });
+    }
     tabRequests(tabId).delete(params.requestId);
   }
 });
