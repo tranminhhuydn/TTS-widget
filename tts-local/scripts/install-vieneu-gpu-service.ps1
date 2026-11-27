@@ -56,23 +56,23 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "NSSM install that bai." }
     $installed = $true
 
-    $settings = @(
-        @("AppDirectory", $ModelRoot),
-        @("ObjectName", $currentUser, $plainPassword),
-        @("Start", "SERVICE_AUTO_START"),
-        @("AppStdout", (Join-Path $logDir "stdout.log")),
-        @("AppStderr", (Join-Path $logDir "stderr.log")),
-        @("AppRotateFiles", "1"),
-        @("AppRotateOnline", "1"),
-        @("AppRotateBytes", "10485760"),
-        @("AppExit", "Default", "Restart"),
-        @("AppRestartDelay", "5000"),
-        @("AppKillProcessTree", "1")
-    )
-    foreach ($setting in $settings) {
-        & $nssmExe set $ServiceName @setting
-        if ($LASTEXITCODE -ne 0) { throw "NSSM khong cau hinh duoc muc $($setting[0])." }
+    function Set-NssmSetting {
+        param([string[]]$Arguments)
+        & $nssmExe set $ServiceName @Arguments
+        if ($LASTEXITCODE -ne 0) { throw "NSSM khong cau hinh duoc muc $($Arguments[0])." }
     }
+
+    Set-NssmSetting @("AppDirectory", $ModelRoot)
+    Set-NssmSetting @("ObjectName", $currentUser, $plainPassword)
+    Set-NssmSetting @("Start", "SERVICE_AUTO_START")
+    Set-NssmSetting @("AppStdout", (Join-Path $logDir "stdout.log"))
+    Set-NssmSetting @("AppStderr", (Join-Path $logDir "stderr.log"))
+    Set-NssmSetting @("AppRotateFiles", "1")
+    Set-NssmSetting @("AppRotateOnline", "1")
+    Set-NssmSetting @("AppRotateBytes", "10485760")
+    Set-NssmSetting @("AppExit", "Default", "Restart")
+    Set-NssmSetting @("AppRestartDelay", "5000")
+    Set-NssmSetting @("AppKillProcessTree", "1")
 }
 catch {
     if ($installed) { & $nssmExe remove $ServiceName confirm 2>$null }
