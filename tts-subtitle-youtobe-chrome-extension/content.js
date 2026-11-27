@@ -1,179 +1,62 @@
 (() => {
   if (window.__ttsSubtitleYouTubeLoaded) return;
-  window.__ttsSubtitleYouTubeLoaded = true;
-
-  const DEFAULTS = { enabled: false, rate: 1, voiceURI: "", voiceURIs: [], rotateVoices: false, autoLanguage: true };
-  let settings = { ...DEFAULTS };
-  let enabled = false, currentUtterance = null, lastCueKey = "", rotationIndex = 0;
-  let activeVideo = null, poller = null, pageObserver = null, voiceList = [];
-  const captionRootSelector = ".ytp-caption-window-container";
-
-  function getVideo() { return document.querySelector("video"); }
-  function normalizeText(value) { return String(value || "").replace(/\s+/g, " ").trim(); }
-
-  function detectLanguage(text, trackLanguage) {
-    if (trackLanguage && /^[a-z]{2,3}(-[A-Z]{2})?$/i.test(trackLanguage)) return trackLanguage;
-    if (/[\u3040-\u30ff\u4e00-\u9faf]/.test(text)) return /[\u3040-\u30ff]/.test(text) ? "ja" : "zh";
-    if (/[\uac00-\ud7af]/.test(text)) return "ko";
-    if (/[\u0400-\u04ff]/.test(text)) return "ru";
-    if (/[\u0600-\u06ff]/.test(text)) return "ar";
-    if (/[\u0e00-\u0e7f]/.test(text)) return "th";
-    if (/[\u00c0-\u024f]/.test(text)) return "fr";
-    if (/[\u0100-\u017f]/.test(text)) return "vi";
-    return "en";
+  window.__ttsSubtitleYouTubeLoaded=true;
+  const DEFAULTS={enabled:false,rate:1,volume:1,voiceURI:"",voiceURIs:[],rotateVoices:false,autoLanguage:true};
+  let settings={...DEFAULTS},enabled=false,video=null,engine=null,sentences=[],track=null,utterance=null,rotationIndex=0,status="idle",loadToken=0;
+  const norm=s=>String(s||"").replace(/\s+/g," ").trim();
+  function language(text,trackLang){if(trackLang)return trackLang;if(/[\u3040-\u30ff]/.test(text))return"ja";if(/[\u4e00-\u9fff]/.test(text))return"zh";if(/[\uac00-\ud7af]/.test(text))return"ko";if(/[\u0100-\u017f]/.test(text))return"vi";if(/[\u0400-\u04ff]/.test(text))return"ru";return"en";}
+  function voices(){return speechSynthesis.getVoices();}
+  function chooseVoice(text,lang){
+    const all=voices(),code=(settings.autoLanguage?language(text,lang):"").toLowerCase();
+    const selected=(settings.voiceURIs||[]).map(id=>all.find(v=>v.voiceURI===id)).filter(Boolean);
+    const matches=list=>list.filter(v=>v.lang.toLowerCase()===code||v.lang.toLowerCase().startsWith(code+"-"));
+    if(settings.rotateVoices&&selected.length){const pool=settings.autoLanguage&&matches(selected).length?matches(selected):selected;const v=pool[rotationIndex%pool.length];rotationIndex++;return v;}
+    if(settings.autoLanguage){const v=all.find(v=>v.lang.toLowerCase()===code)||all.find(v=>v.lang.toLowerCase().startsWith(code+"-"));if(v)return v;}
+    return all.find(v=>v.voiceURI===settings.voiceURI)||selected[0]||null;
   }
-
-  function getTrackCue(video) {
-    if (!video || !video.textTracks) return null;
-    for (const track of Array.from(video.textTracks)) {
-      if (track.mode === "disabled") continue;
-      const cues = track.activeCues;
-      if (!cues || !cues.length) continue;
-      const cue = cues[0];
-      const text = normalizeText(cue.text);
-      if (text) return { text, start: cue.startTime, end: cue.endTime, lang: track.language || "" };
-    }
+  function cancel(){try{speechSynthesis.cancel();}catch(_){}utterance=null;}
+  function speak(item){return new Promise(resolve=>{
+    cancel();const u=new SpeechSynthesisUtterance(item.text),v=chooseVoice(item.text,track?.languageCode||"");
+    if(v){u.voice=v;u.lang=v.lang;}else u.lang=language(item.text,track?.languageCode);
+    u.rate=Math.max(.5,Math.min(2,Number(settings.rate)||1));u.volume=Math.max(0,Math.min(1,Number(settings.volume)||0));
+    utterance=u;u.onend=u.onerror=()=>{if(utterance===u)utterance=null;resolve();};speechSynthesis.speak(u);
+  });}
+  function playerResponse(){
+    if(window.ytInitialPlayerResponse)return window.ytInitialPlayerResponse;
+    for(const s of document.scripts){const t=s.textContent||"",p=t.indexOf("ytInitialPlayerResponse");if(p<0)continue;const b=t.indexOf("{",p);if(b<0)continue;let d=0,q=false,e=false;
+      for(let i=b;i<t.length;i++){const c=t[i];if(q){if(e)e=false;else if(c==="\\")e=true;else if(c==='"')q=false;continue;}if(c==='"'){q=true;continue;}if(c==="{")d++;else if(c==="}"&&--d===0){try{return JSON.parse(t.slice(b,i+1));}catch(_){break;}}}}
     return null;
   }
-
-  function getDomCue() {
-    const root = document.querySelector(captionRootSelector);
-    if (!root) return null;
-    const text = normalizeText(Array.from(root.querySelectorAll(".ytp-caption-segment"))
-      .map(node => node.textContent).filter(Boolean).join(" "));
-    return text ? { text, start: null, end: null, lang: "" } : null;
+  async function load(){
+    const tracks=playerResponse()?.captions?.playerCaptionsTracklistRenderer?.captionTracks||[];
+    if(!tracks.length)throw Error("Video không cung cấp phụ đề có thể tải.");
+    const preferred=(navigator.language||"vi").split("-")[0].toLowerCase();
+    track=tracks.find(t=>t.languageCode?.toLowerCase().startsWith(preferred))||tracks.find(t=>t.languageCode?.toLowerCase().startsWith("vi"))||tracks[0];
+    const url=new URL(track.baseUrl);url.searchParams.set("fmt","json3");
+    const response=await fetch(url.href,{credentials:"include"});if(!response.ok)throw Error("Không tải được phụ đề: "+response.status);
+    const parsed=window.TTSSubtitleParser.toSentences(await response.json());if(!parsed.length)throw Error("Phụ đề không có câu thoại.");
+    return parsed;
   }
-
-  function getCue(video) { return getTrackCue(video) || getDomCue(); }
-  function getVoices() { voiceList = window.speechSynthesis.getVoices(); return voiceList; }
-
-  function chooseVoice(text, trackLanguage) {
-    const voices = getVoices();
-    const language = detectLanguage(text, trackLanguage).toLowerCase();
-    const selected = (settings.voiceURIs || []).map(uri => voices.find(v => v.voiceURI === uri)).filter(Boolean);
-    const languageMatches = list => list.filter(v =>
-      v.lang.toLowerCase() === language || v.lang.toLowerCase().startsWith(language + "-")
-    );
-    if (settings.rotateVoices && selected.length) {
-      const rotationPool = settings.autoLanguage ? (languageMatches(selected).length ? languageMatches(selected) : selected) : selected;
-      const voice = rotationPool[rotationIndex % rotationPool.length];
-      rotationIndex++;
-      return voice;
-    }
-    if (settings.autoLanguage) {
-      const match = voices.find(v => v.lang.toLowerCase() === language) ||
-        voices.find(v => v.lang.toLowerCase().startsWith(language + "-"));
-      if (match) return match;
-    }
-    return voices.find(v => v.voiceURI === settings.voiceURI) || selected[0] || null;
+  async function activate(){
+    const token=++loadToken;video=document.querySelector("video.html5-main-video")||document.querySelector("video");
+    if(!video)throw Error("Không tìm thấy video YouTube.");
+    status="loading";const next=await load();if(token!==loadToken)return;
+    if(engine)engine.destroy();sentences=next;
+    engine=new window.TTSSubtitleHybridSync({video,sentences,speak,cancel,pauseSpeech:()=>speechSynthesis.pause(),resumeSpeech:()=>speechSynthesis.resume(),onStatus:s=>status=s});
+    enabled=true;chrome.storage.local.set({enabled:true});engine.start(video.currentTime);status="reading";
   }
-
-  function stopSpeech() {
-    window.speechSynthesis.cancel();
-    currentUtterance = null;
-  }
-
-  function speakCue(cue) {
-    if (!enabled || !cue || !cue.text) return;
-    const video = getVideo();
-    if (!video || video.paused || video.ended) return;
-    const key = cue.start == null ? "dom:" + cue.text : cue.start + ":" + cue.end + ":" + cue.text;
-    if (key === lastCueKey) return;
-    lastCueKey = key;
-    stopSpeech();
-    const utterance = new SpeechSynthesisUtterance(cue.text);
-    utterance.rate = Math.min(2, Math.max(0.5, Number(settings.rate) || 1));
-    const voice = chooseVoice(cue.text, cue.lang);
-    if (voice) { utterance.voice = voice; utterance.lang = voice.lang; }
-    else utterance.lang = detectLanguage(cue.text, cue.lang);
-    utterance.onend = () => { if (currentUtterance === utterance) currentUtterance = null; };
-    utterance.onerror = () => { if (currentUtterance === utterance) currentUtterance = null; };
-    currentUtterance = utterance;
-    window.speechSynthesis.speak(utterance);
-  }
-
-  function tick() {
-    const video = getVideo();
-    if (!video) return;
-    if (video !== activeVideo) bindVideo(video);
-    if (!enabled || video.paused || video.ended) return;
-    const cue = getCue(video);
-    if (cue) speakCue(cue);
-  }
-
-  function bindVideo(video) {
-    if (activeVideo) {
-      activeVideo.removeEventListener("pause", handlePause);
-      activeVideo.removeEventListener("play", handlePlay);
-      activeVideo.removeEventListener("ended", handlePause);
-      activeVideo.removeEventListener("seeked", handleSeek);
-    }
-    activeVideo = video;
-    lastCueKey = "";
-    if (!video) return;
-    video.addEventListener("pause", handlePause);
-    video.addEventListener("play", handlePlay);
-    video.addEventListener("ended", handlePause);
-    video.addEventListener("seeked", handleSeek);
-  }
-  function handlePause() { stopSpeech(); }
-  function handlePlay() { lastCueKey = ""; tick(); }
-  function handleSeek() { stopSpeech(); lastCueKey = ""; tick(); }
-
-  function setEnabled(value) {
-    enabled = Boolean(value);
-    document.documentElement.classList.toggle("tts-subtitle-enabled", enabled);
-    if (enabled) { lastCueKey = ""; tick(); }
-    else stopSpeech();
-    chrome.storage.local.set({ enabled });
-  }
-
-  function stateResponse() {
-    return {
-      enabled, rate: settings.rate, voiceURI: settings.voiceURI,
-      voiceURIs: settings.voiceURIs || [], rotateVoices: Boolean(settings.rotateVoices),
-      autoLanguage: settings.autoLanguage !== false,
-      voices: getVoices().map(v => ({ name: v.name, lang: v.lang, voiceURI: v.voiceURI }))
-    };
-  }
-
-  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (!message || message.target !== "tts-subtitle-youtube") return;
-    switch (message.type) {
-      case "GET_STATE": sendResponse(stateResponse()); break;
-      case "SET_ENABLED": setEnabled(message.value); sendResponse({ enabled }); break;
-      case "SET_RATE":
-        settings.rate = Math.min(2, Math.max(0.5, Number(message.value) || 1));
-        chrome.storage.local.set({ rate: settings.rate }); sendResponse({ rate: settings.rate }); break;
-      case "SET_VOICES":
-        settings.voiceURIs = Array.isArray(message.value) ? message.value : [];
-        rotationIndex = 0; chrome.storage.local.set({ voiceURIs: settings.voiceURIs });
-        sendResponse({ voiceURIs: settings.voiceURIs }); break;
-      case "SET_ROTATE":
-        settings.rotateVoices = Boolean(message.value);
-        chrome.storage.local.set({ rotateVoices: settings.rotateVoices });
-        sendResponse({ rotateVoices: settings.rotateVoices }); break;
-      case "SET_AUTO_LANGUAGE":
-        settings.autoLanguage = Boolean(message.value);
-        chrome.storage.local.set({ autoLanguage: settings.autoLanguage });
-        sendResponse({ autoLanguage: settings.autoLanguage }); break;
-      case "STOP": stopSpeech(); lastCueKey = ""; sendResponse({ stopped: true }); break;
-    }
+  function deactivate(){enabled=false;loadToken++;if(engine)engine.stop();cancel();status="stopped";chrome.storage.local.set({enabled:false});}
+  function response(){return{enabled,rate:settings.rate,volume:settings.volume,voiceURI:settings.voiceURI,voiceURIs:settings.voiceURIs,rotateVoices:settings.rotateVoices,autoLanguage:settings.autoLanguage,status,voices:voices().map(v=>({name:v.name,lang:v.lang,voiceURI:v.voiceURI}))};}
+  chrome.runtime.onMessage.addListener((m,s,send)=>{
+    if(m?.target!=="tts-subtitle-youtube")return;
+    if(m.type==="GET_STATE"){send(response());return;}
+    if(m.type==="SET_ENABLED"){if(m.value)activate().then(()=>send({enabled:true})).catch(e=>{status="error";send({error:e.message});});else{deactivate();send({enabled:false});}return true;}
+    if(m.type==="STOP"){deactivate();send({stopped:true});return;}
+    const key={SET_RATE:"rate",SET_VOLUME:"volume",SET_VOICES:"voiceURIs",SET_ROTATE:"rotateVoices",SET_AUTO_LANGUAGE:"autoLanguage"}[m.type];
+    if(key){settings[key]=m.value;if(key==="rate")settings.rate=Math.max(.5,Math.min(2,Number(m.value)||1));if(key==="volume")settings.volume=Math.max(0,Math.min(1,Number(m.value)||0));if(key==="voiceURIs")rotationIndex=0;chrome.storage.local.set({[key]:settings[key]});if(engine&&key==="volume"&&utterance){}send({[key]:settings[key]});}
     return true;
   });
-
-  window.speechSynthesis.onvoiceschanged = () => { getVoices(); };
-  chrome.storage.local.get(DEFAULTS, stored => {
-    settings = { ...DEFAULTS, ...stored };
-    enabled = Boolean(settings.enabled);
-    document.documentElement.classList.toggle("tts-subtitle-enabled", enabled);
-    bindVideo(getVideo());
-    tick();
-  });
-  poller = window.setInterval(tick, 80);
-  pageObserver = new MutationObserver(() => {
-    const video = getVideo();
-    if (video !== activeVideo) bindVideo(video);
-  });
-  pageObserver.observe(document.documentElement, { childList: true, subtree: true });
+  speechSynthesis.onvoiceschanged=()=>{};
+  chrome.storage.local.get(DEFAULTS,stored=>{settings={...DEFAULTS,...stored};enabled=false;});
+  document.addEventListener("yt-navigate-finish",()=>{if(enabled)activate().catch(e=>{status="error";console.warn("[TTS Subtitle]",e.message);});});
 })();
