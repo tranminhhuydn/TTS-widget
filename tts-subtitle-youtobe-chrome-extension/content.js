@@ -33,6 +33,9 @@
     if(settings.autoLanguage){const v=all.find(v=>v.lang.toLowerCase()===code)||all.find(v=>v.lang.toLowerCase().startsWith(code+"-"));if(v)return v;}
     return all.find(v=>v.voiceURI===settings.voiceURI)||selected[0]||null;
   }
+  const audioCache=new Map(),audioPending=new Map(),synthesisQueue=[];
+  let synthesisRunning=false,preloadGeneration=0;
+  const CACHE_LIMIT=24;
   function cancel(){
     try{speechSynthesis.cancel();}catch(_){}
     utterance=null;
@@ -40,7 +43,12 @@
     if(activeAudioUrl){URL.revokeObjectURL(activeAudioUrl);activeAudioUrl=null;}
     if(activeAudioResolve){const resolve=activeAudioResolve;activeAudioResolve=null;resolve();}
   }
-  function requestVieNeu(text){
+  function resetPreload(){
+    preloadGeneration++;
+    for(const task of synthesisQueue){audioPending.delete(task.item.id);task.reject(Error("Đã hủy hàng đợi audio cũ."));}
+    synthesisQueue.length=0;
+  }
+  function synthesizeBlob(text){
     return new Promise((resolve,reject)=>{
       chrome.runtime.sendMessage({target:"vieneu-local-tts",type:"SYNTHESIZE",text,voice:settings.vieneuVoice||"Pham Tuyen"},response=>{
         const runtimeError=chrome.runtime.lastError;
@@ -49,19 +57,59 @@
         try{
           const binary=atob(response.audioBase64),bytes=new Uint8Array(binary.length);
           for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-          const blob=new Blob([bytes],{type:response.mimeType||"audio/wav"});
-          const url=URL.createObjectURL(blob),audio=new Audio(url);
-          activeAudio=audio;activeAudioUrl=url;audio.volume=Math.max(0,Math.min(1,Number(settings.volume)||0));audio.playbackRate=Math.max(.5,Math.min(2,Number(settings.rate)||1));
-          const cleanup=()=>{if(activeAudio===audio)activeAudio=null;if(activeAudioUrl===url){URL.revokeObjectURL(url);activeAudioUrl=null;}activeAudioResolve=null;};
-          activeAudioResolve=()=>{cleanup();resolve();};
-          audio.onended=()=>{cleanup();resolve();};
-          audio.onerror=()=>{cleanup();reject(Error("Không phát được WAV do VieNeu trả về."));};
-          audio.play().catch(error=>{cleanup();reject(Error("Trình duyệt không phát được âm thanh VieNeu: "+error.message));});
+          resolve(new Blob([bytes],{type:response.mimeType||"audio/wav"}));
         }catch(error){reject(error);}
       });
     });
   }
-  function speak(item){if(settings.engine==="vieneu")return requestVieNeu(item.text);return new Promise((resolve,reject)=>{
+  async function pumpSynthesisQueue(){
+    if(synthesisRunning)return;
+    synthesisRunning=true;
+    while(synthesisQueue.length){
+      const task=synthesisQueue.shift();
+      try{
+        const blob=await synthesizeBlob(task.item.text);
+        if(task.generation===preloadGeneration){
+          audioCache.set(task.item.id,blob);
+          while(audioCache.size>CACHE_LIMIT)audioCache.delete(audioCache.keys().next().value);
+        }
+        audioPending.delete(task.item.id);
+        task.resolve(blob);
+      }catch(error){
+        audioPending.delete(task.item.id);
+        task.reject(error);
+      }
+    }
+    synthesisRunning=false;
+  }
+  function prepare(item){
+    if(settings.engine!=="vieneu")return Promise.resolve(null);
+    if(audioCache.has(item.id))return Promise.resolve(audioCache.get(item.id));
+    if(audioPending.has(item.id))return audioPending.get(item.id);
+    const generation=preloadGeneration;
+    const promise=new Promise((resolve,reject)=>{
+      synthesisQueue.push({item,generation,resolve,reject});
+      audioPending.set(item.id,promise);
+    });
+    pumpSynthesisQueue();
+    return promise;
+  }
+  function playVieNeu(item){
+    return prepare(item).then(blob=>new Promise((resolve,reject)=>{
+      if(!blob){reject(Error("Audio VieNeu chưa sẵn sàng."));return;}
+      const url=URL.createObjectURL(blob),audio=new Audio(url);
+      activeAudio=audio;activeAudioUrl=url;
+      audio.volume=Math.max(0,Math.min(1,Number(settings.volume)||0));
+      audio.playbackRate=Math.max(.5,Math.min(2,Number(settings.rate)||1));
+      const cleanup=()=>{if(activeAudio===audio)activeAudio=null;if(activeAudioUrl===url){URL.revokeObjectURL(url);activeAudioUrl=null;}if(activeAudioResolve===finish)activeAudioResolve=null;};
+      const finish=()=>{cleanup();resolve();};
+      activeAudioResolve=finish;
+      audio.onended=finish;
+      audio.onerror=()=>{cleanup();reject(Error("Không phát được WAV do VieNeu trả về."));};
+      audio.play().catch(error=>{cleanup();reject(Error("Trình duyệt không phát được âm thanh VieNeu: "+error.message));});
+    }));
+  }
+  function speak(item){if(settings.engine==="vieneu")return playVieNeu(item);return new Promise((resolve,reject)=>{
     // Chrome đôi khi bỏ lệnh speak ngay sau cancel(), đặc biệt với giọng đọc mạng.
     cancel();
     const u=new SpeechSynthesisUtterance(item.text),v=chooseVoice(item.text,track?.languageCode||"");
@@ -128,11 +176,11 @@
     const token=++loadToken;video=document.querySelector("video.html5-main-video")||document.querySelector("video");
     if(!video)throw Error("Không tìm thấy video YouTube.");
     status="loading";const next=await load();if(token!==loadToken)return;
-    if(engine)engine.destroy();sentences=next;
-    engine=new window.TTSSubtitleHybridSync({video,sentences,speak,cancel,pauseSpeech:()=>speechSynthesis.pause(),resumeSpeech:()=>speechSynthesis.resume(),onStatus:s=>status=s});
+    if(engine)engine.destroy();resetPreload();audioCache.clear();sentences=next;
+    engine=new window.TTSSubtitleHybridSync({video,sentences,speak,prepare,cancel,resetPreload,pauseSpeech:()=>{if(activeAudio)activeAudio.pause();speechSynthesis.pause();},resumeSpeech:()=>{if(activeAudio)activeAudio.play().catch(()=>{});speechSynthesis.resume();},onStatus:s=>status=s,onError:e=>{status="error";console.warn("[TTS Subtitle] VieNeu:",e.message);}});
     enabled=true;chrome.storage.local.set({enabled:true});engine.start(video.currentTime);status="reading";
   }
-  function deactivate(){enabled=false;loadToken++;if(engine)engine.stop();cancel();status="stopped";chrome.storage.local.set({enabled:false});}
+  function deactivate(){enabled=false;loadToken++;if(engine)engine.stop();resetPreload();audioCache.clear();cancel();status="stopped";chrome.storage.local.set({enabled:false});}
   function response(){return{enabled,engine:settings.engine,vieneuVoice:settings.vieneuVoice,rate:settings.rate,volume:settings.volume,voiceURI:settings.voiceURI,voiceURIs:settings.voiceURIs,rotateVoices:settings.rotateVoices,autoLanguage:settings.autoLanguage,readingMode:settings.readingMode,status,voices:voices().map(v=>({name:v.name,lang:v.lang,voiceURI:v.voiceURI}))};}
   chrome.runtime.onMessage.addListener((m,s,send)=>{
     if(m?.target!=="tts-subtitle-youtube")return;
@@ -141,13 +189,13 @@
     if(m.type==="STOP"){deactivate();send({stopped:true});return;}
     if(m.type==="SET_ENGINE"){
       if(!["browser","vieneu"].includes(m.value)){send({error:"TTS engine không hợp lệ."});return;}
-      settings.engine=m.value;chrome.storage.local.set({engine:settings.engine});
+      settings.engine=m.value;resetPreload();audioCache.clear();chrome.storage.local.set({engine:settings.engine});
       if(enabled)activate().then(()=>send({engine:settings.engine})).catch(e=>send({error:e.message}));else send({engine:settings.engine});
       return true;
     }
     if(m.type==="SET_VIENEU_VOICE"){
       settings.vieneuVoice=String(m.value||"Pham Tuyen").trim()||"Pham Tuyen";
-      chrome.storage.local.set({vieneuVoice:settings.vieneuVoice});send({vieneuVoice:settings.vieneuVoice});return;
+      resetPreload();audioCache.clear();chrome.storage.local.set({vieneuVoice:settings.vieneuVoice});send({vieneuVoice:settings.vieneuVoice});return;
     }
     if(m.type==="SET_READING_MODE"){
       if(!["original","story"].includes(m.value)){send({error:"Kiểu đọc không hợp lệ."});return;}
