@@ -33,7 +33,7 @@
     resume(){if(this.active){this.waiting=false;this.resumeSpeech();this.preload();this.tick();}}
     seek(){
       if(!this.active)return;
-      this.session++;this.cancel();this.resetPreload?.();this.preparing.clear();this.preloadAttempted.clear();this.preloadAttempted.clear();
+      this.session++;this.cancel();this.resetPreload?.();this.preparing.clear();this.preloadAttempted.clear();
       this.speaking=false;this.index=this.findIndex(this.video.currentTime);this.waiting=true;this.onStatus("resync");
     }
     tick(){
@@ -56,7 +56,7 @@
     }
     stop(notify=true){
       this.active=false;this.waiting=false;this.speaking=false;this.session++;
-      clearInterval(this.timer);this.timer=null;this.cancel();this.resetPreload?.();this.preparing.clear();
+      clearInterval(this.timer);this.timer=null;this.cancel();this.resetPreload?.();this.preparing.clear();this.preloadAttempted.clear();
       if(notify)this.onStatus("stopped");
     }
     destroy(){
