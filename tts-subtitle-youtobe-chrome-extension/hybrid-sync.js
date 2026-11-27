@@ -4,7 +4,7 @@
     constructor({video,sentences,speak,prepare,cancel,resetPreload,pauseSpeech,resumeSpeech,onStatus,onError}) {
       Object.assign(this,{video,sentences,speak,prepare,cancel,resetPreload,pauseSpeech,resumeSpeech,onStatus,onError});
       this.index=0;this.active=false;this.waiting=false;this.speaking=false;this.session=0;this.timer=null;
-      this.preparing=new Set();this.preloadAttempted=new Set();this.preloadAhead=10;
+      this.preparing=new Set();this.preloadAttempted=new Set();this.preloadAhead=20;
       this.onPlay=()=>this.resume();this.onPause=()=>this.pause();this.onSeeking=()=>this.seek();
       this.onSeeked=()=>{this.waiting=this.video.paused;if(!this.waiting){this.preload();this.tick();}};
       this.onRate=()=>this.tick();
