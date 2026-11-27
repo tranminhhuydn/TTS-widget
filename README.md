@@ -22,6 +22,12 @@ Thư mục: [`tts-widget-chrome-extension/`](./tts-widget-chrome-extension/)
 
 Khu vực dành riêng cho phiên bản Chrome Extension. Phần này được tách biệt để prompts và mã nguồn Extension không tự ý tác động đến phiên bản nhúng website. Extension sẽ được triển khai ở giai đoạn tiếp theo; thư mục hiện chứa hướng dẫn phạm vi và quy tắc phát triển.
 
+### 3. Network Listener Chrome Extension
+
+Thư mục: [`network-listener-chrome-extension/`](./network-listener-chrome-extension/)
+
+Chrome Extension độc lập để theo dõi Network của tab hiện tại, liệt kê response và xem nội dung text hoặc nhận diện dữ liệu nhị phân. Không phụ thuộc vào TTS-widget.
+
 ## Nguyên tắc tổ chức
 
 - Mỗi phiên bản quản lý README, prompts và mã nguồn riêng.
