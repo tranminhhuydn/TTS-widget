@@ -2,6 +2,14 @@
 
 const toggleButton = document.getElementById("toggleButton");
 const statusNode = document.getElementById("status");
+const darkModeToggle = document.getElementById("darkModeToggle");
+const pageFontSize = document.getElementById("pageFontSize");
+const pageFontSizeValue = document.getElementById("pageFontSizeValue");
+async function loadAppearanceSettings(){const s=await chrome.storage.sync.get({darkMode:false,pageFontSize:16});darkModeToggle.checked=s.darkMode===true;pageFontSize.value=String(s.pageFontSize);pageFontSizeValue.textContent=s.pageFontSize+" px";}
+async function saveAppearanceSettings(){const s={darkMode:darkModeToggle.checked,pageFontSize:Number(pageFontSize.value)};await chrome.storage.sync.set(s);pageFontSizeValue.textContent=s.pageFontSize+" px";}
+darkModeToggle.addEventListener("change",async()=>{darkModeToggle.disabled=true;try{await saveAppearanceSettings();}catch(error){darkModeToggle.checked=!darkModeToggle.checked;showStatus(error?.message||"Không lưu được chế độ ban đêm.","error");}finally{darkModeToggle.disabled=false;}});
+pageFontSize.addEventListener("input",()=>{pageFontSizeValue.textContent=pageFontSize.value+" px";});
+pageFontSize.addEventListener("change",async()=>{pageFontSize.disabled=true;try{await saveAppearanceSettings();}catch(error){showStatus(error?.message||"Không lưu được cỡ chữ.","error");}finally{pageFontSize.disabled=false;}});
 
 function showStatus(message, type) {
   statusNode.textContent = message;
@@ -120,5 +128,6 @@ toggleButton.addEventListener("click", async () => {
   }
 });
 
+loadAppearanceSettings().catch(error=>showStatus(error?.message||'Không tải được cài đặt giao diện.','error'));
 refreshState();
 
