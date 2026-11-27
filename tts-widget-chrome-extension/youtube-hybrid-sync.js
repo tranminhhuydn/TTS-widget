@@ -21,10 +21,12 @@
       this.onPlay=()=>this.resume();
       this.onPause=()=>this.pause();
       this.onSeek=()=>this.seek();
+      this.onSeeked=()=>{this.waiting=this.video.paused;if(!this.waiting)this.tick();};
       this.onRate=()=>this.tick();
       this.video.addEventListener("play",this.onPlay);
       this.video.addEventListener("pause",this.onPause);
       this.video.addEventListener("seeking",this.onSeek);
+      this.video.addEventListener("seeked",this.onSeeked);
       this.video.addEventListener("ratechange",this.onRate);
       this.video.addEventListener("ended",this.onPause);
     }
@@ -56,8 +58,7 @@
       this.cancel();
       this.speaking=false;
       this.index=this.findIndex(this.video.currentTime);
-      this.waiting=this.video.paused;
-      if(!this.waiting)this.tick();
+      this.waiting=true;
       this.onStatus("resync");
     }
     tick(){
@@ -107,6 +108,7 @@
       this.video.removeEventListener("play",this.onPlay);
       this.video.removeEventListener("pause",this.onPause);
       this.video.removeEventListener("seeking",this.onSeek);
+      this.video.removeEventListener("seeked",this.onSeeked);
       this.video.removeEventListener("ratechange",this.onRate);
       this.video.removeEventListener("ended",this.onPause);
     }
