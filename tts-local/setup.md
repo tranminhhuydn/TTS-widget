@@ -353,3 +353,57 @@ API CPU vẫn ở http://127.0.0.1:8080. Windows Service VieNeuTTS hiện tại 
 - cudart, cuBLAS hoặc cuFFT không tìm thấy: kiểm tra nội dung archive cudart đã được giải nén cạnh các binary theo cấu trúc gói.
 - Không đủ VRAM: RTX 2050 có 4 GB VRAM; đóng ứng dụng GPU khác, thử tải model khi máy ít sử dụng GPU. Không thay đổi runtime CPU.
 - Cổng 8081 đã được sử dụng: kiểm tra tiến trình đang chiếm cổng trước khi chạy GPU API.
+
+
+### Đăng ký Windows Service cho GPU
+
+Chỉ cài service sau khi đã chạy thử GPU thủ công thành công: API health ở cổng 8081 hoạt động và đã tạo được ít nhất một file WAV. Dừng cửa sổ GPU chạy thủ công bằng Ctrl+C trước khi cài để tránh trùng cổng.
+
+Mở **PowerShell bằng Run as Administrator**, từ thư mục gốc repository chạy:
+
+~~~powershell
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\install-vieneu-gpu-service.ps1"
+~~~
+
+Bộ cài tạo service riêng tên VieNeuTTS-GPU, chạy script start-vieneu-gpu.ps1 để thiết lập PATH cho các DLL CUDA rồi khởi chạy audio.cpp bằng server-gpu.json. Service dùng tài khoản Windows hiện tại; nhập mật khẩu tài khoản khi được hỏi (PIN Windows Hello không thay thế mật khẩu). NSSM được dùng chung tại thư mục windows-service.
+
+Service GPU được đặt tự khởi động cùng Windows, tự khởi động lại tiến trình khi lỗi và ghi log riêng. Cài đặt này không sửa hoặc khởi động lại service CPU VieNeuTTS.
+
+Kiểm tra:
+
+~~~powershell
+Get-Service VieNeuTTS-GPU
+Invoke-RestMethod "http://127.0.0.1:8081/health"
+Get-CimInstance Win32_Service -Filter "Name='VieNeuTTS-GPU'" |
+    Select-Object Name, State, StartMode, StartName, ProcessId
+~~~
+
+Quản lý service GPU (PowerShell Administrator):
+
+~~~powershell
+# Xem trạng thái
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\manage-vieneu-gpu-service.ps1" -Action Status
+
+# Khởi động
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\manage-vieneu-gpu-service.ps1" -Action Start
+
+# Dừng
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\manage-vieneu-gpu-service.ps1" -Action Stop
+
+# Khởi động lại
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\manage-vieneu-gpu-service.ps1" -Action Restart
+~~~
+
+Gỡ riêng service GPU:
+
+~~~powershell
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\uninstall-vieneu-gpu-service.ps1"
+~~~
+
+Lệnh gỡ chỉ xóa đăng ký VieNeuTTS-GPU; không xóa runtime CUDA, model, cấu hình, log hoặc service CPU. Log GPU nằm tại:
+
+~~~text
+%USERPROFILE%\.lmstudio\models\pnnbao-ump\VieNeu-TTS-v3-Turbo\windows-service\gpu-logs\
+~~~
+
+**Lưu ý VRAM:** nếu service tự khởi động cùng Windows trong khi ứng dụng khác đang chiếm VRAM, model có thể không nạp được. Khi đó xem gpu-logs\stdout.log và stderr.log, giải phóng VRAM rồi khởi động lại service GPU. Hai service CPU/GPU có thể cùng chạy nhưng GPU 4 GB không đảm bảo đủ bộ nhớ cho mọi cấu hình.
