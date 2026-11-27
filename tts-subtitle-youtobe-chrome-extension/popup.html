@@ -48,9 +48,13 @@
         <p id="voiceHelp" class="field-help">Giữ Ctrl để chọn nhiều giọng luân phiên.</p>
       </div>
       <div id="vieneuSettings" class="engine-settings" hidden>
-        <label class="field-label" for="vieneuVoice">Giọng VieNeu</label>
-        <input id="vieneuVoice" class="control" type="text" value="Pham Tuyen" placeholder="Ví dụ: Pham Tuyen">
-        <p class="field-help">Tổng hợp giọng nói trực tiếp trên máy tính.</p>
+        <div class="voice-heading">
+          <label class="field-label" for="vieneuVoices">Giọng VieNeu GPU</label>
+          <button id="refreshVieNeuVoices" class="refresh-voices" type="button" title="Tải lại danh sách giọng">↻ Tải lại</button>
+        </div>
+        <select id="vieneuVoices" class="control voice-list vieneu-voice-list" multiple size="5" aria-describedby="vieneuVoiceHelp"></select>
+        <p id="vieneuVoiceHelp" class="field-help">Chọn một giọng để dùng cố định hoặc giữ Ctrl để chọn nhiều giọng luân phiên.</p>
+        <p id="vieneuVoiceStatus" class="voice-api-status" role="status">Đang chờ danh sách giọng...</p>
       </div>
     </section>
 
