@@ -158,6 +158,10 @@ async function startBackend() {
     windowsHide: false
   });
   const child = backendProcess;
+  child.once("error", error => {
+    console.error("Không chạy được audiocpp_server.exe:", error.message);
+    if (backendProcess === child) backendProcess = null;
+  });
   child.once("exit", (code, signal) => {
     if (backendProcess === child) backendProcess = null;
     if (code !== 0 && code !== null) {
@@ -229,7 +233,11 @@ function proxy(req, res) {
     method: req.method,
     headers
   }, upstreamRes => {
-    res.writeHead(upstreamRes.statusCode || 502, upstreamRes.headers);
+    const responseHeaders = { ...upstreamRes.headers };
+    responseHeaders["access-control-allow-origin"] = "*";
+    responseHeaders["access-control-allow-methods"] = "GET, POST, OPTIONS";
+    responseHeaders["access-control-allow-headers"] = "Content-Type";
+    res.writeHead(upstreamRes.statusCode || 502, responseHeaders);
     upstreamRes.pipe(res);
   });
   upstream.on("error", error => {
