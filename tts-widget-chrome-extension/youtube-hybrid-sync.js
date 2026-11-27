@@ -7,6 +7,9 @@
       this.sentences=options.sentences||[];
       this.speak=options.speak;
       this.cancel=options.cancel||(()=>{});
+      this.pauseSpeech=options.pauseSpeech||(()=>{});
+      this.resumeSpeech=options.resumeSpeech||(()=>{});
+      this.speaking=false;
       this.onStatus=options.onStatus||(()=>{});
       this.tolerance=Number(options.tolerance)||2;
       this.resyncThreshold=Number(options.resyncThreshold)||8;
@@ -39,26 +42,26 @@
     }
     pause(){
       if(!this.active)return;
-      this.waiting=true;
-      this.cancel();
+      this.pauseSpeech();
       this.onStatus("paused");
     }
     resume(){
       if(!this.active)return;
-      this.waiting=false;
+      this.resumeSpeech();
       this.tick();
     }
     seek(){
       if(!this.active)return;
       this.session++;
       this.cancel();
+      this.speaking=false;
       this.index=this.findIndex(this.video.currentTime);
       this.waiting=this.video.paused;
       if(!this.waiting)this.tick();
       this.onStatus("resync");
     }
     tick(){
-      if(!this.active||this.waiting||this.video.paused||this.video.ended)return;
+      if(!this.active||this.waiting||this.speaking||this.video.paused||this.video.ended)return;
       const now=this.video.currentTime;
       if(this.index>=this.sentences.length){this.onStatus("ended");return;}
       let item=this.sentences[this.index];
@@ -75,23 +78,24 @@
       }
       const currentIndex=this.index;
       const token=this.session;
-      this.waiting=true;
+      this.speaking=true;
       this.onStatus("reading");
       Promise.resolve(this.speak(item)).then(()=>{
         if(!this.active||token!==this.session)return;
         this.index=Math.max(this.index,currentIndex+1);
-        this.waiting=false;
+        this.speaking=false;
         this.tick();
       }).catch(()=>{
         if(!this.active||token!==this.session)return;
         this.index=currentIndex+1;
-        this.waiting=false;
+        this.speaking=false;
         this.tick();
       });
     }
     stop(notify=true){
       this.active=false;
       this.waiting=false;
+      this.speaking=false;
       this.session++;
       if(this.timer)clearInterval(this.timer);
       this.timer=null;
