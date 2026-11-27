@@ -6,7 +6,8 @@
   "minimum_chrome_version": "102",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "action": {
     "default_title": "TTS-widget",
@@ -21,5 +22,19 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "theme.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
 }
