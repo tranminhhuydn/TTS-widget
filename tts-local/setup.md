@@ -302,3 +302,54 @@ Nếu service không khởi động:
 5. Sau khi sửa `server.json` hoặc file liên quan, khởi động lại service.
 
 Nếu tài khoản Windows không có mật khẩu hoặc không thể cấu hình quyền đăng nhập dưới dạng service, không nên đổi tùy tiện sang `LocalSystem`; hãy cân nhắc dùng Task Scheduler chạy khi người dùng đăng nhập.
+
+
+## 10. Cài thêm API GPU (giữ nguyên CPU)
+
+Cấu hình này tạo một instance CUDA riêng, không sửa cấu hình CPU và không thay đổi API đang chạy ở cổng 8080.
+
+### Cấu hình song song
+
+| Instance | Runtime | Backend | Port |
+|---|---|---|---:|
+| VieNeu CPU | audio.cpp 0.9.6 CPU portable hiện tại | cpu | 8080 |
+| VieNeu GPU | audio.cpp 0.9.6 CUDA 12.4 | cuda | 8081 |
+
+GPU mục tiêu là NVIDIA RTX 2050 4 GB. Model GGUF và thư mục voice được dùng chung; mỗi server có cấu hình riêng. Hai instance có thể cùng tồn tại, nhưng VRAM 4 GB có thể giới hạn khả năng nạp model hoặc mức tăng tốc thực tế.
+
+### Cài runtime CUDA
+
+Gói Windows CUDA 12.4 của audio.cpp v0.9.6 gồm hai archive riêng: CUDA binary khoảng 471 MB và CUDA runtime libraries khoảng 607 MB. Script tự tải cả hai, kiểm tra SHA-256 theo release, giải nén vào thư mục riêng và sao chép SEA-G2P DLL từ runtime CPU. Cần khoảng hơn 1 GB dung lượng tải xuống, cộng dung lượng giải nén.
+
+Từ thư mục gốc repository, chạy PowerShell:
+
+~~~powershell
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\install-vieneu-gpu.ps1"
+~~~
+
+Script tạo server-gpu.json từ cấu hình CPU, chỉ đổi backend thành cuda, port thành 8081 và cập nhật đường dẫn SEA-G2P DLL. File cấu hình CPU không bị sửa.
+
+### Khởi động và kiểm tra GPU
+
+Không dừng API CPU. Mở một cửa sổ PowerShell khác và chạy:
+
+~~~powershell
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\start-vieneu-gpu.ps1"
+~~~
+
+Kiểm tra API GPU trong cửa sổ PowerShell khác:
+
+~~~powershell
+Invoke-RestMethod "http://127.0.0.1:8081/health"
+~~~
+
+Sau đó gửi request tạo WAV theo mục 7, nhưng thay URL thành http://127.0.0.1:8081/v1/audio/speech. Trong lúc tổng hợp, theo dõi nvidia-smi để xác nhận GPU có hoạt động. Chỉ coi GPU đã chạy thành công khi server nạp model, request tạo WAV hoàn tất và log xác nhận backend CUDA.
+
+API CPU vẫn ở http://127.0.0.1:8080. Windows Service VieNeuTTS hiện tại vẫn trỏ tới runtime CPU; chưa cài hoặc thay đổi service GPU ở bước thử nghiệm này.
+
+### Lỗi thường gặp
+
+- ggml-cuda.dll không tìm thấy: kiểm tra đã giải nén cả hai archive CUDA vào runtime GPU.
+- cudart, cuBLAS hoặc cuFFT không tìm thấy: kiểm tra nội dung archive cudart đã được giải nén cạnh các binary theo cấu trúc gói.
+- Không đủ VRAM: RTX 2050 có 4 GB VRAM; đóng ứng dụng GPU khác, thử tải model khi máy ít sử dụng GPU. Không thay đổi runtime CPU.
+- Cổng 8081 đã được sử dụng: kiểm tra tiến trình đang chiếm cổng trước khi chạy GPU API.
