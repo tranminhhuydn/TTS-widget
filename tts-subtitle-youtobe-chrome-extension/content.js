@@ -33,7 +33,7 @@
     if(settings.autoLanguage){const v=all.find(v=>v.lang.toLowerCase()===code)||all.find(v=>v.lang.toLowerCase().startsWith(code+"-"));if(v)return v;}
     return all.find(v=>v.voiceURI===settings.voiceURI)||selected[0]||null;
   }
-  const audioCache=new Map(),audioPending=new Map(),synthesisQueue=[];
+  const audioCache=new Map(),audioPending=new Map(),audioFailures=new Map(),synthesisQueue=[];
   let synthesisRunning=false,preloadGeneration=0;
   const CACHE_LIMIT=24;
   function cancel(){
@@ -47,6 +47,7 @@
     preloadGeneration++;
     for(const task of synthesisQueue){audioPending.delete(task.item.id);task.reject(Error("Đã hủy hàng đợi audio cũ."));}
     synthesisQueue.length=0;
+    audioFailures.clear();
   }
   function synthesizeBlob(text){
     return new Promise((resolve,reject)=>{
@@ -77,6 +78,7 @@
         task.resolve(blob);
       }catch(error){
         audioPending.delete(task.item.id);
+        if(task.generation===preloadGeneration)audioFailures.set(task.item.id,error);
         task.reject(error);
       }
     }
@@ -85,12 +87,13 @@
   function prepare(item){
     if(settings.engine!=="vieneu")return Promise.resolve(null);
     if(audioCache.has(item.id))return Promise.resolve(audioCache.get(item.id));
+    if(audioFailures.has(item.id))return Promise.reject(audioFailures.get(item.id));
     if(audioPending.has(item.id))return audioPending.get(item.id);
     const generation=preloadGeneration;
-    const promise=new Promise((resolve,reject)=>{
-      synthesisQueue.push({item,generation,resolve,reject});
-      audioPending.set(item.id,promise);
-    });
+    let resolveTask,rejectTask;
+    const promise=new Promise((resolve,reject)=>{resolveTask=resolve;rejectTask=reject;});
+    synthesisQueue.push({item,generation,resolve:resolveTask,reject:rejectTask});
+    audioPending.set(item.id,promise);
     pumpSynthesisQueue();
     return promise;
   }
