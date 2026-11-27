@@ -14,6 +14,8 @@
       if(Array.isArray(payload?.events)&&payload.events.length)capturedTimedtext={url:data.url,payload};
     }catch(error){console.warn("[TTS Subtitle] Không đọc được response timedtext:",error.message);}
   });
+  // Yêu cầu Network Listener phát lại JSON3 nếu YouTube đã tải phụ đề trước document_idle.
+  window.postMessage({source:"tts-subtitle-content",type:"GET_TIMEDTEXT_CACHE"},location.origin);
   const norm=s=>String(s||"").replace(/\s+/g," ").trim();
   function language(text,trackLang){if(trackLang)return trackLang;if(/[\u3040-\u30ff]/.test(text))return"ja";if(/[\u4e00-\u9fff]/.test(text))return"zh";if(/[\uac00-\ud7af]/.test(text))return"ko";if(/[\u0100-\u017f]/.test(text))return"vi";if(/[\u0400-\u04ff]/.test(text))return"ru";return"en";}
   function voices(){return speechSynthesis.getVoices();}
