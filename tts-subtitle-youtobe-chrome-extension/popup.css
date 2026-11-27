@@ -82,3 +82,11 @@ footer{margin-top:11px;text-align:center;color:#a0a8b6;font-size:9px}
 .footer-mark{color:#3970d9;font-size:12px;font-weight:800}
 .footer-separator{padding:0 4px}
 :disabled{opacity:.48;cursor:not-allowed!important}
+.voice-heading{display:flex;align-items:center;justify-content:space-between}
+.voice-heading .field-label{margin-bottom:6px}
+.refresh-voices{padding:4px 7px;border:1px solid #dce5f5;border-radius:6px;background:#f5f8ff;color:#285bc4;font-size:10px;font-weight:650;cursor:pointer}
+.refresh-voices:hover{background:#eaf1ff}
+.vieneu-voice-list{min-height:105px}
+.voice-api-status{margin:6px 0 0;color:#8290a5;font-size:10px;line-height:1.4}
+.voice-api-status.error{color:#c63838}
+.voice-api-status.success{color:#21834c}
