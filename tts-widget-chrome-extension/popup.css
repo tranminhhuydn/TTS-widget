@@ -53,3 +53,10 @@ footer { margin-top: 14px; color: #94a3b8; font-size: 10px; text-align: center; 
 .appearance-setting h2 { margin: 0 0 12px; font-size: 14px; }
 .font-size-row { display:flex; justify-content:space-between; gap:12px; margin:14px 0 6px; font-size:12px; font-weight:600; }
 #pageFontSize { width:100%; margin:0; accent-color:#2463a6; cursor:pointer; }
+
+.font-enable-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px; cursor:pointer; }
+.font-enable-row span { display:grid; gap:4px; }
+.font-enable-row strong { font-size:12px; }
+.font-enable-row small { color:#64748b; font-size:11px; line-height:1.4; }
+#pageFontEnabled { width:18px; height:18px; margin:0; accent-color:#2463a6; cursor:pointer; flex:0 0 auto; }
+#pageFontSize:disabled { opacity:.45; cursor:not-allowed; }
