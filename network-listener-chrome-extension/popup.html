@@ -9,38 +9,30 @@
 <body>
   <main class="app">
     <header class="topbar">
-      <div>
-        <h1>Network Listener</h1>
-        <p id="tabHost">Đang kết nối tab...</p>
-      </div>
+      <div><h1>Network</h1><p id="tabHost">Đang kết nối tab...</p></div>
       <span id="stateBadge" class="badge">Đã tắt</span>
     </header>
-
     <section class="listen-panel">
       <button id="toggleListen" class="primary">Bắt đầu lắng nghe</button>
       <button id="clearList" class="secondary">Xóa danh sách</button>
     </section>
-
-    <section class="files-section">
-      <div class="section-heading">
-        <h2>Danh sách file</h2>
-        <span id="fileCount">0</span>
-      </div>
-      <div id="fileList" class="file-list">
-        <div class="empty">Chưa có dữ liệu. Nhấn “Bắt đầu lắng nghe”, sau đó tải lại hoặc thao tác trên website.</div>
+    <section class="requests-section">
+      <div class="section-heading"><h2>Danh sách request</h2><span id="fileCount">0</span></div>
+      <div class="table-scroll">
+        <table class="request-table">
+          <thead><tr>
+            <th class="name-col">Name</th><th>Status</th><th>Type</th>
+            <th>Initiator</th><th>Size</th><th>Time</th>
+          </tr></thead>
+          <tbody id="fileList"><tr><td colspan="6" class="empty">Chưa có request nào. Bắt đầu lắng nghe rồi tải lại trang.</td></tr></tbody>
+        </table>
       </div>
     </section>
-
     <section class="viewer-section">
-      <div class="section-heading">
-        <h2>Nội dung file</h2>
-        <span id="viewerType" class="muted">Chưa chọn</span>
-      </div>
-      <div id="viewer" class="viewer">
-        <div class="empty">Chọn một file trong danh sách để xem.</div>
-      </div>
+      <div class="section-heading"><h2>Sources / Response</h2><span id="viewerType" class="muted">Chưa chọn</span></div>
+      <div id="viewer" class="viewer"><div class="empty">Chọn một request để xem nội dung response.</div></div>
     </section>
-    <footer>Response body chỉ được giữ trong phiên trình duyệt hiện tại.</footer>
+    <footer>Danh sách được sắp xếp theo thời điểm bắt request; nội dung response chỉ lưu trong phiên hiện tại.</footer>
   </main>
   <script src="popup.js"></script>
 </body>
