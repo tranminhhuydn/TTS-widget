@@ -120,6 +120,7 @@
     if(location.hostname!=="www.youtube.com"&&location.hostname!=="youtube.com")return false;
     const settings=readSettings();
     volume=Math.min(1,Math.max(0,Number(settings.volume??1)));
+    try{if(typeof chrome!=="undefined"&&chrome.storage?.sync)chrome.storage.sync.get({ttsVolume:null},result=>{if(result.ttsVolume!==null)setVolume(result.ttsVolume);});}catch(_){}
     preferredVoice=localStorage.getItem("tts-widget-voice-v1")||"";
     // Activation is controlled by the existing extension popup.
     active=true;
