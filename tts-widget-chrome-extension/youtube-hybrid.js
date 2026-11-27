@@ -96,7 +96,7 @@
         onStatus:value=>{status=value;}
       });
     }
-    if(!video.paused)engine.start(video.currentTime);
+    engine.start(video.currentTime);
   }
   function deactivate(){
     active=false;
