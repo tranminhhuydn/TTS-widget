@@ -23,11 +23,16 @@ function normalizeVieNeuVoices(data) {
   }).filter(Boolean);
 }
 
+function currentVieNeuEngine() {
+  return $("engine").value === "vieneu-gpu" ? "vieneu-gpu" : "vieneu";
+}
+
 function loadVieNeuVoices(selected = []) {
   const status = $("vieneuVoiceStatus");
-  status.textContent = "Đang tải danh sách giọng từ VieNeu GPU (8081)...";
+  const isGpu = currentVieNeuEngine() === "vieneu-gpu";
+  status.textContent = "Đang tải danh sách giọng từ VieNeu " + (isGpu ? "GPU (8081)" : "CPU (8080)") + "...";
   status.className = "voice-api-status";
-  chrome.runtime.sendMessage({ target: "vieneu-local-tts", type: "GET_VOICES" }, response => {
+  chrome.runtime.sendMessage({ target: "vieneu-local-tts", type: "GET_VOICES", engine: currentVieNeuEngine() }, response => {
     const runtimeError = chrome.runtime.lastError;
     if (runtimeError || !response?.ok) {
       status.textContent = response?.error || runtimeError?.message || "Không kết nối được VieNeu GPU.";
@@ -56,7 +61,7 @@ function loadVieNeuVoices(selected = []) {
 
 
 function updateEngineSettings(engine) {
-  const isVieNeu = engine === "vieneu";
+  const isVieNeu = engine === "vieneu" || engine === "vieneu-gpu";
   $("browserSettings").hidden = isVieNeu;
   $("vieneuSettings").hidden = !isVieNeu;
   $("rotateSetting").hidden = isVieNeu;
@@ -139,7 +144,7 @@ function loadState() {
     $("engine").value = response.engine || "browser";
     updateEngineSettings($("engine").value);
     syncEngineCards($("engine").value);
-    if ($("engine").value === "vieneu") loadVieNeuVoices(response.vieneuVoices || (response.vieneuVoice ? [response.vieneuVoice] : []));
+    if ($("engine").value === "vieneu" || $("engine").value === "vieneu-gpu") loadVieNeuVoices(response.vieneuVoices || (response.vieneuVoice ? [response.vieneuVoice] : []));
 
     $("readingMode").value = response.readingMode || "story";
     $("rate").value = response.rate || 1;
@@ -222,10 +227,10 @@ function syncEngineCards(engine) {
 $("engine").addEventListener("change", event => {
   updateEngineSettings(event.target.value);
   syncEngineCards(event.target.value);
-  if (event.target.value === "vieneu") loadVieNeuVoices(Array.from($("vieneuVoices").selectedOptions).map(o => o.value));
+  if (event.target.value === "vieneu" || event.target.value === "vieneu-gpu") loadVieNeuVoices(Array.from($("vieneuVoices").selectedOptions).map(o => o.value));
   send("SET_ENGINE", event.target.value, response => {
     if (response?.error) showStatus(response.error);
-    else showStatus(event.target.value === "vieneu" ? "Đã chọn VieNeu TTS Local." : "Đã chọn giọng đọc trình duyệt.");
+    else showStatus(event.target.value === "vieneu" ? "Đã chọn VieNeu CPU (8080)." : event.target.value === "vieneu-gpu" ? "Đã chọn VieNeu GPU (8081)." : "Đã chọn giọng đọc trình duyệt.");
   });
 });
 $("vieneuVoices").addEventListener("change", event => {
