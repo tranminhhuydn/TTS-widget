@@ -141,6 +141,15 @@ darkModeToggle.addEventListener("change", async () => {
   try {
     await chrome.storage.sync.set({ darkMode: darkModeToggle.checked });
     document.documentElement.dataset.theme = darkModeToggle.checked ? "dark" : "light";
+    // Also update the already-open active tab immediately (not only after reload).
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (typeof tab?.id === "number") {
+        await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["theme.js"] });
+      }
+    } catch (_) {
+      // Browser-internal pages do not allow script injection; the preference is still saved.
+    }
   } catch (error) {
     darkModeToggle.checked = !darkModeToggle.checked;
     showStatus("Không thể lưu cài đặt chế độ ban đêm.", "error");
