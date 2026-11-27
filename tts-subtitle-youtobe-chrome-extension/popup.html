@@ -10,55 +10,66 @@
   <main class="app">
     <header class="header">
       <div class="brand">
-        <div class="brand-icon" aria-hidden="true">♫</div>
-        <div><h1>TTS Subtitle</h1><p>Đọc phụ đề YouTube</p></div>
+        <div class="brand-icon" aria-hidden="true"><span>♫</span></div>
+        <div class="brand-copy"><h1>TTS Subtitle</h1><p>Đọc phụ đề YouTube</p></div>
       </div>
-      <span class="youtube-tag">YOUTUBE</span>
+      <span class="youtube-tag"><span class="youtube-dot"></span> YOUTUBE</span>
     </header>
 
     <section class="playback-card">
       <div class="playback-top">
-        <div><h2>Đọc phụ đề</h2><p>Đồng bộ lời đọc theo video hiện tại</p></div>
+        <div class="playback-copy"><h2>Đọc phụ đề</h2><p>Đồng bộ lời đọc theo video hiện tại</p></div>
         <label class="toggle" aria-label="Bật hoặc tắt đọc phụ đề">
-          <input id="enabled" type="checkbox">
-          <span class="toggle-track"></span>
+          <input id="enabled" type="checkbox"><span class="toggle-track"></span>
         </label>
       </div>
-      <p id="status" class="status" role="status" aria-live="polite">Đang kiểm tra trang...</p>
+      <div class="status-line"><span class="status-dot"></span><p id="status" class="status" role="status" aria-live="polite">Đang kiểm tra trang...</p></div>
     </section>
 
-    <section class="section">
-      <label class="section-label" for="engine">BỘ MÁY GIỌNG ĐỌC</label>
-      <select id="engine" class="control engine-select">
-        <option value="browser">Browser TTS · Giọng trình duyệt</option>
-        <option value="vieneu">VieNeu Local · Giọng AI trên máy</option>
+    <section class="section engine-section">
+      <div class="section-heading"><span class="section-label">BỘ MÁY GIỌNG ĐỌC</span><span class="section-hint">Chọn một</span></div>
+      <select id="engine" class="engine-native" aria-label="Bộ máy giọng đọc">
+        <option value="browser">Browser TTS</option><option value="vieneu">VieNeu Local</option>
       </select>
+      <div class="engine-cards">
+        <button class="engine-card is-active" type="button" data-engine="browser" aria-pressed="true">
+          <span class="engine-icon browser-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 22h8M12 18v4M3 9h18"/></svg></span>
+          <span class="engine-card-copy"><strong>Browser TTS</strong><small>Giọng trình duyệt</small></span><span class="engine-check">✓</span>
+        </button>
+        <button class="engine-card" type="button" data-engine="vieneu" aria-pressed="false">
+          <span class="engine-icon vieneu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1"/><circle cx="12" cy="12" r="5"/></svg></span>
+          <span class="engine-card-copy"><strong>VieNeu Local</strong><small>Giọng AI trên máy</small></span><span class="engine-check">✓</span>
+        </button>
+      </div>
 
       <div id="browserSettings" class="engine-settings">
         <label class="field-label" for="voices">Giọng đọc trình duyệt</label>
         <select id="voices" class="control voice-list" multiple size="4" aria-describedby="voiceHelp"></select>
-        <p id="voiceHelp" class="field-help">Có thể chọn nhiều giọng để sử dụng luân phiên.</p>
+        <p id="voiceHelp" class="field-help">Giữ Ctrl để chọn nhiều giọng luân phiên.</p>
       </div>
-
       <div id="vieneuSettings" class="engine-settings" hidden>
-        <label class="field-label" for="vieneuVoice">Tên giọng VieNeu</label>
+        <label class="field-label" for="vieneuVoice">Giọng VieNeu</label>
         <input id="vieneuVoice" class="control" type="text" value="Pham Tuyen" placeholder="Ví dụ: Pham Tuyen">
-        <p class="field-help">VieNeu chạy trên máy tính qua dịch vụ local.</p>
+        <p class="field-help">Tổng hợp giọng nói trực tiếp trên máy tính.</p>
       </div>
     </section>
 
     <section class="section tuning">
-      <div class="range-heading"><label for="rate">Tốc độ đọc</label><strong id="rateValue">1.0×</strong></div>
-      <input id="rate" class="range" type="range" min=".5" max="2" step=".1" value="1">
-      <div class="range-limits"><span>0.5×</span><span>2.0×</span></div>
-
-      <div class="range-heading volume-heading"><label for="volume">Âm lượng</label><strong id="volumeValue">100%</strong></div>
-      <input id="volume" class="range" type="range" min="0" max="1" step=".05" value="1">
-      <div class="range-limits"><span>0%</span><span>100%</span></div>
+      <div class="section-heading"><span class="section-label">ĐIỀU CHỈNH ÂM THANH</span></div>
+      <div class="range-block">
+        <div class="range-heading"><label for="rate">Tốc độ đọc</label><strong id="rateValue">1.0×</strong></div>
+        <input id="rate" class="range" type="range" min=".5" max="2" step=".1" value="1">
+        <div class="range-limits"><span>Chậm · 0.5×</span><span>Nhanh · 2.0×</span></div>
+      </div>
+      <div class="range-block volume-block">
+        <div class="range-heading"><label for="volume">Âm lượng</label><strong id="volumeValue">100%</strong></div>
+        <input id="volume" class="range" type="range" min="0" max="1" step=".05" value="1">
+        <div class="range-limits"><span>0%</span><span>100%</span></div>
+      </div>
     </section>
 
     <details class="advanced">
-      <summary><span>Thiết lập nâng cao</span><span class="summary-note">Tùy chỉnh thêm</span></summary>
+      <summary><span class="advanced-title"><span class="advanced-icon">⚙</span><span><strong>Thiết lập nâng cao</strong><small>Tùy chỉnh cách đọc phụ đề</small></span></span><span class="summary-chevron">⌄</span></summary>
       <div class="advanced-content">
         <label class="field-label" for="readingMode">Chế độ đọc phụ đề</label>
         <select id="readingMode" class="control">
@@ -66,15 +77,13 @@
           <option value="original">Nguyên bản · Đọc từng đoạn</option>
         </select>
         <label class="check-row"><span><strong>Tự chọn giọng theo ngôn ngữ</strong><small>Ưu tiên giọng phù hợp với phụ đề</small></span><input id="autoLanguage" type="checkbox" checked></label>
-        <div id="rotateSetting">
-          <label class="check-row"><span><strong>Luân phiên giọng đọc</strong><small>Thay đổi giọng giữa các đoạn</small></span><input id="rotateVoices" type="checkbox"></label>
-        </div>
+        <div id="rotateSetting"><label class="check-row"><span><strong>Luân phiên giọng đọc</strong><small>Thay đổi giọng giữa các đoạn</small></span><input id="rotateVoices" type="checkbox"></label></div>
         <p class="advanced-help">Chế độ kể chuyện ghép các đoạn phụ đề thành câu hoàn chỉnh. Cả hai chế độ đều đồng bộ với thời gian video.</p>
       </div>
     </details>
 
-    <button id="stop" class="stop-button" type="button"><span aria-hidden="true">■</span> Dừng giọng đọc</button>
-    <footer> TTS Subtitle YouTube <span>·</span> Điều khiển giọng đọc </footer>
+    <button id="stop" class="stop-button" type="button"><span class="stop-square"></span>Dừng giọng đọc</button>
+    <footer><span class="footer-mark">♫</span> TTS Subtitle <span class="footer-separator">·</span> YouTube</footer>
   </main>
   <script src="popup.js"></script>
 </body>
