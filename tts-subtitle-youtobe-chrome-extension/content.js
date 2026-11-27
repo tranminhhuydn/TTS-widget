@@ -1,7 +1,7 @@
 (() => {
   if (window.__ttsSubtitleYouTubeLoaded) return;
   window.__ttsSubtitleYouTubeLoaded=true;
-  const DEFAULTS={enabled:false,rate:1,volume:1,voiceURI:"",voiceURIs:[],rotateVoices:false,autoLanguage:true};
+  const DEFAULTS={enabled:false,rate:1,volume:1,voiceURI:"",voiceURIs:[],rotateVoices:false,autoLanguage:true,readingMode:"story"};
   let settings={...DEFAULTS},enabled=false,video=null,engine=null,sentences=[],track=null,utterance=null,rotationIndex=0,status="idle",loadToken=0;
   let capturedTimedtext=null;
   window.addEventListener("message",event=>{
@@ -73,7 +73,9 @@
     const preferred=(navigator.language||"vi").split("-")[0].toLowerCase();
     track=tracks.find(t=>t.languageCode?.toLowerCase().startsWith(preferred))||tracks.find(t=>t.languageCode?.toLowerCase().startsWith("vi"))||tracks[0]||null;
     const captured=await waitForTimedtext(track?.languageCode||"",loadToken);
-    const parsed=window.TTSSubtitleParser.toSentences(captured.payload);
+    const parsed=settings.readingMode==="original"
+      ? window.TTSSubtitleParser.parse(captured.payload).map((cue,id)=>({id,text:cue.text,startTime:cue.start,endTime:cue.end}))
+      : window.TTSSubtitleParser.toSentences(captured.payload);
     if(!parsed.length)throw Error("Network Listener đã bắt được timedtext nhưng không tìm thấy câu phụ đề JSON3.");
     return parsed;
   }
@@ -86,12 +88,21 @@
     enabled=true;chrome.storage.local.set({enabled:true});engine.start(video.currentTime);status="reading";
   }
   function deactivate(){enabled=false;loadToken++;if(engine)engine.stop();cancel();status="stopped";chrome.storage.local.set({enabled:false});}
-  function response(){return{enabled,rate:settings.rate,volume:settings.volume,voiceURI:settings.voiceURI,voiceURIs:settings.voiceURIs,rotateVoices:settings.rotateVoices,autoLanguage:settings.autoLanguage,status,voices:voices().map(v=>({name:v.name,lang:v.lang,voiceURI:v.voiceURI}))};}
+  function response(){return{enabled,rate:settings.rate,volume:settings.volume,voiceURI:settings.voiceURI,voiceURIs:settings.voiceURIs,rotateVoices:settings.rotateVoices,autoLanguage:settings.autoLanguage,readingMode:settings.readingMode,status,voices:voices().map(v=>({name:v.name,lang:v.lang,voiceURI:v.voiceURI}))};}
   chrome.runtime.onMessage.addListener((m,s,send)=>{
     if(m?.target!=="tts-subtitle-youtube")return;
     if(m.type==="GET_STATE"){send(response());return;}
     if(m.type==="SET_ENABLED"){if(m.value)activate().then(()=>send({enabled:true})).catch(e=>{status="error";send({error:e.message});});else{deactivate();send({enabled:false});}return true;}
     if(m.type==="STOP"){deactivate();send({stopped:true});return;}
+    if(m.type==="SET_READING_MODE"){
+      if(!["original","story"].includes(m.value)){send({error:"Kiểu đọc không hợp lệ."});return;}
+      const wasEnabled=enabled;
+      settings.readingMode=m.value;
+      chrome.storage.local.set({readingMode:settings.readingMode});
+      if(wasEnabled)activate().then(()=>send({readingMode:settings.readingMode,enabled:true})).catch(e=>send({error:e.message}));
+      else send({readingMode:settings.readingMode,enabled:false});
+      return true;
+    }
     const key={SET_RATE:"rate",SET_VOLUME:"volume",SET_VOICES:"voiceURIs",SET_ROTATE:"rotateVoices",SET_AUTO_LANGUAGE:"autoLanguage"}[m.type];
     if(key){settings[key]=m.value;if(key==="rate")settings.rate=Math.max(.5,Math.min(2,Number(m.value)||1));if(key==="volume")settings.volume=Math.max(0,Math.min(1,Number(m.value)||0));if(key==="voiceURIs")rotationIndex=0;chrome.storage.local.set({[key]:settings[key]});if(engine&&key==="volume"&&utterance){}send({[key]:settings[key]});}
     return true;
