@@ -12,27 +12,42 @@ function injectContentScripts(done) {
     return;
   }
   injecting = true;
+
+  // Network Listener phải chạy trong MAIN world để quan sát fetch/XHR của YouTube.
   chrome.scripting.executeScript({
     target: { tabId },
-    files: ["subtitle-parser.js", "hybrid-sync.js", "content.js"]
+    world: "MAIN",
+    files: ["network-listener.js"]
   }, () => {
-    const scriptError = chrome.runtime.lastError;
-    if (scriptError) {
+    const networkError = chrome.runtime.lastError;
+    if (networkError) {
       injecting = false;
-      showStatus("Không thể nạp bộ đọc: " + scriptError.message);
+      showStatus("Không thể nạp Network Listener: " + networkError.message);
       return;
     }
-    chrome.scripting.insertCSS({
+
+    chrome.scripting.executeScript({
       target: { tabId },
-      files: ["content.css"]
+      files: ["subtitle-parser.js", "hybrid-sync.js", "content.js"]
     }, () => {
-      const cssError = chrome.runtime.lastError;
-      injecting = false;
-      if (cssError) {
-        showStatus("Không thể nạp kiểu hiển thị: " + cssError.message);
+      const scriptError = chrome.runtime.lastError;
+      if (scriptError) {
+        injecting = false;
+        showStatus("Không thể nạp bộ đọc: " + scriptError.message);
         return;
       }
-      done();
+      chrome.scripting.insertCSS({
+        target: { tabId },
+        files: ["content.css"]
+      }, () => {
+        const cssError = chrome.runtime.lastError;
+        injecting = false;
+        if (cssError) {
+          showStatus("Không thể nạp kiểu hiển thị: " + cssError.message);
+          return;
+        }
+        done();
+      });
     });
   });
 }
