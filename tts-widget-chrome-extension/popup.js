@@ -6,7 +6,21 @@ const darkModeToggle = document.getElementById("darkModeToggle");
 const pageFontSize = document.getElementById("pageFontSize");
 const pageFontSizeValue = document.getElementById("pageFontSizeValue");
 async function loadAppearanceSettings(){const s=await chrome.storage.sync.get({darkMode:false,pageFontSize:16});darkModeToggle.checked=s.darkMode===true;pageFontSize.value=String(s.pageFontSize);pageFontSizeValue.textContent=s.pageFontSize+" px";}
-async function saveAppearanceSettings(){const s={darkMode:darkModeToggle.checked,pageFontSize:Number(pageFontSize.value)};await chrome.storage.sync.set(s);pageFontSizeValue.textContent=s.pageFontSize+" px";}
+async function applyAppearanceToActiveTab(){
+  const tab=await getActiveTab();
+  await chrome.scripting.executeScript({target:{tabId:tab.id},files:["theme.js"]});
+}
+async function saveAppearanceSettings(){
+  const s={darkMode:darkModeToggle.checked,pageFontSize:Number(pageFontSize.value)};
+  await chrome.storage.sync.set(s);
+  pageFontSizeValue.textContent=s.pageFontSize+" px";
+  try {
+    await applyAppearanceToActiveTab();
+    showStatus("Đã áp dụng giao diện cho tab hiện tại.","success");
+  } catch(error) {
+    showStatus("Đã lưu cài đặt. Không thể áp dụng trên tab này; hãy thử tải lại trang. "+(error?.message||""),"error");
+  }
+}
 darkModeToggle.addEventListener("change",async()=>{darkModeToggle.disabled=true;try{await saveAppearanceSettings();}catch(error){darkModeToggle.checked=!darkModeToggle.checked;showStatus(error?.message||"Không lưu được chế độ ban đêm.","error");}finally{darkModeToggle.disabled=false;}});
 pageFontSize.addEventListener("input",()=>{pageFontSizeValue.textContent=pageFontSize.value+" px";});
 pageFontSize.addEventListener("change",async()=>{pageFontSize.disabled=true;try{await saveAppearanceSettings();}catch(error){showStatus(error?.message||"Không lưu được cỡ chữ.","error");}finally{pageFontSize.disabled=false;}});
