@@ -6,6 +6,55 @@ function showStatus(message) {
   $("status").textContent = message;
 }
 
+let vieneuVoiceOptions = [];
+
+function normalizeVieNeuVoices(data) {
+  let source = data?.voices ?? data?.data?.voices ?? data?.items ?? data?.data ?? data;
+  if (source && !Array.isArray(source) && typeof source === "object") {
+    source = Object.entries(source).map(([key, value]) =>
+      typeof value === "string" ? { id: key, name: value } : { id: key, ...value });
+  }
+  if (!Array.isArray(source)) return [];
+  return source.map(item => {
+    if (typeof item === "string") return { id: item, name: item };
+    const id = item?.voice ?? item?.id ?? item?.name ?? item?.voice_id ?? item?.speaker ?? item?.key;
+    const name = item?.display_name ?? item?.label ?? item?.name ?? id;
+    return id ? { id: String(id), name: String(name) } : null;
+  }).filter(Boolean);
+}
+
+function loadVieNeuVoices(selected = []) {
+  const status = $("vieneuVoiceStatus");
+  status.textContent = "Đang tải danh sách giọng từ VieNeu GPU (8081)...";
+  status.className = "voice-api-status";
+  chrome.runtime.sendMessage({ target: "vieneu-local-tts", type: "GET_VOICES" }, response => {
+    const runtimeError = chrome.runtime.lastError;
+    if (runtimeError || !response?.ok) {
+      status.textContent = response?.error || runtimeError?.message || "Không kết nối được VieNeu GPU.";
+      status.className = "voice-api-status error";
+      return;
+    }
+    vieneuVoiceOptions = normalizeVieNeuVoices(response.data);
+    const select = $("vieneuVoices");
+    select.innerHTML = "";
+    vieneuVoiceOptions.forEach(voice => {
+      const option = document.createElement("option");
+      option.value = voice.id;
+      option.textContent = voice.name === voice.id ? voice.name : voice.name + " · " + voice.id;
+      option.selected = selected.includes(voice.id);
+      select.append(option);
+    });
+    if (!vieneuVoiceOptions.length) {
+      status.textContent = "API đã phản hồi nhưng không tìm thấy danh sách giọng. Cần kiểm tra cấu trúc JSON.";
+      status.className = "voice-api-status error";
+    } else {
+      status.textContent = "Đã tải " + vieneuVoiceOptions.length + " giọng. Đang chọn " + selected.filter(id => vieneuVoiceOptions.some(v => v.id === id)).length + ".";
+      status.className = "voice-api-status success";
+    }
+  });
+}
+
+
 function updateEngineSettings(engine) {
   const isVieNeu = engine === "vieneu";
   $("browserSettings").hidden = isVieNeu;
@@ -90,7 +139,7 @@ function loadState() {
     $("engine").value = response.engine || "browser";
     updateEngineSettings($("engine").value);
     syncEngineCards($("engine").value);
-    $("vieneuVoice").value = response.vieneuVoice || "Pham Tuyen";
+
     $("readingMode").value = response.readingMode || "story";
     $("rate").value = response.rate || 1;
     $("rateValue").textContent = Number(response.rate || 1).toFixed(1) + "×";
@@ -118,7 +167,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
   const tab = tabs[0];
   if (!tab?.url || !/^https:\/\/(www\.)?youtube\.com\//.test(tab.url)) {
     showStatus("Hãy mở video trên YouTube.");
-    ["enabled", "engine", "vieneuVoice", "readingMode", "rate", "volume", "voices", "rotateVoices", "autoLanguage", "stop"]
+    ["enabled", "engine", "vieneuVoices", "readingMode", "rate", "volume", "voices", "rotateVoices", "autoLanguage", "stop", "refreshVieNeuVoices"]
       .forEach(id => { $(id).disabled = true; });
     return;
   }
@@ -172,14 +221,31 @@ function syncEngineCards(engine) {
 $("engine").addEventListener("change", event => {
   updateEngineSettings(event.target.value);
   syncEngineCards(event.target.value);
+  if (event.target.value === "vieneu") loadVieNeuVoices(Array.from($("vieneuVoices").selectedOptions).map(o => o.value));
   send("SET_ENGINE", event.target.value, response => {
     if (response?.error) showStatus(response.error);
     else showStatus(event.target.value === "vieneu" ? "Đã chọn VieNeu TTS Local." : "Đã chọn giọng đọc trình duyệt.");
   });
 });
-$("vieneuVoice").addEventListener("change", event => {
-  send("SET_VIENEU_VOICE", event.target.value, response => {
-    if (response?.error) showStatus(response.error);
-    else showStatus("Đã lưu giọng VieNeu: " + (response?.vieneuVoice || event.target.value));
+$("vieneuVoices").addEventListener("change", event => {
+  const selected = Array.from(event.target.selectedOptions).map(option => option.value);
+  if (!selected.length) {
+    $("vieneuVoiceStatus").textContent = "Hãy chọn ít nhất một giọng.";
+    $("vieneuVoiceStatus").className = "voice-api-status error";
+    return;
+  }
+  send("SET_VIENEU_VOICES", selected, response => {
+    if (response?.error) {
+      $("vieneuVoiceStatus").textContent = response.error;
+      $("vieneuVoiceStatus").className = "voice-api-status error";
+    } else {
+      $("vieneuVoiceStatus").textContent = selected.length === 1
+        ? "Đã chọn giọng: " + selected[0]
+        : "Đã chọn " + selected.length + " giọng để luân phiên.";
+      $("vieneuVoiceStatus").className = "voice-api-status success";
+    }
   });
+});
+$("refreshVieNeuVoices").addEventListener("click", () => {
+  loadVieNeuVoices(Array.from($("vieneuVoices").selectedOptions).map(o => o.value));
 });
