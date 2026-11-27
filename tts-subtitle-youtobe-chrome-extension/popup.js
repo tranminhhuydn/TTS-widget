@@ -99,7 +99,9 @@ function loadState() {
       option.selected = (response.voiceURIs || []).includes(voice.voiceURI);
       select.append(option);
     });
-    showStatus("Đã kết nối với YouTube. Hãy bật “Đọc phụ đề”.");
+    if(response.lastError)showStatus("Lỗi VieNeu: "+response.lastError);
+    else if(response.engine==="vieneu"&&response.enabled)showStatus("VieNeu Local: "+(response.preloadedAudio||0)+" audio đã tạo sẵn; "+(response.pendingAudio||0)+" đang xử lý.");
+    else showStatus("Đã kết nối với YouTube. Hãy bật “Đọc phụ đề”.");
   });
 }
 
