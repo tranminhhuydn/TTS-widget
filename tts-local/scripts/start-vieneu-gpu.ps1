@@ -15,6 +15,12 @@ if ($serverCandidates.Count -ne 1) {
 }
 $serverExe = $serverCandidates[0].FullName
 $runtimeDir = Split-Path -Parent $serverExe
+# CUDA archives may place dependent DLLs in nested bin/lib folders.
+$runtimeDllDirs = @($runtimeDir) + @(
+    Get-ChildItem -LiteralPath $runtime -Directory -Recurse |
+        ForEach-Object { $_.FullName }
+)
+$env:PATH = (($runtimeDllDirs | Select-Object -Unique) -join ";") + ";" + $env:PATH
 
 Write-Host "Starting VieNeu GPU API at http://127.0.0.1:8081" -ForegroundColor Cyan
 Write-Host "CPU API on port 8080 is not changed."
