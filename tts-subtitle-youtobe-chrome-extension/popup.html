@@ -3,6 +3,9 @@
 <body><main><h1>TTS Subtitle YouTube</h1>
 <label class="switch-row"><span>Đọc phụ đề</span><input id="enabled" type="checkbox"></label>
 <p id="status" role="status">Đang kiểm tra trang...</p>
+<label for="engine">Bộ máy giọng đọc</label>
+<select id="engine"><option value="browser">Giọng đọc trình duyệt / Microsoft</option><option value="vieneu">VieNeu TTS Local (127.0.0.1:8080)</option></select>
+<label for="vieneuVoice">Tên giọng VieNeu</label><input id="vieneuVoice" type="text" value="Pham Tuyen" placeholder="Ví dụ: Pham Tuyen">
 <label for="readingMode">Kiểu đọc phụ đề</label>
 <select id="readingMode">
 <option value="story">Chế độ kể chuyện – ghép thành câu tự nhiên</option>
