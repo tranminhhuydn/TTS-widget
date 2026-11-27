@@ -168,7 +168,7 @@ async function startBackend() {
 }
 
 function selectVoice(voiceId) {
-  restartChain = restartChain.then(async () => {
+  restartChain = restartChain.catch(() => {}).then(async () => {
     if (typeof voiceId !== "string" || !/^[a-zA-Z0-9_-]{1,80}$/.test(voiceId)) {
       const error = new Error("voice phải là id thư mục hợp lệ, ví dụ pham_tuyen");
       error.status = 400;
