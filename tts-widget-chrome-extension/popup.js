@@ -202,5 +202,6 @@ toggleButton.addEventListener("click", async () => {
 });
 
 loadAppearanceSettings().catch(error=>showStatus(error?.message||'Không tải được cài đặt giao diện.','error'));
+loadTtsVolume().catch(error=>showStatus(error?.message||'Không tải được âm lượng TTS.','error'));
 refreshState();
 
