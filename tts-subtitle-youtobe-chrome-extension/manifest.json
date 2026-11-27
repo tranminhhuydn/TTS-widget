@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "TTS Subtitle YouTube",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Đọc phụ đề YouTube thành câu, đồng bộ lời đọc với thời gian video.",
   "permissions": [
     "storage",
