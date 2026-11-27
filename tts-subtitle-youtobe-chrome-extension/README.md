@@ -15,6 +15,7 @@ Chrome Extension Manifest V3 đọc phụ đề YouTube thành câu hoàn chỉn
 - Lập lịch đọc theo thời gian video; chờ khi TTS sớm, bỏ qua câu đã quá cũ tại ranh giới câu khi video chạy nhanh hơn.
 - Đồng bộ Play/Pause/Seek và thay đổi tốc độ bằng sự kiện của video YouTube.
 - Giữ chọn nhiều giọng, tự nhận diện ngôn ngữ và luân phiên giọng.
+- Chọn Chế độ nguyên bản (đọc từng event phụ đề) hoặc Chế độ kể chuyện (ghép thành câu hoàn chỉnh) ngay trong popup.
 - Điều chỉnh tốc độ và âm lượng ngay trong popup; lưu thiết lập bằng chrome.storage.local.
 
 ## Giới hạn
