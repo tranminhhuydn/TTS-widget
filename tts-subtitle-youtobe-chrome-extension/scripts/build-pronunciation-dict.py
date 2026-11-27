@@ -45,3 +45,5 @@ payload = {
     encoding="utf-8"
 )
 print(f"Generated {len(entries)} entries; duplicate keys overwritten: {duplicates}; key column: {headers[key_idx]}")
+
+# Trigger dictionary build after workflow registration.
