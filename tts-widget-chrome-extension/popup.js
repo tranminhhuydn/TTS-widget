@@ -101,6 +101,23 @@ toggleButton.addEventListener("click", async () => {
   toggleButton.disabled = true;
   try {
     const tab = await getActiveTab();
+    const currentUrl=new URL(tab.url||"");
+    const isYouTube=/(^|\.)youtube\.com$/i.test(currentUrl.hostname)&&currentUrl.pathname==="/watch";
+    if(isYouTube){
+      const [youtubeState]=await chrome.scripting.executeScript({target:{tabId:tab.id},func:()=>document.querySelector(".tts-widget-root")?.dataset.extensionActive==="true"});
+      if(youtubeState?.result){
+        await chrome.scripting.executeScript({target:{tabId:tab.id},func:()=>window.TTSYouTubeHybrid?.deactivate()});
+        toggleButton.textContent="Kích hoạt trên trang này";
+        showStatus("Đã tắt đọc phụ đề YouTube.","success");
+      }else{
+        await chrome.scripting.executeScript({target:{tabId:tab.id},files:["youtube-subtitle-parser.js","youtube-hybrid-sync.js","youtube-hybrid.js","content.js"]});
+        const [verify]=await chrome.scripting.executeScript({target:{tabId:tab.id},func:()=>document.querySelector(".tts-widget-root")?.dataset.extensionActive==="true"});
+        if(!verify?.result){showStatus("Chưa khởi tạo được bộ đọc phụ đề. Hãy kiểm tra video có phụ đề hay không.","error");return;}
+        toggleButton.textContent="Tắt trên trang này";
+        showStatus("Đã bật đọc phụ đề YouTube. Điều khiển phát/tạm dừng bằng YouTube.","success");
+      }
+      return;
+    }
     const [state] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: () => !!(document.querySelector(".tts-widget-root")?.dataset.extensionActive === "true")
