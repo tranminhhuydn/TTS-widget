@@ -89,6 +89,7 @@ function loadState() {
     $("enabled").checked = response.enabled;
     $("engine").value = response.engine || "browser";
     updateEngineSettings($("engine").value);
+    syncEngineCards($("engine").value);
     $("vieneuVoice").value = response.vieneuVoice || "Pham Tuyen";
     $("readingMode").value = response.readingMode || "story";
     $("rate").value = response.rate || 1;
@@ -152,8 +153,25 @@ $("rotateVoices").addEventListener("change", event => send("SET_ROTATE", event.t
 $("autoLanguage").addEventListener("change", event => send("SET_AUTO_LANGUAGE", event.target.checked));
 $("stop").addEventListener("click", () => send("STOP"));
 
+document.querySelectorAll(".engine-card").forEach(card => {
+  card.addEventListener("click", () => {
+    const engine = card.dataset.engine;
+    $("engine").value = engine;
+    $("engine").dispatchEvent(new Event("change"));
+  });
+});
+
+function syncEngineCards(engine) {
+  document.querySelectorAll(".engine-card").forEach(card => {
+    const active = card.dataset.engine === engine;
+    card.classList.toggle("is-active", active);
+    card.setAttribute("aria-pressed", String(active));
+  });
+}
+
 $("engine").addEventListener("change", event => {
   updateEngineSettings(event.target.value);
+  syncEngineCards(event.target.value);
   send("SET_ENGINE", event.target.value, response => {
     if (response?.error) showStatus(response.error);
     else showStatus(event.target.value === "vieneu" ? "Đã chọn VieNeu TTS Local." : "Đã chọn giọng đọc trình duyệt.");
