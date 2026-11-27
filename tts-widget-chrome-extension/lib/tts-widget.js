@@ -25,7 +25,15 @@ function init(options={}){
   document.body.append(widgetRoot);
   /* SETTINGS MANAGER */
 class SettingsManager {
-  constructor(){this.key="tts-widget-settings-v2";this.defaults={rate:1,pitch:1,volume:1,highlight:true,wordSync:true,sync:true,keepBackgroundReading:true,toolbarPosition:"header",theme:"system",fontSize:16,voiceRotationEnabled:false,highlightColor:"#ffe58a",textColor:"#332600",borderColor:"#e0a800"};this.value=this.load();}
+  constructor(){this.key="tts-widget-settings-v2";this.defaults={rate:1,pitch:1,volume:1,highlight:true,wordSync:true,sync:true,keepBackgroundReading:true,toolbarPosition:"header",theme:"system",fontSize:16,voiceRotationEnabled:false,highlightColor:"#ffe58a",textColor:"#332600",borderColor:"#e0a800"};this.value=this.load();
+    document.addEventListener("tts-widget:volume-change",event=>{const value=Number(event.detail?.volume);if(Number.isFinite(value)){this.value.volume=Math.min(1,Math.max(0,value));this.save();}});
+    try{
+      if(typeof chrome!=="undefined"&&chrome.storage?.sync){
+        chrome.storage.sync.get({ttsVolume:null},result=>{const value=Number(result.ttsVolume);if(result.ttsVolume!==null&&Number.isFinite(value)){this.value.volume=Math.min(1,Math.max(0,value));this.save();const slider=widgetRoot.querySelector("#settingVolume");if(slider)slider.value=String(this.value.volume);}});
+        chrome.storage.onChanged.addListener((changes,area)=>{if(area==="sync"&&changes.ttsVolume){const value=Number(changes.ttsVolume.newValue);if(Number.isFinite(value)){this.value.volume=Math.min(1,Math.max(0,value));this.save();const slider=widgetRoot.querySelector("#settingVolume");if(slider)slider.value=String(this.value.volume);}}});
+      }
+    }catch(_){}
+  }
   load(){try{const saved=JSON.parse(localStorage.getItem(this.key)||"{}");const value={...this.defaults,...(saved&&typeof saved==="object"&&!Array.isArray(saved)?saved:{})};
     ["font","size","line","width","autoScroll","compact"].forEach(key=>delete value[key]);
     const number=(key,min,max)=>{const n=Number(value[key]);value[key]=Number.isFinite(n)?Math.min(max,Math.max(min,n)):this.defaults[key];};
