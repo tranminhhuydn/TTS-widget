@@ -4,7 +4,7 @@
   if(global.TTSYouTubeHybrid)return;
   const KEY="tts-widget-settings-v2";
   let engine=null,active=false,video=null,videoId="",sentences=[],utterance=null,volume=1,preferredVoice="";
-  let status="idle";
+  let status="idle",ready=Promise.resolve(false);
   const readSettings=()=>{try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch(_){return {}}};
   function getVoice(lang){
     const voices= speechSynthesis.getVoices();
@@ -139,9 +139,9 @@
     // Activation is controlled by the existing extension popup.
     active=true;
     ensureRoot();
-    activate().catch(error=>{status="error";console.warn("[TTS YouTube]",error.message);});
+    ready=activate().then(()=>true).catch(error=>{status="error";const root=document.querySelector(".tts-widget-root");if(root)root.dataset.extensionActive="false";console.warn("[TTS YouTube]",error.message);throw error;});
     document.addEventListener("yt-navigate-finish",()=>{refresh()});
     return true;
   }
-  global.TTSYouTubeHybrid={init,activate,deactivate,stop:deactivate,setVolume,getStatus:()=>status};
+  global.TTSYouTubeHybrid={init,activate,deactivate,stop:deactivate,setVolume,getStatus:()=>status,get ready(){return ready;}};
 })(globalThis);
