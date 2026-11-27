@@ -12,6 +12,7 @@ html[${DARK_ATTRIBUTE}="true"] body :not(.tts-widget-root):not(.tts-widget-root 
 html[${DARK_ATTRIBUTE}="true"] body a:not(.tts-widget-root a){color:#93c5fd!important}
 html[${DARK_ATTRIBUTE}="true"] body input,html[${DARK_ATTRIBUTE}="true"] body textarea,html[${DARK_ATTRIBUTE}="true"] body select,html[${DARK_ATTRIBUTE}="true"] body button{color:#f9fafb!important;background:#263244!important;border-color:#64748b!important}
 html[${DARK_ATTRIBUTE}="true"] body img,html[${DARK_ATTRIBUTE}="true"] body video,html[${DARK_ATTRIBUTE}="true"] body canvas,html[${DARK_ATTRIBUTE}="true"] body svg,html[${DARK_ATTRIBUTE}="true"] body iframe{filter:none!important}
+html[${DARK_ATTRIBUTE}="true"] .tts-widget-root,html[${DARK_ATTRIBUTE}="true"] .tts-widget-root *{box-shadow:none!important}
 `;
 function apply(settings){
  const root=document.documentElement;if(!root)return;
