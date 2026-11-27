@@ -209,7 +209,7 @@ $("voices").addEventListener("change", event => {
 });
 $("rotateVoices").addEventListener("change", event => send("SET_ROTATE", event.target.checked));
 $("autoLanguage").addEventListener("change", event => send("SET_AUTO_LANGUAGE", event.target.checked));
-$("stop").addEventListener("click", () => send("STOP"));
+
 
 document.querySelectorAll(".engine-card").forEach(card => {
   card.addEventListener("click", () => {
