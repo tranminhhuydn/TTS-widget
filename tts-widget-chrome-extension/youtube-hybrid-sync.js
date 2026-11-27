@@ -49,6 +49,7 @@
     }
     resume(){
       if(!this.active)return;
+      this.waiting=false;
       this.resumeSpeech();
       this.tick();
     }
