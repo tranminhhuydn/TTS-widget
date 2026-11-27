@@ -17,13 +17,14 @@
   });
   // Yêu cầu Network Listener phát lại JSON3 nếu YouTube đã tải phụ đề trước document_idle.
   window.postMessage({source:"tts-subtitle-content",type:"GET_TIMEDTEXT_CACHE"},location.origin);
-  let pronunciationEntries={},pronunciationPattern=null,pronunciationLoadPromise=null;
+  let pronunciationEntries={},pronunciationLookup={},pronunciationPattern=null,pronunciationLoadPromise=null;
   function loadPronunciationDictionary(){
     if(pronunciationLoadPromise)return pronunciationLoadPromise;
     pronunciationLoadPromise=new Promise(resolve=>{
       chrome.runtime.sendMessage({target:"tts-pronunciation",type:"GET_DICTIONARY"},response=>{
         if(chrome.runtime.lastError||!response?.ok||!response.data?.entries){resolve(false);return;}
         pronunciationEntries=response.data.entries;
+        pronunciationLookup=Object.fromEntries(Object.entries(pronunciationEntries).map(([key,value])=>[key.toLocaleLowerCase(),value]));
         const keys=Object.keys(pronunciationEntries).sort((a,b)=>b.length-a.length);
         if(keys.length){
           const special=[".", "*", "+", "?", "^", "$", "{", "}", "(", ")", "|", "[", "]", String.fromCharCode(92)];
@@ -41,7 +42,7 @@
     const source=String(text||"");
     if(!pronunciationPattern)return source;
     pronunciationPattern.lastIndex=0;
-    return source.replace(pronunciationPattern,(match,prefix,term)=>prefix+(pronunciationEntries[term]||pronunciationEntries[term.toLocaleLowerCase()]||term));
+    return source.replace(pronunciationPattern,(match,prefix,term)=>prefix+(pronunciationLookup[term.toLocaleLowerCase()]||term));
   }
   const norm=s=>String(s||"").replace(/\s+/g," ").trim();
   function language(text,trackLang){if(trackLang)return trackLang;if(/[\u3040-\u30ff]/.test(text))return"ja";if(/[\u4e00-\u9fff]/.test(text))return"zh";if(/[\uac00-\ud7af]/.test(text))return"ko";if(/[\u0100-\u017f]/.test(text))return"vi";if(/[\u0400-\u04ff]/.test(text))return"ru";return"en";}
@@ -86,7 +87,8 @@
     if (selected.length > 1) rotationIndex++;
     return voice;
   }
-  function synthesizeBlob(text){
+  async function synthesizeBlob(text){
+    await loadPronunciationDictionary();
     const voice = selectedVieNeuVoice();
     return new Promise((resolve,reject)=>{
       chrome.runtime.sendMessage({target:"vieneu-local-tts",type:"SYNTHESIZE",engine:settings.engine,text:pronunciationText(text),voice},response=>{
@@ -154,7 +156,8 @@
   async function speak(item){await loadPronunciationDictionary();if(isVieNeuEngine(settings.engine))return playVieNeu(item);return new Promise((resolve,reject)=>{
     // Chrome đôi khi bỏ lệnh speak ngay sau cancel(), đặc biệt với giọng đọc mạng.
     cancel();
-    const spokenText=pronunciationText(item.text);\n    const u=new SpeechSynthesisUtterance(spokenText),v=chooseVoice(spokenText,track?.languageCode||"");
+    const spokenText=pronunciationText(item.text);
+    const u=new SpeechSynthesisUtterance(spokenText),v=chooseVoice(spokenText,track?.languageCode||"");
     if(v){u.voice=v;u.lang=v.lang;}else u.lang=language(item.text,track?.languageCode);
     u.rate=Math.max(.5,Math.min(2,Number(settings.rate)||1));u.volume=Math.max(0,Math.min(1,Number(settings.volume)||0));
     utterance=u;
