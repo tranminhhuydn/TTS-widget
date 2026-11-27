@@ -4,7 +4,7 @@
     constructor({video,sentences,speak,prepare,cancel,resetPreload,pauseSpeech,resumeSpeech,onStatus,onError}) {
       Object.assign(this,{video,sentences,speak,prepare,cancel,resetPreload,pauseSpeech,resumeSpeech,onStatus,onError});
       this.index=0;this.active=false;this.waiting=false;this.speaking=false;this.session=0;this.timer=null;
-      this.preparing=new Set();this.preloadAhead=10;
+      this.preparing=new Set();this.preloadAttempted=new Set();this.preloadAhead=10;
       this.onPlay=()=>this.resume();this.onPause=()=>this.pause();this.onSeeking=()=>this.seek();
       this.onSeeked=()=>{this.waiting=this.video.paused;if(!this.waiting){this.preload();this.tick();}};
       this.onRate=()=>this.tick();
@@ -18,22 +18,22 @@
       const end=Math.min(this.sentences.length,this.index+this.preloadAhead);
       for(let i=this.index;i<end;i++){
         const item=this.sentences[i];
-        if(this.preparing.has(item.id))continue;
-        this.preparing.add(item.id);
+        if(this.preloadAttempted.has(item.id))continue;
+        this.preparing.add(item.id);this.preloadAttempted.add(item.id);
         Promise.resolve(this.prepare(item)).catch(error=>{
           if(this.active&&error?.message!=="Đã hủy hàng đợi audio cũ.")this.onError?.(error,item);
         }).finally(()=>this.preparing.delete(item.id));
       }
     }
     start(t){
-      this.stop(false);this.active=true;this.session++;this.index=this.findIndex(t);
+      this.stop(false);this.preparing.clear();this.preloadAttempted.clear();this.active=true;this.session++;this.index=this.findIndex(t);
       this.preload();this.tick();this.timer=setInterval(()=>{this.preload();this.tick();},200);
     }
     pause(){if(this.active){this.pauseSpeech();this.onStatus("paused");}}
     resume(){if(this.active){this.waiting=false;this.resumeSpeech();this.preload();this.tick();}}
     seek(){
       if(!this.active)return;
-      this.session++;this.cancel();this.resetPreload?.();this.preparing.clear();
+      this.session++;this.cancel();this.resetPreload?.();this.preparing.clear();this.preloadAttempted.clear();this.preloadAttempted.clear();
       this.speaking=false;this.index=this.findIndex(this.video.currentTime);this.waiting=true;this.onStatus("resync");
     }
     tick(){
