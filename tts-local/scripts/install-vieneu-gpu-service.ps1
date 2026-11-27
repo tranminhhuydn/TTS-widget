@@ -72,7 +72,6 @@ try {
     Set-NssmSetting @("AppRotateBytes", "10485760")
     Set-NssmSetting @("AppExit", "Default", "Restart")
     Set-NssmSetting @("AppRestartDelay", "5000")
-    Set-NssmSetting @("AppKillProcessTree", "1")
 }
 catch {
     if ($installed) { & $nssmExe remove $ServiceName confirm 2>$null }
