@@ -12,6 +12,7 @@ Tài liệu này ghi lại cách dựng API TTS local trên Windows PowerShell 5
 6. Chạy API
 7. Kiểm tra tiếng Việt
 8. Khắc phục lỗi
+9. Đăng ký Windows Service
 
 ## 1. Thành phần và thư mục
 
@@ -206,24 +207,84 @@ Thiết lập hiện tại dùng CPU. Hiệu năng có thể thấp hơn backend
 Kết quả: VieNeu-TTS-v3-Turbo cung cấp API local tại 127.0.0.1:8080, dùng SEA-G2P xử lý tiếng Việt và audio.cpp tổng hợp WAV. Không cần chạy Python server.
 
 
-## 9. Chạy Voice Manager wrapper (tùy chọn)
+## 9. Đăng ký Windows Service
 
-Để có API liệt kê và chọn voice, dùng wrapper Node.js thay vì chạy trực tiếp `audiocpp_server.exe`.
+Sau khi VieNeu API chạy ổn định bằng cách thủ công, có thể đăng ký audio.cpp thành Windows Service để tự khởi động cùng Windows. Giải pháp sử dụng NSSM (Non-Sucking Service Manager) để quản lý tiến trình \`audiocpp_server.exe\`.
 
-1. Cài Node.js 18 trở lên.
-2. Nếu audio.cpp đang chạy thủ công ở port 8080, nhấn `Ctrl+C` trong cửa sổ server để tắt.
-3. Từ thư mục gốc repository, chạy:
+### Điều kiện trước khi cài
+
+- Đã hoàn tất các mục 1–8 và kiểm tra API hoạt động.
+- Đã dừng server audio.cpp đang chạy thủ công bằng \`Ctrl+C\`. Không để hai tiến trình cùng chiếm port 8080.
+- Repository đã có ba script trong \`tts-local/scripts\`.
+- Tài khoản Windows dùng để chạy service phải có mật khẩu đăng nhập. PIN Windows Hello không thay thế mật khẩu tài khoản khi cấu hình service logon.
+- Mở PowerShell bằng **Run as Administrator**. Nếu không, PowerShell sẽ từ chối chạy script do chỉ thị \`#requires -RunAsAdministrator\`.
+
+### Cài đặt service
+
+Từ thư mục gốc repository, chạy:
 
 ~~~powershell
-node .\tts-local\server.js
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\install-vieneu-service.ps1"
 ~~~
 
-Wrapper tự khởi động audio.cpp bằng cấu hình `server.json` hiện có. API wrapper chạy ở `http://127.0.0.1:8081`; API audio.cpp nội bộ vẫn ở port 8080.
+Script tải NSSM 2.24, đặt NSSM trong thư mục model tại \`windows-service\`, yêu cầu mật khẩu tài khoản Windows hiện tại rồi đăng ký service tên \`VieNeuTTS\` với chế độ tự khởi động. Mật khẩu được nhập dạng bảo mật và không ghi vào file script.
 
-- `GET /api/voices`: liệt kê preset đã xuất và trạng thái đủ file.
-- `POST /api/voices/select`: chọn voice theo id thư mục, cập nhật hai file voice trong `server.json` và restart audio.cpp.
-- `POST /v1/audio/speech`: gửi yêu cầu tổng hợp qua wrapper.
+Service chạy dưới tài khoản Windows hiện tại để truy cập được model và voice trong thư mục profile. Không chuyển sang LocalSystem nếu chưa điều chỉnh quyền truy cập và đường dẫn.
 
-Chi tiết request/response xem [README Voice Manager API](./README.md#9-voice-manager-api).
+### Kiểm tra
 
-**Lưu ý:** chọn voice sẽ restart audio.cpp và nạp model lại. Chỉ chạy một audio.cpp server trên port 8080; không chạy đồng thời server thủ công và wrapper.
+~~~powershell
+Get-Service VieNeuTTS
+Invoke-RestMethod "http://127.0.0.1:8080/health"
+~~~
+
+Thông tin service chi tiết:
+
+~~~powershell
+Get-CimInstance Win32_Service -Filter "Name='VieNeuTTS'" |
+    Select-Object Name, State, StartMode, StartName, ProcessId
+~~~
+
+### Quản lý
+
+Chạy các lệnh dưới đây trong PowerShell Administrator:
+
+~~~powershell
+# Trạng thái
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\manage-vieneu-service.ps1" -Action Status
+
+# Khởi động
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\manage-vieneu-service.ps1" -Action Start
+
+# Dừng
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\manage-vieneu-service.ps1" -Action Stop
+
+# Khởi động lại
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\manage-vieneu-service.ps1" -Action Restart
+~~~
+
+### Gỡ service
+
+~~~powershell
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\uninstall-vieneu-service.ps1"
+~~~
+
+Lệnh gỡ chỉ xóa đăng ký service. NSSM và log vẫn được giữ lại trong thư mục \`windows-service\`.
+
+### Log và xử lý lỗi
+
+Log stdout/stderr nằm tại:
+
+~~~text
+%USERPROFILE%\.lmstudio\models\pnnbao-ump\VieNeu-TTS-v3-Turbo\windows-service\logs\
+~~~
+
+Nếu service không khởi động:
+
+1. Kiểm tra tài khoản và mật khẩu service logon.
+2. Kiểm tra service có đọc được model, \`server.json\`, SEA-G2P DLL và các file voice không.
+3. Kiểm tra port 8080 có bị tiến trình khác chiếm không.
+4. Đọc \`stdout.log\` và \`stderr.log\`.
+5. Nếu vừa sửa cấu hình, dừng service rồi khởi động lại.
+
+Nếu tài khoản Windows không có mật khẩu hoặc không thể cấp quyền Log on as a service, không nên đổi bừa sang LocalSystem. Hãy dùng Task Scheduler chạy khi đăng nhập thay thế.
