@@ -7,7 +7,7 @@ import traceback
 ROOT = Path("tts-subtitle-youtobe-chrome-extension")
 SOURCE = ROOT / "tu_dien_phien_am_phat_giao_tay_tang.xlsx"
 OUTPUT = ROOT / "tudien-phien-am-phat-giao-tay-tang.json"
-SHEET_NAME = "Tự điển tổng hợp"
+SHEET_NAME = "Từ điển tổng hợp"
 PRONUNCIATION_HEADER = "Cách đọc gần tiếng Việt"
 
 def norm(value):
@@ -46,7 +46,7 @@ def main():
     print("DETECTED HEADER ROW:", header_row_num)
     print("DETECTED HEADERS:", repr(headers))
     # Cột thuật ngữ: ưu tiên header có từ khóa rõ nghĩa; nếu không có thì dừng để tránh map nhầm cột.
-    preferred = ("thuật ngữ", "từ gốc", "từ", "term", "tạng", "sanskrit", "tibetan")
+    preferred = ("tên thường dùng", "thuật ngữ", "từ gốc", "term", "tạng", "sanskrit", "tibetan")
     candidates = [i for i, h in enumerate(headers) if i != pron_idx and h.strip()]
     key_idx = next((i for token in preferred for i in candidates if token in norm(headers[i])), None)
     if key_idx is None:
@@ -78,7 +78,7 @@ def main():
         "count": len(entries),
         "entries": entries,
     }
-    OUTPUT.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\\n", encoding="utf-8")
+    OUTPUT.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"SUCCESS: {len(entries)} entries; duplicate keys overwritten: {duplicates}; key column: {headers[key_idx]!r}")
 
 if __name__ == "__main__":
