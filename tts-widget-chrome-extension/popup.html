@@ -23,6 +23,12 @@
       Đang kiểm tra trạng thái trên tab hiện tại.
     </p>
 
+    <section class="appearance-setting audio-setting" aria-label="Âm thanh TTS">
+      <h2>Âm thanh TTS</h2>
+      <label class="font-size-row" for="ttsVolume"><span>Âm lượng giọng đọc</span><output id="ttsVolumeValue">100%</output></label>
+      <input id="ttsVolume" type="range" min="0" max="1" step="0.05" value="1">
+    </section>
+
     <section class="appearance-setting" aria-label="Giao diện website">
       <h2>Giao diện website</h2>
       <label class="switch-row" for="darkModeToggle">
@@ -35,8 +41,9 @@
     </section>
 
     <div class="hint">
-      Khi được kích hoạt, nhấn nút <strong>🔊 Đọc nội dung này</strong> ở góc dưới bên phải trang.
-      Mở <strong>Cài đặt</strong> để chọn giọng đọc và điều chỉnh tốc độ.
+      Trên website thông thường, nhấn nút loa ở góc dưới bên phải để đọc nội dung.
+      Trên YouTube, bật Extension tại đây rồi dùng nút phát, tạm dừng và tua của YouTube.
+      Chọn giọng đọc trong Cài đặt TTS-widget; âm lượng điều chỉnh ngay tại popup này.
     </div>
     <footer>Phiên bản 0.1.0 · Web Speech API</footer>
   </main>

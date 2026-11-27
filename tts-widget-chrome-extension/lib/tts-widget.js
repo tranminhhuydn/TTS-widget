@@ -25,7 +25,15 @@ function init(options={}){
   document.body.append(widgetRoot);
   /* SETTINGS MANAGER */
 class SettingsManager {
-  constructor(){this.key="tts-widget-settings-v2";this.defaults={rate:1,pitch:1,volume:1,highlight:true,wordSync:true,sync:true,keepBackgroundReading:true,toolbarPosition:"header",theme:"system",fontSize:16,voiceRotationEnabled:false,highlightColor:"#ffe58a",textColor:"#332600",borderColor:"#e0a800"};this.value=this.load();}
+  constructor(){this.key="tts-widget-settings-v2";this.defaults={rate:1,pitch:1,volume:1,highlight:true,wordSync:true,sync:true,keepBackgroundReading:true,toolbarPosition:"header",theme:"system",fontSize:16,voiceRotationEnabled:false,highlightColor:"#ffe58a",textColor:"#332600",borderColor:"#e0a800"};this.value=this.load();
+    document.addEventListener("tts-widget:volume-change",event=>{const value=Number(event.detail?.volume);if(Number.isFinite(value)){this.value.volume=Math.min(1,Math.max(0,value));this.save();}});
+    try{
+      if(typeof chrome!=="undefined"&&chrome.storage?.sync){
+        chrome.storage.sync.get({ttsVolume:null},result=>{const value=Number(result.ttsVolume);if(result.ttsVolume!==null&&Number.isFinite(value)){this.value.volume=Math.min(1,Math.max(0,value));this.save();const slider=widgetRoot.querySelector("#settingVolume");if(slider)slider.value=String(this.value.volume);}});
+        chrome.storage.onChanged.addListener((changes,area)=>{if(area==="sync"&&changes.ttsVolume){const value=Number(changes.ttsVolume.newValue);if(Number.isFinite(value)){this.value.volume=Math.min(1,Math.max(0,value));this.save();const slider=widgetRoot.querySelector("#settingVolume");if(slider)slider.value=String(this.value.volume);}}});
+      }
+    }catch(_){}
+  }
   load(){try{const saved=JSON.parse(localStorage.getItem(this.key)||"{}");const value={...this.defaults,...(saved&&typeof saved==="object"&&!Array.isArray(saved)?saved:{})};
     ["font","size","line","width","autoScroll","compact"].forEach(key=>delete value[key]);
     const number=(key,min,max)=>{const n=Number(value[key]);value[key]=Number.isFinite(n)?Math.min(max,Math.max(min,n)):this.defaults[key];};
@@ -36,7 +44,7 @@ class SettingsManager {
     ["highlightColor","textColor","borderColor"].forEach(key=>{if(typeof value[key]!=="string"||!/^#[0-9a-f]{6}$/i.test(value[key]))value[key]=this.defaults[key];});
     return value;
   }catch(_){return {...this.defaults};}}
-  save(){try{localStorage.setItem(this.key,JSON.stringify(this.value));}catch(_){}}
+  save(){try{localStorage.setItem(this.key,JSON.stringify(this.value));}catch(_){}try{if(typeof chrome!=="undefined"&&chrome.storage?.sync)chrome.storage.sync.set({ttsVolume:this.value.volume});}catch(_){}}
   reset(){this.value={...this.defaults};this.save();}
 }
 
@@ -51,6 +59,7 @@ class VoiceManager {
     this.rotationList.addEventListener("click",event=>{const button=event.target.closest("button[data-action][data-identity]");if(!button||!this.rotationList.contains(button))return;event.preventDefault();event.stopPropagation();const index=this.rotation.findIndex(item=>item.identity===button.dataset.identity);if(index<0)return;const action=button.dataset.action;if(action==="remove")this.rotation.splice(index,1);else if(action==="up"&&index>0)[this.rotation[index-1],this.rotation[index]]=[this.rotation[index],this.rotation[index-1]];else if(action==="down"&&index<this.rotation.length-1)[this.rotation[index+1],this.rotation[index]]=[this.rotation[index],this.rotation[index+1]];else return;this.saveRotation();this.renderRotation();});
     widgetRoot.querySelector("#addRotationVoiceBtn").addEventListener("click",()=>this.addSelectedToRotation());
     this.search.addEventListener("input",()=>this.render());this.select.addEventListener("change",()=>this.choose(this.select.value));
+    try{if(typeof chrome!=="undefined"&&chrome.storage?.sync)chrome.storage.sync.get({ttsVoiceIdentity:""},result=>{if(result.ttsVoiceIdentity&&!this.userSelected){this.storedIdentity=result.ttsVoiceIdentity;this.load();}});}catch(_){}
   }
   identity(v){return v?v.voiceURI+"|"+v.name+"|"+v.lang:"";}
   clearRetry(){if(this.retryTimer!==null){clearTimeout(this.retryTimer);this.retryTimer=null;}}
@@ -117,7 +126,7 @@ class VoiceManager {
   choose(identity,persist=true){
     const voice=this.voices.find(item=>this.identity(item)===identity);if(!voice)return;
     this.selected=voice;this.hasInitialSelection=true;this.userSelected=true;this.syncSelection();this.updateInfo(voice);
-    if(persist){this.storedIdentity=this.identity(voice);try{localStorage.setItem(this.storageKey,this.storedIdentity);}catch(_){}}
+    if(persist){this.storedIdentity=this.identity(voice);try{localStorage.setItem(this.storageKey,this.storedIdentity);}catch(_){}try{if(typeof chrome!=="undefined"&&chrome.storage?.sync)chrome.storage.sync.set({ttsVoiceIdentity:this.storedIdentity});}catch(_){}}
     this.onChange(voice);
   }
 }

@@ -4,6 +4,13 @@
 (function () {
   "use strict";
 
+  // YouTube narration uses the native YouTube player controls and a separate hybrid engine.
+  const isYouTubeWatch = location.hostname.endsWith("youtube.com") && location.pathname === "/watch";
+  if (isYouTubeWatch && window.TTSYouTubeHybrid) {
+    window.TTSYouTubeHybrid.init();
+    return;
+  }
+
   // If the widget already exists, restore it without creating a second instance.
   const existingRoot = document.querySelector(".tts-widget-root");
   if (existingRoot) {
