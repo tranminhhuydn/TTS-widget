@@ -32,27 +32,25 @@
     if(!tracks.length)throw Error("Video không cung cấp phụ đề có thể tải.");
     const preferred=(navigator.language||"vi").split("-")[0].toLowerCase();
     track=tracks.find(t=>t.languageCode?.toLowerCase().startsWith(preferred))||tracks.find(t=>t.languageCode?.toLowerCase().startsWith("vi"))||tracks[0];
-    // YouTube thường trả JSON3 dưới dạng nội dung text; không dựa vào MIME/đuôi file.
-    // Thử URL JSON3 trước, sau đó thử URL gốc nếu endpoint JSON3 trả rỗng.
-    const base=new URL(track.baseUrl);
-    const urls=[];
-    const json3=new URL(base.href);json3.searchParams.set("fmt","json3");urls.push(json3.href);
-    urls.push(base.href);
-    let payload=null,lastError=null,body="";
-    for(const requestUrl of [...new Set(urls)]){
-      try{
-        const response=await fetch(requestUrl,{credentials:"include",cache:"no-store"});
-        if(!response.ok){lastError=Error("HTTP "+response.status);continue;}
-        body=await response.text();
-        if(!body.trim()){lastError=Error("Phản hồi phụ đề rỗng");continue;}
-        payload=window.TTSSubtitleParser.parseText
-          ? window.TTSSubtitleParser.parseText(body)
-          : JSON.parse(body.replace(/^\\uFEFF|^\\s*\\)\\]}'?,?\\s*/,""));
-        if(payload)break;
-      }catch(error){lastError=error;}
+    // Gọi trực tiếp YouTube timedtext API; giữ các tham số/chữ ký do captionTracks cung cấp.
+    const source=new URL(track.baseUrl);
+    const endpoint=new URL("https://www.youtube.com/api/timedtext");
+    source.searchParams.forEach((value,key)=>endpoint.searchParams.set(key,value));
+    endpoint.searchParams.set("fmt","json3");
+    if(!endpoint.searchParams.has("v")){
+      const videoId=playerResponse()?.videoDetails?.videoId||new URL(location.href).searchParams.get("v");
+      if(videoId)endpoint.searchParams.set("v",videoId);
     }
-    if(!payload){
-      throw Error("Không lấy được JSON phụ đề từ YouTube. "+(lastError?.message||"Phản hồi rỗng")+". Hãy tải lại video và thử lại.");
+    if(!endpoint.searchParams.has("lang")&&track.languageCode)endpoint.searchParams.set("lang",track.languageCode);
+    const response=await fetch(endpoint.href,{credentials:"include",cache:"no-store"});
+    if(!response.ok)throw Error("YouTube timedtext API trả lỗi HTTP "+response.status+".");
+    const body=await response.text();
+    if(!body.trim())throw Error("YouTube timedtext API trả về JSON phụ đề rỗng.");
+    let payload;
+    try{
+      payload=window.TTSSubtitleParser.parseText(body);
+    }catch(error){
+      throw Error("Không phân tích được JSON từ YouTube timedtext API: "+error.message);
     }
     const parsed=window.TTSSubtitleParser.toSentences(payload);
     if(!parsed.length)throw Error("Đã tải được dữ liệu nhưng không tìm thấy câu phụ đề để đọc.");
