@@ -171,7 +171,16 @@
     const preferred=(navigator.language||"vi").split("-")[0].toLowerCase();
     track=tracks.find(t=>t.languageCode?.toLowerCase().startsWith(preferred))||tracks.find(t=>t.languageCode?.toLowerCase().startsWith("vi"))||tracks[0]||null;
     const captured=await waitForTimedtext(track?.languageCode||"",loadToken);
-    if(token!==loadToken)return;
+    const parsed=settings.readingMode==="original"
+      ? window.TTSSubtitleParser.parse(captured.payload).map((cue,id)=>({id,text:cue.text,startTime:cue.start,endTime:cue.end}))
+      : window.TTSSubtitleParser.toSentences(captured.payload);
+    if(!parsed.length)throw Error("Network Listener đã bắt được timedtext nhưng không tìm thấy câu phụ đề JSON3.");
+    return parsed;
+  }
+  async function activate(){
+    const token=++loadToken;video=document.querySelector("video.html5-main-video")||document.querySelector("video");
+    if(!video)throw Error("Không tìm thấy video YouTube.");
+    status="loading";lastError="";const next=await load();if(token!==loadToken)return;
     if(settings.engine==="browser"){
       await new Promise((resolve,reject)=>{
         chrome.runtime.sendMessage({target:"tts-subtitle-youtube",type:"TTS_CLAIM"},response=>{
@@ -183,16 +192,6 @@
       });
       if(token!==loadToken)return;
     }
-    const parsed=settings.readingMode==="original"
-      ? window.TTSSubtitleParser.parse(captured.payload).map((cue,id)=>({id,text:cue.text,startTime:cue.start,endTime:cue.end}))
-      : window.TTSSubtitleParser.toSentences(captured.payload);
-    if(!parsed.length)throw Error("Network Listener đã bắt được timedtext nhưng không tìm thấy câu phụ đề JSON3.");
-    return parsed;
-  }
-  async function activate(){
-    const token=++loadToken;video=document.querySelector("video.html5-main-video")||document.querySelector("video");
-    if(!video)throw Error("Không tìm thấy video YouTube.");
-    status="loading";lastError="";const next=await load();if(token!==loadToken)return;
     if(engine)engine.destroy();resetPreload();audioCache.clear();sentences=next;
     engine=new window.TTSSubtitleHybridSync({video,sentences,speak,prepare,cancel,resetPreload,pauseSpeech:()=>{if(activeAudio)activeAudio.pause();speechSynthesis.pause();},resumeSpeech:()=>{if(activeAudio)activeAudio.play().catch(()=>{});speechSynthesis.resume();},onStatus:s=>status=s,onError:e=>{status="error";lastError=e.message;console.warn("[TTS Subtitle] VieNeu:",e.message);}});
     enabled=true;chrome.storage.local.set({enabled:true});engine.start(video.currentTime);status="reading";
