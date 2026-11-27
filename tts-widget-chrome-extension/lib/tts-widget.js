@@ -44,7 +44,7 @@ class SettingsManager {
     ["highlightColor","textColor","borderColor"].forEach(key=>{if(typeof value[key]!=="string"||!/^#[0-9a-f]{6}$/i.test(value[key]))value[key]=this.defaults[key];});
     return value;
   }catch(_){return {...this.defaults};}}
-  save(){try{localStorage.setItem(this.key,JSON.stringify(this.value));}catch(_){}}
+  save(){try{localStorage.setItem(this.key,JSON.stringify(this.value));}catch(_){}try{if(typeof chrome!=="undefined"&&chrome.storage?.sync)chrome.storage.sync.set({ttsVolume:this.value.volume});}catch(_){}}
   reset(){this.value={...this.defaults};this.save();}
 }
 
@@ -125,7 +125,7 @@ class VoiceManager {
   choose(identity,persist=true){
     const voice=this.voices.find(item=>this.identity(item)===identity);if(!voice)return;
     this.selected=voice;this.hasInitialSelection=true;this.userSelected=true;this.syncSelection();this.updateInfo(voice);
-    if(persist){this.storedIdentity=this.identity(voice);try{localStorage.setItem(this.storageKey,this.storedIdentity);}catch(_){}}
+    if(persist){this.storedIdentity=this.identity(voice);try{localStorage.setItem(this.storageKey,this.storedIdentity);}catch(_){}try{if(typeof chrome!=="undefined"&&chrome.storage?.sync)chrome.storage.sync.set({ttsVoiceIdentity:this.storedIdentity});}catch(_){}}
     this.onChange(voice);
   }
 }
