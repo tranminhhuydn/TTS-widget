@@ -4,7 +4,7 @@
   if(global.TTSYouTubeHybrid)return;
   const KEY="tts-widget-settings-v2";
   let engine=null,active=false,video=null,videoId="",sentences=[],utterance=null,volume=1,preferredVoice="";
-  let status="idle",ready=Promise.resolve(false),navigationListenerAdded=false;
+  let status="idle",ready=Promise.resolve(false),navigationListenerAdded=false,storageListenerAdded=false;
   const readSettings=()=>{try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch(_){return {}}};
   function getVoice(lang){
     const voices= speechSynthesis.getVoices();
@@ -128,11 +128,11 @@
           if(result.ttsVolume!==null)setVolume(result.ttsVolume);
           if(result.ttsVoiceIdentity)preferredVoice=result.ttsVoiceIdentity;
         });
-        chrome.storage.onChanged.addListener((changes,area)=>{
+        if(!storageListenerAdded){chrome.storage.onChanged.addListener((changes,area)=>{
           if(area!=="sync")return;
           if(changes.ttsVolume)setVolume(changes.ttsVolume.newValue);
           if(changes.ttsVoiceIdentity)preferredVoice=changes.ttsVoiceIdentity.newValue||"";
-        });
+        });storageListenerAdded=true;}
       }
     }catch(_){}
     preferredVoice=localStorage.getItem("tts-widget-voice-v1")||preferredVoice;
