@@ -62,8 +62,11 @@ function loadVieNeuVoices(selected = []) {
 
 function updateEngineSettings(engine) {
   const isVieNeu = engine === "vieneu" || engine === "vieneu-gpu";
+  const isGpu = engine === "vieneu-gpu";
   $("browserSettings").hidden = isVieNeu;
   $("vieneuSettings").hidden = !isVieNeu;
+  $("vieneuCpuSettings").hidden = !isVieNeu || isGpu;
+  $("vieneuGpuSettings").hidden = !isGpu;
   $("rotateSetting").hidden = isVieNeu;
 }
 
@@ -144,7 +147,7 @@ function loadState() {
     $("engine").value = response.engine || "browser";
     updateEngineSettings($("engine").value);
     syncEngineCards($("engine").value);
-    if ($("engine").value === "vieneu" || $("engine").value === "vieneu-gpu") loadVieNeuVoices(response.vieneuVoices || (response.vieneuVoice ? [response.vieneuVoice] : []));
+    if ($("engine").value === "vieneu-gpu") loadVieNeuVoices(response.vieneuVoices || []);
 
     $("readingMode").value = response.readingMode || "story";
     $("rate").value = response.rate || 1;
@@ -227,7 +230,7 @@ function syncEngineCards(engine) {
 $("engine").addEventListener("change", event => {
   updateEngineSettings(event.target.value);
   syncEngineCards(event.target.value);
-  if (event.target.value === "vieneu" || event.target.value === "vieneu-gpu") loadVieNeuVoices(Array.from($("vieneuVoices").selectedOptions).map(o => o.value));
+  if (event.target.value === "vieneu-gpu") loadVieNeuVoices(Array.from($("vieneuVoices").selectedOptions).map(o => o.value));
   send("SET_ENGINE", event.target.value, response => {
     if (response?.error) showStatus(response.error);
     else showStatus(event.target.value === "vieneu" ? "Đã chọn VieNeu CPU (8080)." : event.target.value === "vieneu-gpu" ? "Đã chọn VieNeu GPU (8081)." : "Đã chọn giọng đọc trình duyệt.");
