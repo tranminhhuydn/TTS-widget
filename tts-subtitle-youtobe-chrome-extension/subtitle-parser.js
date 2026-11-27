@@ -2,9 +2,9 @@
   "use strict";
   const clean = value => String(value || "").replace(/\u200b/g, "").replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
   function parseText(raw) {
-    let text=String(raw ?? "").replace(/^\\uFEFF/, "").trim();
+    let text=String(raw ?? "").replace(/^\uFEFF/, "").trim();
     // Một số endpoint YouTube có tiền tố chống JSON hijacking.
-    text=text.replace(/^\\)\\]}'?,?\\s*/, "");
+    text=text.replace(/^\)\]}'?,?\s*/, "");
     const value=JSON.parse(text);
     // Chấp nhận cả trường hợp JSON được bọc trong một thuộc tính.
     if(value && !Array.isArray(value.events)){
