@@ -93,6 +93,8 @@
       engine=new global.TTSYouTubeHybridSync({
         video,sentences,
         speak:speakSentence,cancel:cancelSpeech,
+        pauseSpeech:()=>{try{speechSynthesis.pause()}catch(_){}},
+        resumeSpeech:()=>{try{speechSynthesis.resume()}catch(_){}},
         onStatus:value=>{status=value;}
       });
     }
