@@ -29,7 +29,7 @@
     <section class="section engine-section">
       <div class="section-heading"><span class="section-label">BỘ MÁY GIỌNG ĐỌC</span><span class="section-hint">Chọn một</span></div>
       <select id="engine" class="engine-native" aria-label="Bộ máy giọng đọc">
-        <option value="browser">Browser TTS</option><option value="vieneu">VieNeu Local</option>
+        <option value="browser">Browser TTS</option><option value="vieneu">VieNeu CPU (8080)</option><option value="vieneu-gpu">VieNeu GPU (8081)</option>
       </select>
       <div class="engine-cards">
         <button class="engine-card is-active" type="button" data-engine="browser" aria-pressed="true">
@@ -38,7 +38,11 @@
         </button>
         <button class="engine-card" type="button" data-engine="vieneu" aria-pressed="false">
           <span class="engine-icon vieneu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1"/><circle cx="12" cy="12" r="5"/></svg></span>
-          <span class="engine-card-copy"><strong>VieNeu Local</strong><small>Giọng AI trên máy</small></span><span class="engine-check">✓</span>
+          <span class="engine-card-copy"><strong>VieNeu CPU</strong><small>Local · cổng 8080</small></span><span class="engine-check">✓</span>
+        </button>
+        <button class="engine-card" type="button" data-engine="vieneu-gpu" aria-pressed="false">
+          <span class="engine-icon vieneu-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1"/><circle cx="12" cy="12" r="5"/></svg></span>
+          <span class="engine-card-copy"><strong>VieNeu GPU</strong><small>Local · cổng 8081</small></span><span class="engine-check">✓</span>
         </button>
       </div>
 
@@ -49,7 +53,7 @@
       </div>
       <div id="vieneuSettings" class="engine-settings" hidden>
         <div class="voice-heading">
-          <label class="field-label" for="vieneuVoices">Giọng VieNeu GPU</label>
+          <label class="field-label" for="vieneuVoices">Danh sách giọng VieNeu</label>
           <button id="refreshVieNeuVoices" class="refresh-voices" type="button" title="Tải lại danh sách giọng">↻ Tải lại</button>
         </div>
         <select id="vieneuVoices" class="control voice-list vieneu-voice-list" multiple size="5" aria-describedby="vieneuVoiceHelp"></select>
