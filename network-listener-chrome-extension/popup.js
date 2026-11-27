@@ -2,7 +2,7 @@ const $ = id => document.getElementById(id);
 let currentTabId=null,selectedId=null,currentItems=[];
 async function send(type,extra={}){return chrome.runtime.sendMessage({type,tabId:currentTabId,...extra});}
 function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function shortUrl(url){try{const u=new URL(url);return u.host+u.pathname.split("/").filter(Boolean).pop()||u.host;}catch{return url||"";}}
+function shortUrl(url){try{const u=new URL(url);return u.pathname.split("/").filter(Boolean).pop()||u.host;}catch{return url||"";}}
 function formatSize(item){const n=item.bodySize??item.encodedDataLength??item.contentLength;if(n==null)return "—";if(n<1024)return n+" B";if(n<1024*1024)return (n/1024).toFixed(1)+" kB";return (n/1024/1024).toFixed(2)+" MB";}
 function formatTime(item){return item.durationMs!=null?item.durationMs.toFixed(0)+" ms":item.finished?"—":"Pending";}
 function setActive(active){$("stateBadge").textContent=active?"Đang lắng nghe":"Đã tắt";$("stateBadge").classList.toggle("active",active);$("toggleListen").textContent=active?"Dừng lắng nghe":"Bắt đầu lắng nghe";}
