@@ -30,18 +30,18 @@ h1{margin:0;font-size:16px;line-height:1.2;font-weight:750;letter-spacing:-.3px}
 .section-label{color:#77849a;font-size:10px;font-weight:800;letter-spacing:.85px}
 .section-hint{color:#9aa4b5;font-size:10px}
 .engine-native{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
-.engine-cards{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.engine-card{position:relative;display:flex;align-items:center;gap:9px;min-width:0;padding:11px 9px;border:1px solid #e0e6ef;border-radius:11px;background:#fff;color:#26334a;text-align:left;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s}
+.engine-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.engine-card{position:relative;display:flex;align-items:center;gap:6px;min-width:0;padding:10px 5px 9px;border:1px solid #e0e6ef;border-radius:11px;background:#fff;color:#26334a;text-align:left;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s}
 .engine-card:hover{border-color:#aabce8}
 .engine-card.is-active{border:1.5px solid #3970e8;background:#f3f7ff;box-shadow:0 0 0 2px #3970e80d}
-.engine-icon{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:9px}
-.engine-icon svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.engine-icon{display:grid;place-items:center;width:25px;height:25px;flex:none;border-radius:9px}
+.engine-icon svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .browser-icon{background:#e8efff;color:#2860d6}
 .vieneu-icon{background:#eeeaff;color:#7252cb}
 .engine-card-copy{display:flex;flex-direction:column;min-width:0;gap:2px}
-.engine-card-copy strong{font-size:11px;font-weight:750;white-space:nowrap}
-.engine-card-copy small{color:#8792a5;font-size:9px;white-space:nowrap}
-.engine-check{display:none;margin-left:auto;color:#2860d6;font-size:13px;font-weight:800}
+.engine-card-copy strong{font-size:9.5px;font-weight:750;white-space:nowrap}
+.engine-card-copy small{display:none;color:#8792a5;font-size:9px;white-space:nowrap}
+.engine-check{display:none;position:absolute;top:3px;right:5px;margin-left:0;color:#2860d6;font-size:13px;font-weight:800}
 .engine-card.is-active .engine-check{display:block}
 .engine-settings[hidden]{display:none}
 .field-label{display:block;margin:12px 0 6px;color:#3d4960;font-size:11px;font-weight:700}
