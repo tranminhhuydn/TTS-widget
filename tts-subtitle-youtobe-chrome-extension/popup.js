@@ -80,6 +80,8 @@ function loadState() {
       return;
     }
     $("enabled").checked = response.enabled;
+    $("engine").value = response.engine || "browser";
+    $("vieneuVoice").value = response.vieneuVoice || "Pham Tuyen";
     $("readingMode").value = response.readingMode || "story";
     $("rate").value = response.rate || 1;
     $("rateValue").textContent = Number(response.rate || 1).toFixed(1) + "×";
@@ -105,7 +107,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
   const tab = tabs[0];
   if (!tab?.url || !/^https:\/\/(www\.)?youtube\.com\//.test(tab.url)) {
     showStatus("Hãy mở video trên YouTube.");
-    ["enabled", "readingMode", "rate", "volume", "voices", "rotateVoices", "autoLanguage", "stop"]
+    ["enabled", "engine", "vieneuVoice", "readingMode", "rate", "volume", "voices", "rotateVoices", "autoLanguage", "stop"]
       .forEach(id => { $(id).disabled = true; });
     return;
   }
@@ -139,3 +141,16 @@ $("voices").addEventListener("change", event => {
 $("rotateVoices").addEventListener("change", event => send("SET_ROTATE", event.target.checked));
 $("autoLanguage").addEventListener("change", event => send("SET_AUTO_LANGUAGE", event.target.checked));
 $("stop").addEventListener("click", () => send("STOP"));
+
+$("engine").addEventListener("change", event => {
+  send("SET_ENGINE", event.target.value, response => {
+    if (response?.error) showStatus(response.error);
+    else showStatus(event.target.value === "vieneu" ? "Đã chọn VieNeu TTS Local." : "Đã chọn giọng đọc trình duyệt.");
+  });
+});
+$("vieneuVoice").addEventListener("change", event => {
+  send("SET_VIENEU_VOICE", event.target.value, response => {
+    if (response?.error) showStatus(response.error);
+    else showStatus("Đã lưu giọng VieNeu: " + (response?.vieneuVoice || event.target.value));
+  });
+});
