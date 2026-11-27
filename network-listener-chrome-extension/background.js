@@ -60,7 +60,12 @@ function updateItem(tabId, item) {
   const list = tabItems(tabId);
   const index = list.findIndex(x => x.id === item.id);
   if (index >= 0) list[index] = { ...list[index], ...item };
-  else list.unshift(item);
+  else list.push(item);
+
+  // Keep the newest captured request at the top. Use startedAt (request start),
+  // not response completion/update time, so slow responses don't jump the list.
+  list.sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0));
+
   if (list.length > MAX_ITEMS) list.length = MAX_ITEMS;
   chrome.storage.session.set({ ["networkItems_" + tabId]: list }).catch(() => {});
 }
