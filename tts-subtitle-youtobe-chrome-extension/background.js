@@ -1,8 +1,40 @@
 "use strict";
 
-// Proxy TTS requests from the YouTube content script. The extension service
-// worker has host permission for the local VieNeu API (content scripts do not).
+// Only one YouTube tab may own the browser SpeechSynthesis engine at a time.
+// This prevents cancel()/speak() calls in different tabs from interrupting each other.
+let activeSpeechTabId = null;
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.target === "tts-subtitle-youtube" && message.type === "TTS_CLAIM") {
+    const tabId = sender.tab?.id;
+    if (typeof tabId !== "number") {
+      sendResponse({ ok: false, error: "Không xác định được tab yêu cầu TTS." });
+      return;
+    }
+    const previousTabId = activeSpeechTabId;
+    activeSpeechTabId = tabId;
+    if (previousTabId !== null && previousTabId !== tabId) {
+      // Wait until the previous tab has cancelled its utterance before granting
+      // ownership to the new tab, avoiding a late cancel() stopping new speech.
+      chrome.tabs.sendMessage(previousTabId, {
+        target: "tts-subtitle-youtube",
+        type: "TTS_PREEMPT"
+      }, () => {
+        void chrome.runtime.lastError;
+        sendResponse({ ok: true, tabId });
+      });
+      return true;
+    }
+    sendResponse({ ok: true, tabId });
+    return;
+  }
+
+  if (message?.target === "tts-subtitle-youtube" && message.type === "TTS_RELEASE") {
+    if (sender.tab?.id === activeSpeechTabId) activeSpeechTabId = null;
+    sendResponse({ ok: true });
+    return;
+  }
+
   if (message?.target !== "vieneu-local-tts" || message.type !== "SYNTHESIZE") return;
   (async () => {
     const response = await fetch("http://127.0.0.1:8080/v1/audio/speech", {
@@ -28,4 +60,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ ok: true, audioBase64: btoa(binary), mimeType: response.headers.get("content-type") || "audio/wav" });
   })().catch(error => sendResponse({ ok: false, error: error.message || String(error) }));
   return true;
+});
+
+
+chrome.tabs.onRemoved.addListener(tabId => {
+  if (tabId === activeSpeechTabId) activeSpeechTabId = null;
 });
