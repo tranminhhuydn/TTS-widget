@@ -121,3 +121,32 @@ toggleButton.addEventListener("click", async () => {
 });
 
 refreshState();
+
+
+// Persist the explicit night-mode choice and synchronize it with the active page.
+const darkModeToggle = document.getElementById("darkModeToggle");
+
+async function loadDarkModePreference() {
+  try {
+    const stored = await chrome.storage.sync.get({ darkMode: false });
+    darkModeToggle.checked = stored.darkMode === true;
+    document.documentElement.dataset.theme = darkModeToggle.checked ? "dark" : "light";
+  } catch (error) {
+    showStatus("Không thể tải cài đặt chế độ ban đêm.", "error");
+  }
+}
+
+darkModeToggle.addEventListener("change", async () => {
+  darkModeToggle.disabled = true;
+  try {
+    await chrome.storage.sync.set({ darkMode: darkModeToggle.checked });
+    document.documentElement.dataset.theme = darkModeToggle.checked ? "dark" : "light";
+  } catch (error) {
+    darkModeToggle.checked = !darkModeToggle.checked;
+    showStatus("Không thể lưu cài đặt chế độ ban đêm.", "error");
+  } finally {
+    darkModeToggle.disabled = false;
+  }
+});
+
+loadDarkModePreference();
