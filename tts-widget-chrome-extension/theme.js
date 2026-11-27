@@ -1,6 +1,9 @@
 (function () {
   "use strict";
 
+  if (globalThis.__ttsWidgetThemeInstalled) return;
+  globalThis.__ttsWidgetThemeInstalled = true;
+
   const STYLE_ID = "tts-widget-global-dark-mode";
   const DARK_ATTRIBUTE = "data-tts-widget-dark-mode";
 
