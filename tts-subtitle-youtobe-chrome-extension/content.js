@@ -24,15 +24,33 @@
     const selected=(settings.voiceURIs||[]).map(id=>all.find(v=>v.voiceURI===id)).filter(Boolean);
     const matches=list=>list.filter(v=>v.lang.toLowerCase()===code||v.lang.toLowerCase().startsWith(code+"-"));
     if(settings.rotateVoices&&selected.length){const pool=settings.autoLanguage&&matches(selected).length?matches(selected):selected;const v=pool[rotationIndex%pool.length];rotationIndex++;return v;}
+    // Ưu tiên giọng người dùng đã chọn; autoLanguage chỉ lọc theo ngôn ngữ,
+    // không được tự ý thay thế giọng Google bằng giọng khác cùng ngôn ngữ.
+    if(selected.length){
+      const preferred=settings.autoLanguage?matches(selected):selected;
+      if(preferred.length)return preferred[0];
+    }
     if(settings.autoLanguage){const v=all.find(v=>v.lang.toLowerCase()===code)||all.find(v=>v.lang.toLowerCase().startsWith(code+"-"));if(v)return v;}
     return all.find(v=>v.voiceURI===settings.voiceURI)||selected[0]||null;
   }
   function cancel(){try{speechSynthesis.cancel();}catch(_){}utterance=null;}
-  function speak(item){return new Promise(resolve=>{
-    cancel();const u=new SpeechSynthesisUtterance(item.text),v=chooseVoice(item.text,track?.languageCode||"");
+  function speak(item){return new Promise((resolve,reject)=>{
+    // Chrome đôi khi bỏ lệnh speak ngay sau cancel(), đặc biệt với giọng đọc mạng.
+    cancel();
+    const u=new SpeechSynthesisUtterance(item.text),v=chooseVoice(item.text,track?.languageCode||"");
     if(v){u.voice=v;u.lang=v.lang;}else u.lang=language(item.text,track?.languageCode);
     u.rate=Math.max(.5,Math.min(2,Number(settings.rate)||1));u.volume=Math.max(0,Math.min(1,Number(settings.volume)||0));
-    utterance=u;u.onend=u.onerror=()=>{if(utterance===u)utterance=null;resolve();};speechSynthesis.speak(u);
+    utterance=u;
+    u.onend=()=>{if(utterance===u)utterance=null;resolve();};
+    u.onerror=event=>{
+      if(utterance===u)utterance=null;
+      console.warn("[TTS Subtitle] Lỗi SpeechSynthesis:",event.error||event.type,"Voice:",v?.name||"mặc định", "Language:",u.lang);
+      reject(Error("Giọng đọc không phát được: "+(event.error||event.type||"speech error")));
+    };
+    setTimeout(()=>{
+      if(utterance!==u){resolve();return;}
+      try{speechSynthesis.speak(u);}catch(error){if(utterance===u)utterance=null;reject(error);}
+    },80);
   });}
   function playerResponse(){
     if(window.ytInitialPlayerResponse)return window.ytInitialPlayerResponse;
