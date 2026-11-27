@@ -52,6 +52,7 @@
     audioFailures.clear();
   }
   function selectedVieNeuVoice() {
+    if (settings.engine === "vieneu") return "Pham Tuyen";
     const selected = Array.isArray(settings.vieneuVoices) && settings.vieneuVoices.length
       ? settings.vieneuVoices
       : [settings.vieneuVoice || "Pham Tuyen"];
