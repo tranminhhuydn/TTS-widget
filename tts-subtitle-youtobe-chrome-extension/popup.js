@@ -164,7 +164,7 @@ function loadState() {
       select.append(option);
     });
     if(response.lastError)showStatus("Lỗi VieNeu: "+response.lastError);
-    else if(response.engine==="vieneu"&&response.enabled)showStatus("VieNeu Local: "+(response.preloadedAudio||0)+" audio đã tạo sẵn; "+(response.pendingAudio||0)+" đang xử lý.");
+    else if((response.engine==="vieneu"||response.engine==="vieneu-gpu")&&response.enabled)showStatus("VieNeu "+(response.engine==="vieneu-gpu"?"GPU":"CPU")+": "+(response.preloadedAudio||0)+" audio đã tạo sẵn; "+(response.pendingAudio||0)+" đang xử lý.");
     else showStatus("Đã kết nối với YouTube. Hãy bật “Đọc phụ đề”.");
   });
 }
