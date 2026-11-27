@@ -80,6 +80,7 @@ function loadState() {
       return;
     }
     $("enabled").checked = response.enabled;
+    $("readingMode").value = response.readingMode || "story";
     $("rate").value = response.rate || 1;
     $("rateValue").textContent = Number(response.rate || 1).toFixed(1) + "×";
     $("volume").value = response.volume ?? 1;
@@ -104,7 +105,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
   const tab = tabs[0];
   if (!tab?.url || !/^https:\/\/(www\.)?youtube\.com\//.test(tab.url)) {
     showStatus("Hãy mở video trên YouTube.");
-    ["enabled", "rate", "volume", "voices", "rotateVoices", "autoLanguage", "stop"]
+    ["enabled", "readingMode", "rate", "volume", "voices", "rotateVoices", "autoLanguage", "stop"]
       .forEach(id => { $(id).disabled = true; });
     return;
   }
@@ -116,6 +117,12 @@ $("enabled").addEventListener("change", event => {
   send("SET_ENABLED", event.target.checked, response => {
     if (response?.enabled) showStatus("Đang đọc phụ đề theo thời gian video.");
     else if (response?.error) $("enabled").checked = false;
+  });
+});
+$("readingMode").addEventListener("change", event => {
+  send("SET_READING_MODE", event.target.value, response => {
+    if (response?.error) showStatus(response.error);
+    else showStatus(event.target.value === "original" ? "Đã chọn chế độ nguyên bản." : "Đã chọn chế độ kể chuyện.");
   });
 });
 $("rate").addEventListener("input", event => {
