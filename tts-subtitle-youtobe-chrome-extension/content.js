@@ -171,6 +171,18 @@
     const preferred=(navigator.language||"vi").split("-")[0].toLowerCase();
     track=tracks.find(t=>t.languageCode?.toLowerCase().startsWith(preferred))||tracks.find(t=>t.languageCode?.toLowerCase().startsWith("vi"))||tracks[0]||null;
     const captured=await waitForTimedtext(track?.languageCode||"",loadToken);
+    if(token!==loadToken)return;
+    if(settings.engine==="browser"){
+      await new Promise((resolve,reject)=>{
+        chrome.runtime.sendMessage({target:"tts-subtitle-youtube",type:"TTS_CLAIM"},response=>{
+          const runtimeError=chrome.runtime.lastError;
+          if(runtimeError){reject(Error("Không điều phối được Google TTS giữa các tab: "+runtimeError.message));return;}
+          if(!response?.ok){reject(Error(response?.error||"Không nhận được quyền sử dụng Google TTS."));return;}
+          resolve();
+        });
+      });
+      if(token!==loadToken)return;
+    }
     const parsed=settings.readingMode==="original"
       ? window.TTSSubtitleParser.parse(captured.payload).map((cue,id)=>({id,text:cue.text,startTime:cue.start,endTime:cue.end}))
       : window.TTSSubtitleParser.toSentences(captured.payload);
@@ -185,15 +197,17 @@
     engine=new window.TTSSubtitleHybridSync({video,sentences,speak,prepare,cancel,resetPreload,pauseSpeech:()=>{if(activeAudio)activeAudio.pause();speechSynthesis.pause();},resumeSpeech:()=>{if(activeAudio)activeAudio.play().catch(()=>{});speechSynthesis.resume();},onStatus:s=>status=s,onError:e=>{status="error";lastError=e.message;console.warn("[TTS Subtitle] VieNeu:",e.message);}});
     enabled=true;chrome.storage.local.set({enabled:true});engine.start(video.currentTime);status="reading";
   }
-  function deactivate(){enabled=false;loadToken++;if(engine)engine.stop();resetPreload();audioCache.clear();cancel();status="stopped";chrome.storage.local.set({enabled:false});}
+  function deactivate(persist=true){enabled=false;loadToken++;if(engine)engine.stop();resetPreload();audioCache.clear();cancel();status="stopped";chrome.runtime.sendMessage({target:"tts-subtitle-youtube",type:"TTS_RELEASE"},()=>void chrome.runtime.lastError);if(persist)chrome.storage.local.set({enabled:false});}
   function response(){return{lastError,preloadedAudio:audioCache.size,pendingAudio:audioPending.size,enabled,engine:settings.engine,vieneuVoice:settings.vieneuVoice,rate:settings.rate,volume:settings.volume,voiceURI:settings.voiceURI,voiceURIs:settings.voiceURIs,rotateVoices:settings.rotateVoices,autoLanguage:settings.autoLanguage,readingMode:settings.readingMode,status,voices:voices().map(v=>({name:v.name,lang:v.lang,voiceURI:v.voiceURI}))};}
   chrome.runtime.onMessage.addListener((m,s,send)=>{
     if(m?.target!=="tts-subtitle-youtube")return;
+    if(m.type==="TTS_PREEMPT"){deactivate(false);send({stopped:true,reason:"another-tab"});return;}
     if(m.type==="GET_STATE"){send(response());return;}
     if(m.type==="SET_ENABLED"){if(m.value)activate().then(()=>send({enabled:true})).catch(e=>{status="error";send({error:e.message});});else{deactivate();send({enabled:false});}return true;}
     if(m.type==="STOP"){deactivate();send({stopped:true});return;}
     if(m.type==="SET_ENGINE"){
       if(!["browser","vieneu"].includes(m.value)){send({error:"TTS engine không hợp lệ."});return;}
+      if(settings.engine==="browser"&&m.value!=="browser")chrome.runtime.sendMessage({target:"tts-subtitle-youtube",type:"TTS_RELEASE"},()=>void chrome.runtime.lastError);
       settings.engine=m.value;lastError="";resetPreload();audioCache.clear();chrome.storage.local.set({engine:settings.engine});
       if(enabled)activate().then(()=>send({engine:settings.engine})).catch(e=>send({error:e.message}));else send({engine:settings.engine});
       return true;
