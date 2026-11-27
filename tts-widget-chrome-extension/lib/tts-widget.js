@@ -59,6 +59,7 @@ class VoiceManager {
     this.rotationList.addEventListener("click",event=>{const button=event.target.closest("button[data-action][data-identity]");if(!button||!this.rotationList.contains(button))return;event.preventDefault();event.stopPropagation();const index=this.rotation.findIndex(item=>item.identity===button.dataset.identity);if(index<0)return;const action=button.dataset.action;if(action==="remove")this.rotation.splice(index,1);else if(action==="up"&&index>0)[this.rotation[index-1],this.rotation[index]]=[this.rotation[index],this.rotation[index-1]];else if(action==="down"&&index<this.rotation.length-1)[this.rotation[index+1],this.rotation[index]]=[this.rotation[index],this.rotation[index+1]];else return;this.saveRotation();this.renderRotation();});
     widgetRoot.querySelector("#addRotationVoiceBtn").addEventListener("click",()=>this.addSelectedToRotation());
     this.search.addEventListener("input",()=>this.render());this.select.addEventListener("change",()=>this.choose(this.select.value));
+    try{if(typeof chrome!=="undefined"&&chrome.storage?.sync)chrome.storage.sync.get({ttsVoiceIdentity:""},result=>{if(result.ttsVoiceIdentity&&!this.userSelected){this.storedIdentity=result.ttsVoiceIdentity;this.load();}});}catch(_){}
   }
   identity(v){return v?v.voiceURI+"|"+v.name+"|"+v.lang:"";}
   clearRetry(){if(this.retryTimer!==null){clearTimeout(this.retryTimer);this.retryTimer=null;}}
