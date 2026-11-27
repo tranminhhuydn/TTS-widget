@@ -136,6 +136,7 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
       url: response.url || req.url || "",
       name: fileName(response.url || req.url || ""),
       method: req.method || "GET",
+      initiator: req.initiator || "Other",
       status: response.status,
       statusText: response.statusText || "",
       mimeType: response.mimeType || headers["content-type"] || "unknown",
