@@ -164,9 +164,30 @@ class ReaderManager {
   }
   open(){
     if(!this.refreshContent()){console.error("[TTSWidget] Không tìm thấy vùng nội dung:",config.contentSelector);return;}
-    this.root.classList.add("open");widgetRoot.classList.add("reader-open");widgetRoot.querySelector("#status").classList.remove("visible");mountReaderContextMenu();
+    this.root.classList.add("open");
+    widgetRoot.classList.add("reader-open");
+    const launcher=widgetRoot.querySelector("#openReaderBtn");
+    launcher?.style.setProperty("display","none","important");
+    launcher?.style.setProperty("visibility","hidden","important");
+    launcher?.style.setProperty("pointer-events","none","important");
+    this.root.style.setProperty("display","block","important");
+    this.root.style.setProperty("visibility","visible","important");
+    widgetRoot.querySelector("#status").classList.remove("visible");
+    mountReaderContextMenu();
   }
-  close(){unmountReaderContextMenu();this.root.classList.remove("open");widgetRoot.classList.remove("reader-open");widgetRoot.querySelector("#status").classList.remove("visible");this.clearHighlight();this.blocks=[];this.source=null;this.active=-1;}
+  close(){
+    unmountReaderContextMenu();
+    this.root.classList.remove("open");
+    widgetRoot.classList.remove("reader-open");
+    this.root.style.setProperty("display","none","important");
+    const launcher=widgetRoot.querySelector("#openReaderBtn");
+    launcher?.style.setProperty("display","inline-flex","important");
+    launcher?.style.setProperty("visibility","visible","important");
+    launcher?.style.setProperty("opacity","1","important");
+    launcher?.style.setProperty("pointer-events","auto","important");
+    widgetRoot.querySelector("#status").classList.remove("visible");
+    this.clearHighlight();this.blocks=[];this.source=null;this.active=-1;
+  }
   setActive(index,settings){if(index<0||index>=this.blocks.length)return;this.clearHighlight();this.active=index;const element=this.blocks[index].element;if(settings.value.highlight&&settings.value.sync){element.classList.add("tts-widget-reading-active");element.setAttribute("data-tts-widget-active","true");const properties=["background-color","background-image","color","outline","outline-offset","box-shadow","border-radius"];const snapshot={};properties.forEach(name=>{snapshot[name]={value:element.style.getPropertyValue(name),priority:element.style.getPropertyPriority(name)};});this.highlightStyleSnapshots.set(element,snapshot);element.style.setProperty("background-color",settings.value.highlightColor,"important");element.style.setProperty("background-image","linear-gradient("+settings.value.highlightColor+","+settings.value.highlightColor+")","important");element.style.setProperty("color",settings.value.textColor,"important");element.style.setProperty("outline","2px solid "+settings.value.borderColor,"important");element.style.setProperty("outline-offset","3px","important");element.style.setProperty("box-shadow","inset 0 0 0 1px "+settings.value.borderColor,"important");element.style.setProperty("border-radius","5px","important");}if(settings.value.sync&&element?.isConnected){const rect=element.getBoundingClientRect();const margin=120;const outsideViewport=rect.top<margin||rect.bottom>window.innerHeight-margin;if(outsideViewport){const reducedMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;element.scrollIntoView({behavior:reducedMotion?"auto":"smooth",block:"center",inline:"nearest"});}}}
   clearHighlight(){this.blocks.forEach(block=>{const element=block.element;element.classList.remove("tts-widget-reading-active");element.removeAttribute("data-tts-widget-active");const snapshot=this.highlightStyleSnapshots.get(element);if(snapshot){Object.entries(snapshot).forEach(([name,original])=>{if(original.value)element.style.setProperty(name,original.value,original.priority);else element.style.removeProperty(name);});this.highlightStyleSnapshots.delete(element);}});if(window.CSS?.highlights){try{window.CSS.highlights.delete("tts-widget-word");}catch(_){}}}
   getBlocks(){return this.blocks;}
