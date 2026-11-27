@@ -8,7 +8,18 @@ const pageFontSizeValue = document.getElementById("pageFontSizeValue");
 async function loadAppearanceSettings(){const s=await chrome.storage.sync.get({darkMode:false,pageFontSize:16});darkModeToggle.checked=s.darkMode===true;pageFontSize.value=String(s.pageFontSize);pageFontSizeValue.textContent=s.pageFontSize+" px";}
 async function applyAppearanceToActiveTab(){
   const tab=await getActiveTab();
+  const settings=await chrome.storage.sync.get({darkMode:false,pageFontSize:16});
   await chrome.scripting.executeScript({target:{tabId:tab.id},files:["theme.js"]});
+  const [result]=await chrome.scripting.executeScript({
+    target:{tabId:tab.id},
+    func:(value)=>{
+      if(typeof globalThis.__ttsWidgetApplyTheme!=="function") return false;
+      globalThis.__ttsWidgetApplyTheme(value);
+      return true;
+    },
+    args:[settings]
+  });
+  if(!result?.result) throw new Error("Không khởi tạo được bộ điều khiển giao diện trên trang.");
 }
 async function saveAppearanceSettings(){
   const s={darkMode:darkModeToggle.checked,pageFontSize:Number(pageFontSize.value)};
