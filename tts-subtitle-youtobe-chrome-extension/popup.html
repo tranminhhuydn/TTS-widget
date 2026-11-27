@@ -52,13 +52,20 @@
         <p id="voiceHelp" class="field-help">Giữ Ctrl để chọn nhiều giọng luân phiên.</p>
       </div>
       <div id="vieneuSettings" class="engine-settings" hidden>
-        <div class="voice-heading">
-          <label class="field-label" for="vieneuVoices">Danh sách giọng VieNeu</label>
-          <button id="refreshVieNeuVoices" class="refresh-voices" type="button" title="Tải lại danh sách giọng">↻ Tải lại</button>
+        <div id="vieneuCpuSettings">
+          <label class="field-label">Giọng VieNeu CPU</label>
+          <div class="control" aria-readonly="true">Pham Tuyen</div>
+          <p class="field-help">CPU sử dụng cố định giọng Pham Tuyen như phiên bản cũ.</p>
         </div>
-        <select id="vieneuVoices" class="control voice-list vieneu-voice-list" multiple size="5" aria-describedby="vieneuVoiceHelp"></select>
-        <p id="vieneuVoiceHelp" class="field-help">Chọn một giọng để dùng cố định hoặc giữ Ctrl để chọn nhiều giọng luân phiên.</p>
-        <p id="vieneuVoiceStatus" class="voice-api-status" role="status">Đang chờ danh sách giọng...</p>
+        <div id="vieneuGpuSettings" hidden>
+          <div class="voice-heading">
+            <label class="field-label" for="vieneuVoices">Danh sách giọng VieNeu GPU</label>
+            <button id="refreshVieNeuVoices" class="refresh-voices" type="button" title="Tải lại danh sách giọng">↻ Tải lại</button>
+          </div>
+          <select id="vieneuVoices" class="control voice-list vieneu-voice-list" multiple size="5" aria-describedby="vieneuVoiceHelp"></select>
+          <p id="vieneuVoiceHelp" class="field-help">Chọn một giọng để dùng cố định hoặc giữ Ctrl để chọn nhiều giọng luân phiên.</p>
+          <p id="vieneuVoiceStatus" class="voice-api-status" role="status">Đang chờ danh sách giọng GPU...</p>
+        </div>
       </div>
     </section>
 
