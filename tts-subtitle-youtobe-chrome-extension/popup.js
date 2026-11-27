@@ -6,6 +6,13 @@ function showStatus(message) {
   $("status").textContent = message;
 }
 
+function updateEngineSettings(engine) {
+  const isVieNeu = engine === "vieneu";
+  $("browserSettings").hidden = isVieNeu;
+  $("vieneuSettings").hidden = !isVieNeu;
+  $("rotateSetting").hidden = isVieNeu;
+}
+
 function injectContentScripts(done) {
   if (injecting) {
     showStatus("Đang nạp bộ đọc phụ đề...");
@@ -81,6 +88,7 @@ function loadState() {
     }
     $("enabled").checked = response.enabled;
     $("engine").value = response.engine || "browser";
+    updateEngineSettings($("engine").value);
     $("vieneuVoice").value = response.vieneuVoice || "Pham Tuyen";
     $("readingMode").value = response.readingMode || "story";
     $("rate").value = response.rate || 1;
@@ -145,6 +153,7 @@ $("autoLanguage").addEventListener("change", event => send("SET_AUTO_LANGUAGE", 
 $("stop").addEventListener("click", () => send("STOP"));
 
 $("engine").addEventListener("change", event => {
+  updateEngineSettings(event.target.value);
   send("SET_ENGINE", event.target.value, response => {
     if (response?.error) showStatus(response.error);
     else showStatus(event.target.value === "vieneu" ? "Đã chọn VieNeu TTS Local." : "Đã chọn giọng đọc trình duyệt.");
