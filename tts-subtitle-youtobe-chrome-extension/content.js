@@ -180,7 +180,7 @@
   async function activate(){
     const token=++loadToken;video=document.querySelector("video.html5-main-video")||document.querySelector("video");
     if(!video)throw Error("Không tìm thấy video YouTube.");
-    status="loading";const next=await load();if(token!==loadToken)return;
+    status="loading";lastError="";const next=await load();if(token!==loadToken)return;
     if(engine)engine.destroy();resetPreload();audioCache.clear();sentences=next;
     engine=new window.TTSSubtitleHybridSync({video,sentences,speak,prepare,cancel,resetPreload,pauseSpeech:()=>{if(activeAudio)activeAudio.pause();speechSynthesis.pause();},resumeSpeech:()=>{if(activeAudio)activeAudio.play().catch(()=>{});speechSynthesis.resume();},onStatus:s=>status=s,onError:e=>{status="error";lastError=e.message;console.warn("[TTS Subtitle] VieNeu:",e.message);}});
     enabled=true;chrome.storage.local.set({enabled:true});engine.start(video.currentTime);status="reading";
@@ -194,13 +194,13 @@
     if(m.type==="STOP"){deactivate();send({stopped:true});return;}
     if(m.type==="SET_ENGINE"){
       if(!["browser","vieneu"].includes(m.value)){send({error:"TTS engine không hợp lệ."});return;}
-      settings.engine=m.value;resetPreload();audioCache.clear();chrome.storage.local.set({engine:settings.engine});
+      settings.engine=m.value;lastError="";resetPreload();audioCache.clear();chrome.storage.local.set({engine:settings.engine});
       if(enabled)activate().then(()=>send({engine:settings.engine})).catch(e=>send({error:e.message}));else send({engine:settings.engine});
       return true;
     }
     if(m.type==="SET_VIENEU_VOICE"){
       settings.vieneuVoice=String(m.value||"Pham Tuyen").trim()||"Pham Tuyen";
-      resetPreload();audioCache.clear();chrome.storage.local.set({vieneuVoice:settings.vieneuVoice});send({vieneuVoice:settings.vieneuVoice});return;
+      lastError="";resetPreload();audioCache.clear();chrome.storage.local.set({vieneuVoice:settings.vieneuVoice});send({vieneuVoice:settings.vieneuVoice});return;
     }
     if(m.type==="SET_READING_MODE"){
       if(!["original","story"].includes(m.value)){send({error:"Kiểu đọc không hợp lệ."});return;}
