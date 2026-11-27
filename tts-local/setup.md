@@ -204,3 +204,26 @@ Thiết lập hiện tại dùng CPU. Hiệu năng có thể thấp hơn backend
 ---
 
 Kết quả: VieNeu-TTS-v3-Turbo cung cấp API local tại 127.0.0.1:8080, dùng SEA-G2P xử lý tiếng Việt và audio.cpp tổng hợp WAV. Không cần chạy Python server.
+
+
+## 9. Chạy Voice Manager wrapper (tùy chọn)
+
+Để có API liệt kê và chọn voice, dùng wrapper Node.js thay vì chạy trực tiếp `audiocpp_server.exe`.
+
+1. Cài Node.js 18 trở lên.
+2. Nếu audio.cpp đang chạy thủ công ở port 8080, nhấn `Ctrl+C` trong cửa sổ server để tắt.
+3. Từ thư mục gốc repository, chạy:
+
+~~~powershell
+node .\tts-local\server.js
+~~~
+
+Wrapper tự khởi động audio.cpp bằng cấu hình `server.json` hiện có. API wrapper chạy ở `http://127.0.0.1:8081`; API audio.cpp nội bộ vẫn ở port 8080.
+
+- `GET /api/voices`: liệt kê preset đã xuất và trạng thái đủ file.
+- `POST /api/voices/select`: chọn voice theo id thư mục, cập nhật hai file voice trong `server.json` và restart audio.cpp.
+- `POST /v1/audio/speech`: gửi yêu cầu tổng hợp qua wrapper.
+
+Chi tiết request/response xem [README Voice Manager API](./README.md#9-voice-manager-api).
+
+**Lưu ý:** chọn voice sẽ restart audio.cpp và nạp model lại. Chỉ chạy một audio.cpp server trên port 8080; không chạy đồng thời server thủ công và wrapper.
