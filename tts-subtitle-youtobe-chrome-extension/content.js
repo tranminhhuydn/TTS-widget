@@ -26,7 +26,9 @@
         pronunciationEntries=response.data.entries;
         const keys=Object.keys(pronunciationEntries).sort((a,b)=>b.length-a.length);
         if(keys.length){
-          const escaped=keys.map(key=>key.replace(/[.*+?^${}()|[\]\\]/g,"\\  const norm=s=>String(s||"").replace(/\s+/g," ").trim();"));
+          const special=[".", "*", "+", "?", "^", "$", "{", "}", "(", ")", "|", "[", "]", String.fromCharCode(92)];
+        const slash=String.fromCharCode(92);
+        const escaped=keys.map(key=>key.split("").map(char=>special.includes(char)?slash+char:char).join(""));
           pronunciationPattern=new RegExp("(^|[^\\p{L}\\p{N}])("+escaped.join("|")+")(?=$|[^\\p{L}\\p{N}])","giu");
         }
         console.info("[TTS Subtitle] Đã nạp từ điển phát âm:",response.data.count||keys.length,"mục");
