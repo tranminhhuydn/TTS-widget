@@ -33,8 +33,17 @@
     const preferred=(navigator.language||"vi").split("-")[0].toLowerCase();
     track=tracks.find(t=>t.languageCode?.toLowerCase().startsWith(preferred))||tracks.find(t=>t.languageCode?.toLowerCase().startsWith("vi"))||tracks[0];
     const url=new URL(track.baseUrl);url.searchParams.set("fmt","json3");
-    const response=await fetch(url.href,{credentials:"include"});if(!response.ok)throw Error("Không tải được phụ đề: "+response.status);
-    const parsed=window.TTSSubtitleParser.toSentences(await response.json());if(!parsed.length)throw Error("Phụ đề không có câu thoại.");
+    const response=await fetch(url.href,{credentials:"include"});
+    if(!response.ok)throw Error("YouTube từ chối tải phụ đề (HTTP "+response.status+").");
+    const body=await response.text();
+    if(!body.trim())throw Error("YouTube trả về nội dung phụ đề rỗng. Hãy thử tải lại video hoặc chọn video có phụ đề bật.");
+    let payload;
+    try{payload=JSON.parse(body);}catch(error){
+      const preview=body.slice(0,120).replace(/\\s+/g," ");
+      throw Error("Dữ liệu phụ đề YouTube không phải JSON3 hợp lệ ("+body.length+" ký tự). Phản hồi: "+preview);
+    }
+    const parsed=window.TTSSubtitleParser.toSentences(payload);
+    if(!parsed.length)throw Error("Đã tải được dữ liệu nhưng không tìm thấy câu phụ đề để đọc.");
     return parsed;
   }
   async function activate(){
