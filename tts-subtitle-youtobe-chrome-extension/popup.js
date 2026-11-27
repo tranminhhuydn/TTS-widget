@@ -143,8 +143,10 @@ function loadState() {
       showStatus("Không nhận được trạng thái từ bộ đọc phụ đề.");
       return;
     }
+    // Ưu tiên engine đã lưu trong storage vì content script có thể chưa đọc xong cấu hình.
+    chrome.storage.local.get({ engine: response.engine || "browser" }, stored => {
     $("enabled").checked = response.enabled;
-    $("engine").value = response.engine || "browser";
+    $("engine").value = stored.engine || response.engine || "browser";
     updateEngineSettings($("engine").value);
     syncEngineCards($("engine").value);
     if ($("engine").value === "vieneu-gpu") loadVieNeuVoices(response.vieneuVoices || []);
@@ -169,6 +171,7 @@ function loadState() {
     if(response.lastError)showStatus("Lỗi VieNeu: "+response.lastError);
     else if((response.engine==="vieneu"||response.engine==="vieneu-gpu")&&response.enabled)showStatus("VieNeu "+(response.engine==="vieneu-gpu"?"GPU":"CPU")+": "+(response.preloadedAudio||0)+" audio đã tạo sẵn; "+(response.pendingAudio||0)+" đang xử lý.");
     else showStatus("Đã kết nối với YouTube. Hãy bật “Đọc phụ đề”.");
+    });
   });
 }
 
@@ -228,6 +231,7 @@ function syncEngineCards(engine) {
 }
 
 $("engine").addEventListener("change", event => {
+  chrome.storage.local.set({ engine: event.target.value });
   updateEngineSettings(event.target.value);
   syncEngineCards(event.target.value);
   if (event.target.value === "vieneu-gpu") loadVieNeuVoices(Array.from($("vieneuVoices").selectedOptions).map(o => o.value));
