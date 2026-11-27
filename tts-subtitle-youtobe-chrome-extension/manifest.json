@@ -21,6 +21,11 @@
   },
   "content_scripts": [{
     "matches": ["https://www.youtube.com/*", "https://youtube.com/*"],
+    "js": ["network-listener.js"],
+    "run_at": "document_start",
+    "world": "MAIN"
+  }, {
+    "matches": ["https://www.youtube.com/*", "https://youtube.com/*"],
     "js": ["subtitle-parser.js", "hybrid-sync.js", "content.js"],
     "css": ["content.css"],
     "run_at": "document_idle"
