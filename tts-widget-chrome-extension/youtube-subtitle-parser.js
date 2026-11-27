@@ -56,15 +56,20 @@
   function toSentences(payload){
     const fragments=parseJSON3(payload);
     const merged=mergeFragments(fragments);
-    return sentenceRanges(merged.text).map((range,index)=>{
-      const relevant=merged.spans.filter(span=>span.end>range.start&&span.start<range.end);
-      return {
-        id:index,
-        text:range.text,
-        startTime:relevant.length?relevant[0].startTime:0,
-        endTime:relevant.length?Math.max(...relevant.map(span=>span.endTime)):0
-      };
-    }).filter(item=>item.text);
+    const timeAt=(position,isEnd)=>{
+      const span=merged.spans.find(item=>isEnd?item.end>=position:item.end>position);
+      if(!span)return merged.spans.length?merged.spans[merged.spans.length-1].endTime:0;
+      const length=Math.max(1,span.end-span.start);
+      const offset=Math.min(length,Math.max(0,position-span.start+(isEnd?1:0)));
+      const ratio=offset/length;
+      return span.startTime+(span.endTime-span.startTime)*ratio;
+    };
+    return sentenceRanges(merged.text).map((range,index)=>({
+      id:index,
+      text:range.text,
+      startTime:timeAt(range.start,false),
+      endTime:timeAt(Math.max(range.start,range.end-1),true)
+    })).filter(item=>item.text);
   }
   global.TTSYouTubeSubtitleParser={parseJSON3,mergeFragments,sentenceRanges,toSentences};
 })(globalThis);
