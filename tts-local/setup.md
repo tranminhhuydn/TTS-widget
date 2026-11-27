@@ -207,50 +207,62 @@ Thiết lập hiện tại dùng CPU. Hiệu năng có thể thấp hơn backend
 Kết quả: VieNeu-TTS-v3-Turbo cung cấp API local tại 127.0.0.1:8080, dùng SEA-G2P xử lý tiếng Việt và audio.cpp tổng hợp WAV. Không cần chạy Python server.
 
 
+
 ## 9. Đăng ký Windows Service
 
-Sau khi VieNeu API chạy ổn định bằng cách thủ công, có thể đăng ký audio.cpp thành Windows Service để tự khởi động cùng Windows. Giải pháp sử dụng NSSM (Non-Sucking Service Manager) để quản lý tiến trình \`audiocpp_server.exe\`.
+Sau khi API chạy ổn định ở chế độ thủ công, có thể đăng ký audio.cpp thành Windows Service để VieNeu tự khởi động cùng Windows. Bộ cài dùng **NSSM 2.24** để quản lý tiến trình `audiocpp_server.exe`.
 
 ### Điều kiện trước khi cài
 
 - Đã hoàn tất các mục 1–8 và kiểm tra API hoạt động.
-- Đã dừng server audio.cpp đang chạy thủ công bằng \`Ctrl+C\`. Không để hai tiến trình cùng chiếm port 8080.
-- Repository đã có ba script trong \`tts-local/scripts\`.
-- Tài khoản Windows dùng để chạy service phải có mật khẩu đăng nhập. PIN Windows Hello không thay thế mật khẩu tài khoản khi cấu hình service logon.
-- Mở PowerShell bằng **Run as Administrator**. Nếu không, PowerShell sẽ từ chối chạy script do chỉ thị \`#requires -RunAsAdministrator\`.
+- Dừng server đang chạy thủ công bằng `Ctrl+C`. Không để tiến trình thủ công và service cùng chiếm cổng 8080.
+- Các script cài đặt, quản lý và gỡ dịch vụ đã có trong `tts-local/scripts`.
+- Tài khoản Windows chạy service cần có mật khẩu tài khoản. PIN Windows Hello không thay thế mật khẩu đăng nhập Windows.
+- Mở PowerShell bằng **Run as Administrator**. Nếu không, script sẽ báo lỗi vì có chỉ thị `#requires -RunAsAdministrator`.
 
-### Cài đặt service
+> Nên mở PowerShell Administrator bằng chính tài khoản Windows đang dùng VieNeu, không chuyển sang một tài khoản quản trị khác. Service cần quyền đọc model, cấu hình, SEA-G2P và các file voice trong thư mục người dùng.
 
-Từ thư mục gốc repository, chạy:
+### Cài đặt
 
-~~~powershell
+Từ thư mục gốc repository `D:\dev\TTS-widget`, chạy:
+
+```powershell
 powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\install-vieneu-service.ps1"
-~~~
+```
 
-Script tải NSSM 2.24, đặt NSSM trong thư mục model tại \`windows-service\`, yêu cầu mật khẩu tài khoản Windows hiện tại rồi đăng ký service tên \`VieNeuTTS\` với chế độ tự khởi động. Mật khẩu được nhập dạng bảo mật và không ghi vào file script.
+Script thực hiện các bước:
 
-Service chạy dưới tài khoản Windows hiện tại để truy cập được model và voice trong thư mục profile. Không chuyển sang LocalSystem nếu chưa điều chỉnh quyền truy cập và đường dẫn.
+1. Kiểm tra `audiocpp_server.exe` và `server.json`.
+2. Tải NSSM 2.24 từ trang phát hành chính thức nếu máy chưa có, sau đó lưu tại thư mục `windows-service` trong thư mục model.
+3. Đăng ký service tên `VieNeuTTS`.
+4. Cấu hình service chạy bằng tài khoản Windows hiện tại và yêu cầu nhập mật khẩu tài khoản.
+5. Đặt kiểu khởi động tự động, bật ghi log và tự khởi động lại tiến trình nếu server bị dừng bất thường.
+6. Khởi động service.
 
-### Kiểm tra
+Mật khẩu được nhập bằng dấu nhắc bảo mật; script không ghi mật khẩu vào file. Windows/NSSM lưu thông tin đăng nhập service trong cấu hình bảo mật của hệ điều hành.
 
-~~~powershell
+### Kiểm tra sau cài đặt
+
+```powershell
 Get-Service VieNeuTTS
 Invoke-RestMethod "http://127.0.0.1:8080/health"
-~~~
+```
 
-Thông tin service chi tiết:
+Xem tài khoản chạy service, kiểu khởi động và PID:
 
-~~~powershell
+```powershell
 Get-CimInstance Win32_Service -Filter "Name='VieNeuTTS'" |
     Select-Object Name, State, StartMode, StartName, ProcessId
-~~~
+```
 
-### Quản lý
+Kết quả mong đợi: service có trạng thái `Running`, `StartMode` là `Auto`, và API health trả về trạng thái hoạt động bình thường.
 
-Chạy các lệnh dưới đây trong PowerShell Administrator:
+### Quản lý service
 
-~~~powershell
-# Trạng thái
+Chạy các lệnh trong PowerShell Administrator:
+
+```powershell
+# Xem trạng thái
 powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\manage-vieneu-service.ps1" -Action Status
 
 # Khởi động
@@ -259,32 +271,34 @@ powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\manage-vieneu-serv
 # Dừng
 powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\manage-vieneu-service.ps1" -Action Stop
 
-# Khởi động lại
+# Khởi động lại sau khi thay đổi cấu hình
 powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\manage-vieneu-service.ps1" -Action Restart
-~~~
+```
 
 ### Gỡ service
 
-~~~powershell
-powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\uninstall-vieneu-service.ps1"
-~~~
+Mở PowerShell Administrator tại thư mục gốc repository:
 
-Lệnh gỡ chỉ xóa đăng ký service. NSSM và log vẫn được giữ lại trong thư mục \`windows-service\`.
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\tts-local\scripts\uninstall-vieneu-service.ps1"
+```
+
+Lệnh này dừng và xóa đăng ký service. NSSM và log được giữ lại trong thư mục `windows-service`; model, voice và `server.json` không bị xóa.
 
 ### Log và xử lý lỗi
 
-Log stdout/stderr nằm tại:
+Log stdout/stderr được lưu tại:
 
-~~~text
+```text
 %USERPROFILE%\.lmstudio\models\pnnbao-ump\VieNeu-TTS-v3-Turbo\windows-service\logs\
-~~~
+```
 
 Nếu service không khởi động:
 
-1. Kiểm tra tài khoản và mật khẩu service logon.
-2. Kiểm tra service có đọc được model, \`server.json\`, SEA-G2P DLL và các file voice không.
-3. Kiểm tra port 8080 có bị tiến trình khác chiếm không.
-4. Đọc \`stdout.log\` và \`stderr.log\`.
-5. Nếu vừa sửa cấu hình, dừng service rồi khởi động lại.
+1. Kiểm tra service có dùng đúng tài khoản Windows và mật khẩu còn hợp lệ không.
+2. Kiểm tra tài khoản đó có quyền đọc model, `server.json`, SEA-G2P DLL và thư mục voice không.
+3. Kiểm tra cổng 8080 có bị chương trình khác chiếm không.
+4. Đọc `stdout.log` và `stderr.log` để xem lỗi từ audio.cpp.
+5. Sau khi sửa `server.json` hoặc file liên quan, khởi động lại service.
 
-Nếu tài khoản Windows không có mật khẩu hoặc không thể cấp quyền Log on as a service, không nên đổi bừa sang LocalSystem. Hãy dùng Task Scheduler chạy khi đăng nhập thay thế.
+Nếu tài khoản Windows không có mật khẩu hoặc không thể cấu hình quyền đăng nhập dưới dạng service, không nên đổi tùy tiện sang `LocalSystem`; hãy cân nhắc dùng Task Scheduler chạy khi người dùng đăng nhập.
