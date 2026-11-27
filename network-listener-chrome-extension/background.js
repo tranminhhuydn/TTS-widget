@@ -43,9 +43,17 @@ function base64ToBytes(base64) {
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return bytes;
 }
-function headersToObject(headers = []) {
+function headersToObject(headers = {}) {
   const out = {};
-  for (const h of headers) out[h.name.toLowerCase()] = h.value;
+  if (Array.isArray(headers)) {
+    for (const h of headers) {
+      if (h && h.name != null) out[String(h.name).toLowerCase()] = String(h.value ?? "");
+    }
+  } else if (headers && typeof headers === "object") {
+    for (const [name, value] of Object.entries(headers)) {
+      out[String(name).toLowerCase()] = String(value ?? "");
+    }
+  }
   return out;
 }
 function updateItem(tabId, item) {
