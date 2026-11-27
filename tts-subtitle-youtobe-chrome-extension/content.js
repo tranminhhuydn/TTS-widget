@@ -76,10 +76,10 @@
           lastError="";
           while(audioCache.size>CACHE_LIMIT)audioCache.delete(audioCache.keys().next().value);
         }
-        audioPending.delete(task.item.id);
+        if(audioPending.get(task.item.id)===task.promise)audioPending.delete(task.item.id);
         task.resolve(blob);
       }catch(error){
-        audioPending.delete(task.item.id);
+        if(audioPending.get(task.item.id)===task.promise)audioPending.delete(task.item.id);
         if(task.generation===preloadGeneration)audioFailures.set(task.item.id,error);
         task.reject(error);
       }
@@ -94,7 +94,7 @@
     const generation=preloadGeneration;
     let resolveTask,rejectTask;
     const promise=new Promise((resolve,reject)=>{resolveTask=resolve;rejectTask=reject;});
-    synthesisQueue.push({item,generation,resolve:resolveTask,reject:rejectTask});
+    synthesisQueue.push({item,generation,promise,resolve:resolveTask,reject:rejectTask});
     audioPending.set(item.id,promise);
     pumpSynthesisQueue();
     return promise;
