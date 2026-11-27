@@ -4,11 +4,12 @@ const toggleButton = document.getElementById("toggleButton");
 const statusNode = document.getElementById("status");
 const darkModeToggle = document.getElementById("darkModeToggle");
 const pageFontSize = document.getElementById("pageFontSize");
+const pageFontEnabled = document.getElementById("pageFontEnabled");
 const pageFontSizeValue = document.getElementById("pageFontSizeValue");
-async function loadAppearanceSettings(){const s=await chrome.storage.sync.get({darkMode:false,pageFontSize:16});darkModeToggle.checked=s.darkMode===true;pageFontSize.value=String(s.pageFontSize);pageFontSizeValue.textContent=s.pageFontSize+" px";}
+async function loadAppearanceSettings(){const s=await chrome.storage.sync.get({darkMode:false,pageFontEnabled:false,pageFontSize:16});darkModeToggle.checked=s.darkMode===true;pageFontEnabled.checked=s.pageFontEnabled===true;pageFontSize.value=String(s.pageFontSize);pageFontSize.disabled=!pageFontEnabled.checked;pageFontSizeValue.textContent=s.pageFontSize+" px";}
 async function applyAppearanceToActiveTab(){
   const tab=await getActiveTab();
-  const settings=await chrome.storage.sync.get({darkMode:false,pageFontSize:16});
+  const settings=await chrome.storage.sync.get({darkMode:false,pageFontEnabled:false,pageFontSize:16});
   await chrome.scripting.executeScript({target:{tabId:tab.id},files:["theme.js"]});
   const [result]=await chrome.scripting.executeScript({
     target:{tabId:tab.id},
@@ -22,7 +23,7 @@ async function applyAppearanceToActiveTab(){
   if(!result?.result) throw new Error("Không khởi tạo được bộ điều khiển giao diện trên trang.");
 }
 async function saveAppearanceSettings(){
-  const s={darkMode:darkModeToggle.checked,pageFontSize:Number(pageFontSize.value)};
+  const s={darkMode:darkModeToggle.checked,pageFontEnabled:pageFontEnabled.checked,pageFontSize:Number(pageFontSize.value)};
   await chrome.storage.sync.set(s);
   pageFontSizeValue.textContent=s.pageFontSize+" px";
   try {
@@ -33,6 +34,7 @@ async function saveAppearanceSettings(){
   }
 }
 darkModeToggle.addEventListener("change",async()=>{darkModeToggle.disabled=true;try{await saveAppearanceSettings();}catch(error){darkModeToggle.checked=!darkModeToggle.checked;showStatus(error?.message||"Không lưu được chế độ ban đêm.","error");}finally{darkModeToggle.disabled=false;}});
+pageFontEnabled.addEventListener("change",async()=>{pageFontSize.disabled=!pageFontEnabled.checked;pageFontEnabled.disabled=true;try{await saveAppearanceSettings();}catch(error){pageFontEnabled.checked=!pageFontEnabled.checked;pageFontSize.disabled=!pageFontEnabled.checked;showStatus(error?.message||"Không lưu được tùy chọn cỡ chữ.","error");}finally{pageFontEnabled.disabled=false;}});
 pageFontSize.addEventListener("input",()=>{pageFontSizeValue.textContent=pageFontSize.value+" px";});
 pageFontSize.addEventListener("change",async()=>{pageFontSize.disabled=true;try{await saveAppearanceSettings();}catch(error){showStatus(error?.message||"Không lưu được cỡ chữ.","error");}finally{pageFontSize.disabled=false;}});
 
