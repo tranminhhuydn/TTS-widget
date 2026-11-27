@@ -4,7 +4,27 @@
 // This prevents cancel()/speak() calls in different tabs from interrupting each other.
 let activeSpeechTabId = null;
 
+let pronunciationDictionaryCache = null;
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message?.target === "tts-pronunciation" && message.type === "GET_DICTIONARY") {
+    if (pronunciationDictionaryCache) {
+      sendResponse({ ok: true, data: pronunciationDictionaryCache });
+      return;
+    }
+    fetch(chrome.runtime.getURL("tudien-phien-am-phat-giao-tay-tang.json"))
+      .then(response => {
+        if (!response.ok) throw new Error("Không tải được từ điển phát âm.");
+        return response.json();
+      })
+      .then(data => {
+        pronunciationDictionaryCache = data;
+        sendResponse({ ok: true, data });
+      })
+      .catch(error => sendResponse({ ok: false, error: error.message || String(error) }));
+    return true;
+  }
+
   if (message?.target === "tts-subtitle-youtube" && message.type === "TTS_CLAIM") {
     const tabId = sender.tab?.id;
     if (typeof tabId !== "number") {
