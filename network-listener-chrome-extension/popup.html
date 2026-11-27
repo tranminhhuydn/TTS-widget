@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Network Listener</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div><h1>Network</h1><p id="tabHost">Đang kết nối tab...</p></div>
+      <span id="stateBadge" class="badge">Đã tắt</span>
+    </header>
+    <section class="listen-panel">
+      <button id="toggleListen" class="primary">Bắt đầu lắng nghe</button>
+      <button id="clearList" class="secondary">Xóa danh sách</button>
+    </section>
+    <section class="requests-section">
+      <div class="section-heading"><h2>Danh sách request</h2><span id="fileCount">0</span></div>
+      <div class="table-scroll">
+        <table class="request-table">
+          <thead><tr>
+            <th class="name-col">Name</th><th>Status</th><th>Type</th>
+            <th>Initiator</th><th>Size</th><th>Time</th>
+          </tr></thead>
+          <tbody id="fileList"><tr><td colspan="6" class="empty">Chưa có request nào. Bắt đầu lắng nghe rồi tải lại trang.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="viewer-section">
+      <div class="section-heading"><h2>Sources / Response</h2><span id="viewerType" class="muted">Chưa chọn</span></div>
+      <div id="viewer" class="viewer"><div class="empty">Chọn một request để xem nội dung response.</div></div>
+    </section>
+    <footer>Danh sách được sắp xếp theo thời điểm bắt request; nội dung response chỉ lưu trong phiên hiện tại.</footer>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
