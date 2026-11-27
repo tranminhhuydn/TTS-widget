@@ -12,7 +12,8 @@ Tài liệu này ghi lại cách dựng API TTS local trên Windows PowerShell 5
 6. Chạy API
 7. Kiểm tra tiếng Việt
 8. Khắc phục lỗi
-9. Đăng ký Windows Service
+9. Đăng ký Windows Service CPU
+10. Cài API GPU và đăng ký Windows Service GPU
 
 ## 1. Thành phần và thư mục
 
