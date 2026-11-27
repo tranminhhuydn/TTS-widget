@@ -284,104 +284,49 @@ Server hiện dùng backend CPU. Thời gian tổng hợp phụ thuộc cấu h�
 - [Script xuất voice presets](./scripts/export-vieneu-voices.ps1)
 
 
-## 9. Voice Manager API (khuyến nghị)
 
-Repository có wrapper Node.js tại `server.js`. Wrapper quản lý audio.cpp, đọc danh sách preset từ thư mục `voices` và cho phép chọn voice bằng API. Không cần Python hoặc package npm bên ngoài.
+## 9. Đăng ký nhiều voice trực tiếp trong audio.cpp
 
-### Yêu cầu và khởi động
+Không cần Node.js wrapper. audio.cpp 0.9.6 hỗ trợ `voice_presets` trong cấu hình model. Script bên dưới tự quét thư mục `voices`, đăng ký các preset có đủ hai file `speaker.emb.txt` và `ref_codes.txt`, sao lưu cấu hình rồi khởi động audio.cpp.
 
-- Cài Node.js 18 trở lên.
-- Đảm bảo đã xuất các voice preset bằng script ở mục [setup.md](./setup.md).
-- **Tắt audio.cpp server đang chạy thủ công ở port 8080 trước khi chạy wrapper.** Wrapper sẽ tự khởi động audio.cpp và quản lý tiến trình đó.
-- Mở PowerShell tại thư mục repository:
+### Chạy tự động
+
+1. Dừng server audio.cpp đang chạy bằng `Ctrl+C`.
+2. Mở PowerShell tại thư mục gốc repository `TTS-widget`.
+3. Chạy:
 
 ~~~powershell
-node .\tts-local\server.js
+powershell -ExecutionPolicy Bypass -File ".\\tts-local\\scripts\\register-vieneu-voices.ps1"
 ~~~
 
-Mặc định:
-- Wrapper/API: `http://127.0.0.1:8081`
-- audio.cpp backend nội bộ: `http://127.0.0.1:8080`
+4. Khi server khởi động xong, mở PowerShell thứ hai và kiểm tra:
 
-Nếu model nằm ở đường dẫn khác, có thể đặt biến môi trường `VIENEU_MODEL_ROOT`, `VIENEU_RUNTIME_DIR`, `VIENEU_CONFIG` hoặc `VIENEU_VOICES_DIR` trước khi chạy.
-
-### Danh sách voice
-
-~~~http
-GET http://127.0.0.1:8081/api/voices
+~~~powershell
+Invoke-RestMethod "http://127.0.0.1:8080/v1/audio/voices?model=vieneu" |
+    ConvertTo-Json -Depth 5
 ~~~
 
-Ví dụ cấu trúc phản hồi:
+Script chỉ đăng ký các thư mục voice có đủ cả embedding và reference codes. Mặc định chọn `pham_tuyen`; nếu thư mục đó không tồn tại, script chọn preset hợp lệ đầu tiên. Trước khi sửa, script tạo bản sao `server.json.YYYYMMDD-HHMMSS.bak`.
+
+### Chỉ cập nhật cấu hình, không khởi động server
+
+~~~powershell
+powershell -ExecutionPolicy Bypass -File ".\\tts-local\\scripts\\register-vieneu-voices.ps1" -ConfigureOnly
+~~~
+
+Sau đó khởi động audio.cpp theo mục 1. Nếu cần khôi phục, chép file backup tương ứng đè lại `server.json`.
+
+### Chọn voice khi tổng hợp
+
+Dùng tên thư mục voice làm giá trị `voice`:
 
 ~~~json
 {
   "model": "vieneu",
-  "selected_voice": "pham_tuyen",
-  "count": 2,
-  "voices": [
-    {
-      "id": "pham_tuyen",
-      "name": "Pham Tuyen",
-      "available": true,
-      "selected": true,
-      "files": {
-        "speaker_embedding": true,
-        "reference_codes": true
-      }
-    }
-  ]
+  "input": "Xin chào! Đây là thử nghiệm giọng đọc.",
+  "voice": "pham_tuyen",
+  "response_format": "wav"
 }
 ~~~
 
-Danh sách thực tế được quét trực tiếp từ ổ đĩa; voice thiếu một trong hai file sẽ có `available: false`.
-
-### Chọn voice
-
-~~~http
-POST http://127.0.0.1:8081/api/voices/select
-Content-Type: application/json
-~~~
-
-~~~json
-{
-  "voice": "pham_tuyen"
-}
-~~~
-
-Wrapper cập nhật đồng bộ `speaker_embedding_file` và `reference_codes_file` trong `server.json`, sau đó khởi động lại audio.cpp để áp dụng voice. Phản hồi thành công:
-
-~~~json
-{
-  "ok": true,
-  "selected_voice": "pham_tuyen",
-  "restarted": true
-}
-~~~
-
-**Lưu ý:** chuyển voice làm audio.cpp khởi động lại và nạp model lại; không nên gọi đổi voice liên tục trong lúc đang tổng hợp âm thanh.
-
-### Tổng hợp âm thanh qua wrapper
-
-Các endpoint khác được proxy tới audio.cpp, vì vậy đổi URL từ port 8080 sang 8081:
-
-~~~javascript
-const response = await fetch("http://127.0.0.1:8081/v1/audio/speech", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    model: "vieneu",
-    input: "Xin chào! Đây là thử nghiệm chọn voice qua wrapper.",
-    response_format: "wav"
-  })
-});
-if (!response.ok) throw new Error(await response.text());
-const wavBlob = await response.blob();
-~~~
-
-Trạng thái wrapper:
-
-~~~http
-GET http://127.0.0.1:8081/api/status
-~~~
-
-Wrapper chỉ bind vào `127.0.0.1`; không mở trực tiếp ra mạng công cộng.
+Lưu ý: `GET /v1/audio/voices` của audio.cpp liệt kê tên voice preset đã cấu hình cùng các voice trong reference library (nếu có). Nó không liệt kê mọi voice nhúng sẵn trong GGUF.
