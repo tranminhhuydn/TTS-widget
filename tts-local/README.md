@@ -282,3 +282,106 @@ Server hiện dùng backend CPU. Thời gian tổng hợp phụ thuộc cấu h�
 
 - [Hướng dẫn cài đặt VieNeu TTS Local](./setup.md)
 - [Script xuất voice presets](./scripts/export-vieneu-voices.ps1)
+
+
+## 9. Voice Manager API (khuyến nghị)
+
+Repository có wrapper Node.js tại `server.js`. Wrapper quản lý audio.cpp, đọc danh sách preset từ thư mục `voices` và cho phép chọn voice bằng API. Không cần Python hoặc package npm bên ngoài.
+
+### Yêu cầu và khởi động
+
+- Cài Node.js 18 trở lên.
+- Đảm bảo đã xuất các voice preset bằng script ở mục [setup.md](./setup.md).
+- **Tắt audio.cpp server đang chạy thủ công ở port 8080 trước khi chạy wrapper.** Wrapper sẽ tự khởi động audio.cpp và quản lý tiến trình đó.
+- Mở PowerShell tại thư mục repository:
+
+~~~powershell
+node .\tts-local\server.js
+~~~
+
+Mặc định:
+- Wrapper/API: `http://127.0.0.1:8081`
+- audio.cpp backend nội bộ: `http://127.0.0.1:8080`
+
+Nếu model nằm ở đường dẫn khác, có thể đặt biến môi trường `VIENEU_MODEL_ROOT`, `VIENEU_RUNTIME_DIR`, `VIENEU_CONFIG` hoặc `VIENEU_VOICES_DIR` trước khi chạy.
+
+### Danh sách voice
+
+~~~http
+GET http://127.0.0.1:8081/api/voices
+~~~
+
+Ví dụ cấu trúc phản hồi:
+
+~~~json
+{
+  "model": "vieneu",
+  "selected_voice": "pham_tuyen",
+  "count": 2,
+  "voices": [
+    {
+      "id": "pham_tuyen",
+      "name": "Pham Tuyen",
+      "available": true,
+      "selected": true,
+      "files": {
+        "speaker_embedding": true,
+        "reference_codes": true
+      }
+    }
+  ]
+}
+~~~
+
+Danh sách thực tế được quét trực tiếp từ ổ đĩa; voice thiếu một trong hai file sẽ có `available: false`.
+
+### Chọn voice
+
+~~~http
+POST http://127.0.0.1:8081/api/voices/select
+Content-Type: application/json
+~~~
+
+~~~json
+{
+  "voice": "pham_tuyen"
+}
+~~~
+
+Wrapper cập nhật đồng bộ `speaker_embedding_file` và `reference_codes_file` trong `server.json`, sau đó khởi động lại audio.cpp để áp dụng voice. Phản hồi thành công:
+
+~~~json
+{
+  "ok": true,
+  "selected_voice": "pham_tuyen",
+  "restarted": true
+}
+~~~
+
+**Lưu ý:** chuyển voice làm audio.cpp khởi động lại và nạp model lại; không nên gọi đổi voice liên tục trong lúc đang tổng hợp âm thanh.
+
+### Tổng hợp âm thanh qua wrapper
+
+Các endpoint khác được proxy tới audio.cpp, vì vậy đổi URL từ port 8080 sang 8081:
+
+~~~javascript
+const response = await fetch("http://127.0.0.1:8081/v1/audio/speech", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    model: "vieneu",
+    input: "Xin chào! Đây là thử nghiệm chọn voice qua wrapper.",
+    response_format: "wav"
+  })
+});
+if (!response.ok) throw new Error(await response.text());
+const wavBlob = await response.blob();
+~~~
+
+Trạng thái wrapper:
+
+~~~http
+GET http://127.0.0.1:8081/api/status
+~~~
+
+Wrapper chỉ bind vào `127.0.0.1`; không mở trực tiếp ra mạng công cộng.
