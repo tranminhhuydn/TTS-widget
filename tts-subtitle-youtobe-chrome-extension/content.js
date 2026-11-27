@@ -3,6 +3,17 @@
   window.__ttsSubtitleYouTubeLoaded=true;
   const DEFAULTS={enabled:false,rate:1,volume:1,voiceURI:"",voiceURIs:[],rotateVoices:false,autoLanguage:true};
   let settings={...DEFAULTS},enabled=false,video=null,engine=null,sentences=[],track=null,utterance=null,rotationIndex=0,status="idle",loadToken=0;
+  let capturedTimedtext=null;
+  window.addEventListener("message",event=>{
+    const data=event.data;
+    if(event.source!==window||event.origin!==location.origin||data?.source!=="tts-subtitle-network"||data.type!=="TIMEDTEXT_RESPONSE")return;
+    try{
+      const url=new URL(data.url,location.href),id=new URL(location.href).searchParams.get("v");
+      if(url.searchParams.get("v")&&url.searchParams.get("v")!==id)return;
+      const payload=window.TTSSubtitleParser.parseText(data.body);
+      if(Array.isArray(payload?.events)&&payload.events.length)capturedTimedtext={url:data.url,payload};
+    }catch(error){console.warn("[TTS Subtitle] Không đọc được response timedtext:",error.message);}
+  });
   const norm=s=>String(s||"").replace(/\s+/g," ").trim();
   function language(text,trackLang){if(trackLang)return trackLang;if(/[\u3040-\u30ff]/.test(text))return"ja";if(/[\u4e00-\u9fff]/.test(text))return"zh";if(/[\uac00-\ud7af]/.test(text))return"ko";if(/[\u0100-\u017f]/.test(text))return"vi";if(/[\u0400-\u04ff]/.test(text))return"ru";return"en";}
   function voices(){return speechSynthesis.getVoices();}
@@ -27,33 +38,41 @@
       for(let i=b;i<t.length;i++){const c=t[i];if(q){if(e)e=false;else if(c==="\\")e=true;else if(c==='"')q=false;continue;}if(c==='"'){q=true;continue;}if(c==="{")d++;else if(c==="}"&&--d===0){try{return JSON.parse(t.slice(b,i+1));}catch(_){break;}}}}
     return null;
   }
+  function waitForTimedtext(expectedLang,token){
+    return new Promise((resolve,reject)=>{
+      const started=Date.now();
+      const cleanup=()=>{clearInterval(timer);window.removeEventListener("message",onMessage);};
+      const check=()=>{
+        if(token!==loadToken){cleanup();reject(Error("Đã hủy yêu cầu tải phụ đề."));return;}
+        if(capturedTimedtext){
+          let lang="";try{lang=new URL(capturedTimedtext.url).searchParams.get("lang")||"";}catch(_){}
+          if(!expectedLang||!lang||lang===expectedLang){const result=capturedTimedtext;cleanup();resolve(result);return;}
+        }
+        if(Date.now()-started>=15000){cleanup();reject(Error("Chưa bắt được phản hồi /api/timedtext. Hãy bật phụ đề (CC) trên YouTube, đợi phụ đề xuất hiện rồi thử bật TTS lại."));}
+      };
+      const onMessage=event=>{
+        const data=event.data;
+        if(event.source!==window||event.origin!==location.origin||data?.source!=="tts-subtitle-network"||data.type!=="TIMEDTEXT_RESPONSE")return;
+        try{
+          const url=new URL(data.url,location.href),id=new URL(location.href).searchParams.get("v");
+          if(url.searchParams.get("v")&&url.searchParams.get("v")!==id)return;
+          const payload=window.TTSSubtitleParser.parseText(data.body);
+          if(Array.isArray(payload?.events)&&payload.events.length)capturedTimedtext={url:data.url,payload};
+        }catch(error){console.warn("[TTS Subtitle] Response timedtext không hợp lệ:",error.message);}
+        check();
+      };
+      const timer=setInterval(check,150);
+      window.addEventListener("message",onMessage);
+      check();
+    });
+  }
   async function load(){
     const tracks=playerResponse()?.captions?.playerCaptionsTracklistRenderer?.captionTracks||[];
-    if(!tracks.length)throw Error("Video không cung cấp phụ đề có thể tải.");
     const preferred=(navigator.language||"vi").split("-")[0].toLowerCase();
-    track=tracks.find(t=>t.languageCode?.toLowerCase().startsWith(preferred))||tracks.find(t=>t.languageCode?.toLowerCase().startsWith("vi"))||tracks[0];
-    // Gọi trực tiếp YouTube timedtext API; giữ các tham số/chữ ký do captionTracks cung cấp.
-    const source=new URL(track.baseUrl);
-    const endpoint=new URL("https://www.youtube.com/api/timedtext");
-    source.searchParams.forEach((value,key)=>endpoint.searchParams.set(key,value));
-    endpoint.searchParams.set("fmt","json3");
-    if(!endpoint.searchParams.has("v")){
-      const videoId=playerResponse()?.videoDetails?.videoId||new URL(location.href).searchParams.get("v");
-      if(videoId)endpoint.searchParams.set("v",videoId);
-    }
-    if(!endpoint.searchParams.has("lang")&&track.languageCode)endpoint.searchParams.set("lang",track.languageCode);
-    const response=await fetch(endpoint.href,{credentials:"include",cache:"no-store"});
-    if(!response.ok)throw Error("YouTube timedtext API trả lỗi HTTP "+response.status+".");
-    const body=await response.text();
-    if(!body.trim())throw Error("YouTube timedtext API trả về JSON phụ đề rỗng.");
-    let payload;
-    try{
-      payload=window.TTSSubtitleParser.parseText(body);
-    }catch(error){
-      throw Error("Không phân tích được JSON từ YouTube timedtext API: "+error.message);
-    }
-    const parsed=window.TTSSubtitleParser.toSentences(payload);
-    if(!parsed.length)throw Error("Đã tải được dữ liệu nhưng không tìm thấy câu phụ đề để đọc.");
+    track=tracks.find(t=>t.languageCode?.toLowerCase().startsWith(preferred))||tracks.find(t=>t.languageCode?.toLowerCase().startsWith("vi"))||tracks[0]||null;
+    const captured=await waitForTimedtext(track?.languageCode||"",loadToken);
+    const parsed=window.TTSSubtitleParser.toSentences(captured.payload);
+    if(!parsed.length)throw Error("Network Listener đã bắt được timedtext nhưng không tìm thấy câu phụ đề JSON3.");
     return parsed;
   }
   async function activate(){
