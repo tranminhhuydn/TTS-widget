@@ -2,6 +2,7 @@
   if (window.__ttsSubtitleYouTubeLoaded) return;
   window.__ttsSubtitleYouTubeLoaded=true;
   const DEFAULTS={enabled:false,engine:"browser",vieneuVoice:"Pham Tuyen",vieneuVoices:["Pham Tuyen"],rate:1,volume:1,voiceURI:"",voiceURIs:[],rotateVoices:false,autoLanguage:true,readingMode:"story"};
+  const isVieNeuEngine=value=>value==="vieneu"||value==="vieneu-gpu";
   let settings={...DEFAULTS},enabled=false,video=null,engine=null,sentences=[],track=null,utterance=null,activeAudio=null,activeAudioUrl=null,activeAudioResolve=null,rotationIndex=0,status="idle",loadToken=0;
   let capturedTimedtext=null;
   window.addEventListener("message",event=>{
@@ -61,7 +62,7 @@
   function synthesizeBlob(text){
     const voice = selectedVieNeuVoice();
     return new Promise((resolve,reject)=>{
-      chrome.runtime.sendMessage({target:"vieneu-local-tts",type:"SYNTHESIZE",text,voice},response=>{
+      chrome.runtime.sendMessage({target:"vieneu-local-tts",type:"SYNTHESIZE",engine:settings.engine,text,voice},response=>{
         const runtimeError=chrome.runtime.lastError;
         if(runtimeError){reject(Error("Không kết nối được VieNeu Local API: "+runtimeError.message));return;}
         if(!response?.ok){reject(Error(response?.error||"VieNeu không trả về âm thanh."));return;}
@@ -96,7 +97,7 @@
     synthesisRunning=false;
   }
   function prepare(item){
-    if(settings.engine!=="vieneu")return Promise.resolve(null);
+    if(!isVieNeuEngine(settings.engine))return Promise.resolve(null);
     if(audioCache.has(item.id))return Promise.resolve(audioCache.get(item.id));
     if(audioFailures.has(item.id))return Promise.reject(audioFailures.get(item.id));
     if(audioPending.has(item.id))return audioPending.get(item.id);
@@ -123,7 +124,7 @@
       audio.play().catch(error=>{cleanup();reject(Error("Trình duyệt không phát được âm thanh VieNeu: "+error.message));});
     }));
   }
-  function speak(item){if(settings.engine==="vieneu")return playVieNeu(item);return new Promise((resolve,reject)=>{
+  function speak(item){if(isVieNeuEngine(settings.engine))return playVieNeu(item);return new Promise((resolve,reject)=>{
     // Chrome đôi khi bỏ lệnh speak ngay sau cancel(), đặc biệt với giọng đọc mạng.
     cancel();
     const u=new SpeechSynthesisUtterance(item.text),v=chooseVoice(item.text,track?.languageCode||"");
@@ -214,7 +215,7 @@
     if(m.type==="SET_ENABLED"){if(m.value)activate().then(()=>send({enabled:true})).catch(e=>{status="error";send({error:e.message});});else{deactivate();send({enabled:false});}return true;}
     if(m.type==="STOP"){deactivate();send({stopped:true});return;}
     if(m.type==="SET_ENGINE"){
-      if(!["browser","vieneu"].includes(m.value)){send({error:"TTS engine không hợp lệ."});return;}
+      if(!["browser","vieneu","vieneu-gpu"].includes(m.value)){send({error:"TTS engine không hợp lệ."});return;}
       if(settings.engine==="browser"&&m.value!=="browser")chrome.runtime.sendMessage({target:"tts-subtitle-youtube",type:"TTS_RELEASE"},()=>void chrome.runtime.lastError);
       settings.engine=m.value;lastError="";resetPreload();audioCache.clear();chrome.storage.local.set({engine:settings.engine});
       if(enabled)activate().then(()=>send({engine:settings.engine})).catch(e=>send({error:e.message}));else send({engine:settings.engine});
