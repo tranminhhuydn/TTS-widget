@@ -139,6 +139,7 @@ function loadState() {
     $("engine").value = response.engine || "browser";
     updateEngineSettings($("engine").value);
     syncEngineCards($("engine").value);
+    if ($("engine").value === "vieneu") loadVieNeuVoices(response.vieneuVoices || (response.vieneuVoice ? [response.vieneuVoice] : []));
 
     $("readingMode").value = response.readingMode || "story";
     $("rate").value = response.rate || 1;
