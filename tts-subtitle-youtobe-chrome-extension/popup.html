@@ -3,10 +3,15 @@
 <body><main><h1>TTS Subtitle YouTube</h1>
 <label class="switch-row"><span>Đọc phụ đề</span><input id="enabled" type="checkbox"></label>
 <p id="status" role="status">Đang kiểm tra trang...</p>
+<label for="readingMode">Kiểu đọc phụ đề</label>
+<select id="readingMode">
+<option value="story">Chế độ kể chuyện – ghép thành câu tự nhiên</option>
+<option value="original">Chế độ nguyên bản – đọc từng đoạn phụ đề</option>
+</select>
 <label for="rate">Tốc độ đọc: <strong id="rateValue">1.0×</strong></label><input id="rate" type="range" min=".5" max="2" step=".1" value="1">
 <label for="volume">Âm lượng: <strong id="volumeValue">100%</strong></label><input id="volume" type="range" min="0" max="1" step=".05" value="1">
 <label class="switch-row"><span>Tự chọn giọng theo ngôn ngữ phụ đề</span><input id="autoLanguage" type="checkbox" checked></label>
 <label for="voices">Danh sách giọng đọc (giữ Ctrl để chọn nhiều)</label><select id="voices" multiple size="6"></select>
 <label class="switch-row"><span>Luân phiên giọng đọc</span><input id="rotateVoices" type="checkbox"></label>
 <button id="stop" type="button">Dừng giọng đọc</button>
-<p class="hint">Lời thoại được ghép thành câu từ phụ đề JSON3 và đồng bộ theo thời gian video. Dùng các nút phát, dừng và tua gốc của YouTube.</p></main><script src="popup.js"></script></body></html>
+<p class="hint">Chế độ nguyên bản đọc từng đoạn phụ đề; chế độ kể chuyện ghép các đoạn thành câu hoàn chỉnh. Cả hai đều đồng bộ theo thời gian video YouTube.</p></main><script src="popup.js"></script></body></html>
