@@ -32,15 +32,27 @@
     if(!tracks.length)throw Error("Video không cung cấp phụ đề có thể tải.");
     const preferred=(navigator.language||"vi").split("-")[0].toLowerCase();
     track=tracks.find(t=>t.languageCode?.toLowerCase().startsWith(preferred))||tracks.find(t=>t.languageCode?.toLowerCase().startsWith("vi"))||tracks[0];
-    const url=new URL(track.baseUrl);url.searchParams.set("fmt","json3");
-    const response=await fetch(url.href,{credentials:"include"});
-    if(!response.ok)throw Error("YouTube từ chối tải phụ đề (HTTP "+response.status+").");
-    const body=await response.text();
-    if(!body.trim())throw Error("YouTube trả về nội dung phụ đề rỗng. Hãy thử tải lại video hoặc chọn video có phụ đề bật.");
-    let payload;
-    try{payload=JSON.parse(body);}catch(error){
-      const preview=body.slice(0,120).replace(/\\s+/g," ");
-      throw Error("Dữ liệu phụ đề YouTube không phải JSON3 hợp lệ ("+body.length+" ký tự). Phản hồi: "+preview);
+    // YouTube thường trả JSON3 dưới dạng nội dung text; không dựa vào MIME/đuôi file.
+    // Thử URL JSON3 trước, sau đó thử URL gốc nếu endpoint JSON3 trả rỗng.
+    const base=new URL(track.baseUrl);
+    const urls=[];
+    const json3=new URL(base.href);json3.searchParams.set("fmt","json3");urls.push(json3.href);
+    urls.push(base.href);
+    let payload=null,lastError=null,body="";
+    for(const requestUrl of [...new Set(urls)]){
+      try{
+        const response=await fetch(requestUrl,{credentials:"include",cache:"no-store"});
+        if(!response.ok){lastError=Error("HTTP "+response.status);continue;}
+        body=await response.text();
+        if(!body.trim()){lastError=Error("Phản hồi phụ đề rỗng");continue;}
+        payload=window.TTSSubtitleParser.parseText
+          ? window.TTSSubtitleParser.parseText(body)
+          : JSON.parse(body.replace(/^\\uFEFF|^\\s*\\)\\]}'?,?\\s*/,""));
+        if(payload)break;
+      }catch(error){lastError=error;}
+    }
+    if(!payload){
+      throw Error("Không lấy được JSON phụ đề từ YouTube. "+(lastError?.message||"Phản hồi rỗng")+". Hãy tải lại video và thử lại.");
     }
     const parsed=window.TTSSubtitleParser.toSentences(payload);
     if(!parsed.length)throw Error("Đã tải được dữ liệu nhưng không tìm thấy câu phụ đề để đọc.");
