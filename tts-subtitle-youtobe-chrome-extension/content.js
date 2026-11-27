@@ -228,7 +228,7 @@
       settings.vieneuVoice = selected[0];
       rotationIndex = 0; lastError = ""; resetPreload(); audioCache.clear();
       chrome.storage.local.set({vieneuVoices:selected,vieneuVoice:selected[0]});
-      if (enabled && settings.engine === "vieneu") activate().then(()=>send({vieneuVoices:selected})).catch(error=>send({error:error.message}));
+      if (enabled && isVieNeuEngine(settings.engine)) activate().then(()=>send({vieneuVoices:selected})).catch(error=>send({error:error.message}));
       else send({vieneuVoices:selected});
       return true;
     }
