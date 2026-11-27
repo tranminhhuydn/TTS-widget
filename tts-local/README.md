@@ -5,7 +5,7 @@ Tài liệu hướng dẫn sử dụng API chuyển văn bản tiếng Việt th
 - **Base URL:** http://127.0.0.1:8080
 - **Model ID:** vieneu
 - **Định dạng đầu ra đã kiểm tra:** WAV
-- **Backend hiện tại:** CPU
+- **Backend:** CPU tại cổng 8080; CUDA tùy chọn tại cổng 8081
 - **Runtime:** audio.cpp 0.9.6
 - **Không cần chạy Python server.**
 
@@ -21,6 +21,13 @@ Tài liệu hướng dẫn sử dụng API chuyển văn bản tiếng Việt th
 6. [Sử dụng nhiều voice](#6-sử-dụng-nhiều-voice)
 7. [Tích hợp Chrome Extension và web](#7-tích-hợp-chrome-extension-và-web)
 8. [Xử lý lỗi thường gặp](#8-xử-lý-lỗi-thường-gặp)
+
+## Hai API chạy song song
+
+- CPU: http://127.0.0.1:8080
+- GPU CUDA: http://127.0.0.1:8081 (sau khi cài theo mục 10 trong [setup.md](./setup.md))
+
+Hai instance dùng chung model và voice nhưng có file cấu hình, runtime và cổng riêng. API CPU hiện tại không bị thay đổi. Khi muốn thử GPU, cài runtime bằng scripts/install-vieneu-gpu.ps1 rồi chạy scripts/start-vieneu-gpu.ps1.
 
 ## 1. Khởi động API
 
