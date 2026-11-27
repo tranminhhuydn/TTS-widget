@@ -34,7 +34,7 @@
     return all.find(v=>v.voiceURI===settings.voiceURI)||selected[0]||null;
   }
   const audioCache=new Map(),audioPending=new Map(),audioFailures=new Map(),synthesisQueue=[];
-  let synthesisRunning=false,preloadGeneration=0;
+  let synthesisRunning=false,preloadGeneration=0,lastError="";
   const CACHE_LIMIT=24;
   function cancel(){
     try{speechSynthesis.cancel();}catch(_){}
@@ -47,6 +47,7 @@
     preloadGeneration++;
     for(const task of synthesisQueue){audioPending.delete(task.item.id);task.reject(Error("Đã hủy hàng đợi audio cũ."));}
     synthesisQueue.length=0;
+    audioPending.clear();
     audioFailures.clear();
   }
   function synthesizeBlob(text){
@@ -72,6 +73,7 @@
         const blob=await synthesizeBlob(task.item.text);
         if(task.generation===preloadGeneration){
           audioCache.set(task.item.id,blob);
+          lastError="";
           while(audioCache.size>CACHE_LIMIT)audioCache.delete(audioCache.keys().next().value);
         }
         audioPending.delete(task.item.id);
@@ -180,11 +182,11 @@
     if(!video)throw Error("Không tìm thấy video YouTube.");
     status="loading";const next=await load();if(token!==loadToken)return;
     if(engine)engine.destroy();resetPreload();audioCache.clear();sentences=next;
-    engine=new window.TTSSubtitleHybridSync({video,sentences,speak,prepare,cancel,resetPreload,pauseSpeech:()=>{if(activeAudio)activeAudio.pause();speechSynthesis.pause();},resumeSpeech:()=>{if(activeAudio)activeAudio.play().catch(()=>{});speechSynthesis.resume();},onStatus:s=>status=s,onError:e=>{status="error";console.warn("[TTS Subtitle] VieNeu:",e.message);}});
+    engine=new window.TTSSubtitleHybridSync({video,sentences,speak,prepare,cancel,resetPreload,pauseSpeech:()=>{if(activeAudio)activeAudio.pause();speechSynthesis.pause();},resumeSpeech:()=>{if(activeAudio)activeAudio.play().catch(()=>{});speechSynthesis.resume();},onStatus:s=>status=s,onError:e=>{status="error";lastError=e.message;console.warn("[TTS Subtitle] VieNeu:",e.message);}});
     enabled=true;chrome.storage.local.set({enabled:true});engine.start(video.currentTime);status="reading";
   }
   function deactivate(){enabled=false;loadToken++;if(engine)engine.stop();resetPreload();audioCache.clear();cancel();status="stopped";chrome.storage.local.set({enabled:false});}
-  function response(){return{enabled,engine:settings.engine,vieneuVoice:settings.vieneuVoice,rate:settings.rate,volume:settings.volume,voiceURI:settings.voiceURI,voiceURIs:settings.voiceURIs,rotateVoices:settings.rotateVoices,autoLanguage:settings.autoLanguage,readingMode:settings.readingMode,status,voices:voices().map(v=>({name:v.name,lang:v.lang,voiceURI:v.voiceURI}))};}
+  function response(){return{lastError,preloadedAudio:audioCache.size,pendingAudio:audioPending.size,enabled,engine:settings.engine,vieneuVoice:settings.vieneuVoice,rate:settings.rate,volume:settings.volume,voiceURI:settings.voiceURI,voiceURIs:settings.voiceURIs,rotateVoices:settings.rotateVoices,autoLanguage:settings.autoLanguage,readingMode:settings.readingMode,status,voices:voices().map(v=>({name:v.name,lang:v.lang,voiceURI:v.voiceURI}))};}
   chrome.runtime.onMessage.addListener((m,s,send)=>{
     if(m?.target!=="tts-subtitle-youtube")return;
     if(m.type==="GET_STATE"){send(response());return;}
