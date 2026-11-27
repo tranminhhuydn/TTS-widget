@@ -35,9 +35,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return;
   }
 
+  if (message?.target === "vieneu-local-tts" && message.type === "GET_VOICES") {
+    (async () => {
+      const response = await fetch("http://127.0.0.1:8081/v1/audio/voices?model=vieneu", { method: "GET" });
+      if (!response.ok) {
+        const detail = await response.text().catch(() => "");
+        throw new Error("Không lấy được danh sách giọng VieNeu GPU (HTTP " + response.status + ")" + (detail ? ": " + detail.slice(0, 250) : ""));
+      }
+      const data = await response.json();
+      sendResponse({ ok: true, data });
+    })().catch(error => sendResponse({ ok: false, error: error.message || String(error) }));
+    return true;
+  }
+
   if (message?.target !== "vieneu-local-tts" || message.type !== "SYNTHESIZE") return;
   (async () => {
-    const response = await fetch("http://127.0.0.1:8080/v1/audio/speech", {
+    const response = await fetch("http://127.0.0.1:8081/v1/audio/speech", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -49,7 +62,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     if (!response.ok) {
       const detail = await response.text().catch(() => "");
-      throw new Error("VieNeu TTS lỗi HTTP " + response.status + (detail ? ": " + detail.slice(0, 300) : ""));
+      throw new Error("VieNeu GPU TTS lỗi HTTP " + response.status + (detail ? ": " + detail.slice(0, 300) : ""));
     }
     const bytes = new Uint8Array(await response.arrayBuffer());
     let binary = "";
