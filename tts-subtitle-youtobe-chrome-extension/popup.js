@@ -386,13 +386,14 @@ function renderEditorCues(){
   const host=$("editorCueList");host.innerHTML="";$("editorCount").textContent=editorCues.length+" đoạn phụ đề";
   const activeEngine=$("engine").value,voiceOptions=editorVoiceOptions();
   editorCues.forEach((cue,index)=>{
-    const card=document.createElement("article");card.className="editor-cue";
+    const card=document.createElement("article");card.className="editor-cue";card.dataset.cueIndex=String(index);
     const top=document.createElement("div");top.className="editor-cue-top";
     const title=document.createElement("strong");title.textContent="Đoạn "+(index+1);
     const actions=document.createElement("div");actions.className="editor-cue-actions";
     const jump=document.createElement("button");jump.type="button";jump.textContent="▶ Đến đoạn";jump.addEventListener("click",()=>editorMessage("SEEK_TO_TIME",{value:Number(cue.startTime)}));
+    const pause=document.createElement("button");pause.type="button";pause.className="cue-pause";pause.textContent="⏸ Tạm dừng";pause.title="Tạm dừng video để biên tập";pause.addEventListener("click",()=>editorMessage("PAUSE_VIDEO"));
     const remove=document.createElement("button");remove.type="button";remove.className="cue-delete";remove.textContent="Xóa";remove.addEventListener("click",()=>{editorCues.splice(index,1);renderEditorCues();});
-    actions.append(jump,remove);top.append(title,actions);card.append(top);
+    actions.append(jump,pause,remove);top.append(title,actions);card.append(top);
     const times=document.createElement("div");times.className="editor-time-row";
     [["Bắt đầu (giây)","startTime"],["Kết thúc (giây)","endTime"]].forEach(([label,key])=>{const wrap=document.createElement("label");wrap.className="editor-time-field";wrap.textContent=label;const input=document.createElement("input");input.type="number";input.min="0";input.step="0.1";input.value=Number(cue[key]).toFixed(2);input.addEventListener("input",()=>{cue[key]=Number(input.value);});wrap.append(input);times.append(wrap);});
     const voiceWrap=document.createElement("label");voiceWrap.className="editor-voice-field";voiceWrap.textContent="Giọng đọc riêng";
@@ -407,8 +408,29 @@ function renderEditorCues(){
     card.append(times,voiceWrap,text);host.append(card);
   });
 }
+let editorPlaybackPoll=null,editorPlaybackRequestPending=false;
+function updateEditorPlaybackHighlight(){
+  if(editorPlaybackRequestPending||$("editorPanel").hidden||!editorVideoId)return;
+  editorPlaybackRequestPending=true;
+  editorMessage("GET_STATE",{},state=>{
+    editorPlaybackRequestPending=false;
+    if(state.videoId!==editorVideoId)return;
+    const now=Number(state.currentTime)||0;
+    document.querySelectorAll(".editor-cue").forEach(card=>{
+      const cue=editorCues[Number(card.dataset.cueIndex)];
+      const active=!!cue&&now>=Number(cue.startTime)&&now<Number(cue.endTime);
+      card.classList.toggle("is-playing",active);
+      if(active)card.setAttribute("aria-current","time");else card.removeAttribute("aria-current");
+    });
+  });
+}
+function startEditorPlaybackPolling(){
+  if(editorPlaybackPoll)clearInterval(editorPlaybackPoll);
+  editorPlaybackPoll=setInterval(updateEditorPlaybackHighlight,180);
+  updateEditorPlaybackHighlight();
+}
 function loadEditorData(){setEditorStatus("Đang tải phụ đề của video hiện tại...");editorMessage("GET_EDITOR_DATA",{},data=>{if(data.error){setEditorStatus(data.error,"error");return;}editorVideoId=data.videoId;editorCues=(data.cues||[]).map((cue,index)=>({id:String(cue.id||index+1),text:String(cue.text||""),startTime:Number(cue.startTime)||0,endTime:Number(cue.endTime)||0,voice:String(cue.voice||""),voiceEngine:String(cue.voiceEngine||"")}));editorCustom=!!data.custom;$("editorVideoTitle").textContent=data.title||("Video ID: "+data.videoId);renderEditorCues();setEditorStatus(editorCustom?"Đã tải bản biên tập đã lưu cho video này.":"Đang dùng phụ đề gốc. Hãy chỉnh sửa rồi lưu để tạo bản riêng.","success");});}
-document.querySelectorAll(".tab-button").forEach(button=>button.addEventListener("click",()=>{const editor=button.dataset.tab==="editor";document.querySelectorAll(".tab-button").forEach(item=>{const active=item===button;item.classList.toggle("is-active",active);item.setAttribute("aria-selected",String(active));});$("mainPanel").hidden=editor;$("editorPanel").hidden=!editor;if(editor){if($("engine").value==="vieneu-gpu"&&!vieneuVoiceOptions.length)loadVieNeuVoices([]);loadEditorData();}}));
+document.querySelectorAll(".tab-button").forEach(button=>button.addEventListener("click",()=>{const editor=button.dataset.tab==="editor";document.querySelectorAll(".tab-button").forEach(item=>{const active=item===button;item.classList.toggle("is-active",active);item.setAttribute("aria-selected",String(active));});$("mainPanel").hidden=editor;$("editorPanel").hidden=!editor;if(editor){if($("engine").value==="vieneu-gpu"&&!vieneuVoiceOptions.length)loadVieNeuVoices([]);loadEditorData();startEditorPlaybackPolling();}else if(editorPlaybackPoll){clearInterval(editorPlaybackPoll);editorPlaybackPoll=null;}}));
 $("editorReload").addEventListener("click",loadEditorData);
 $("editorAdd").addEventListener("click",()=>{const last=editorCues[editorCues.length-1],start=last?Math.max(Number(last.endTime),0):0;editorCues.push({id:"new-"+Date.now(),text:"",startTime:start,endTime:start+3,voice:"",voiceEngine:""});renderEditorCues();setEditorStatus("Đã thêm đoạn mới. Nhập nội dung và điều chỉnh thời gian.");});
 $("editorSave").addEventListener("click",()=>{if(!editorVideoId){setEditorStatus("Chưa tải được video để lưu.","error");return;}const invalid=editorCues.find(cue=>!String(cue.text||"").trim()||!Number.isFinite(Number(cue.startTime))||!Number.isFinite(Number(cue.endTime))||Number(cue.endTime)<=Number(cue.startTime));if(invalid){setEditorStatus("Có đoạn chưa có nội dung hoặc thời gian kết thúc không lớn hơn thời gian bắt đầu.","error");return;}setEditorStatus("Đang lưu bản biên tập...");editorMessage("SAVE_EDITOR_DATA",{videoId:editorVideoId,cues:editorCues},response=>{if(response.error){setEditorStatus(response.error,"error");return;}editorCues=(response.cues||editorCues).map(cue=>({...cue,voice:String(cue.voice||""),voiceEngine:String(cue.voiceEngine||"")}));editorCustom=true;renderEditorCues();setEditorStatus("Đã lưu. Bản phụ đề này sẽ được ưu tiên cho TTS và hiển thị trên video.","success");});});
