@@ -90,3 +90,30 @@ footer{margin-top:11px;text-align:center;color:#a0a8b6;font-size:9px}
 .voice-api-status{margin:6px 0 0;color:#8290a5;font-size:10px;line-height:1.4}
 .voice-api-status.error{color:#c63838}
 .voice-api-status.success{color:#21834c}
+
+.text-filter-panel{margin-top:14px;padding-top:13px;border-top:1px solid #e6eaf1}
+.filter-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.filter-heading strong,.filter-heading small{display:block}
+.filter-heading strong{font-size:12px;color:#24324a}
+.filter-heading small{font-size:10px;color:#8490a4;margin-top:2px}
+.mini-toggle{position:relative;display:inline-flex;width:34px;height:19px;flex:0 0 auto}
+.mini-toggle input{opacity:0;width:0;height:0}
+.mini-toggle span{position:absolute;inset:0;border-radius:20px;background:#cbd2df;cursor:pointer}
+.mini-toggle span:before{content:"";position:absolute;width:13px;height:13px;left:3px;top:3px;border-radius:50%;background:white;transition:.15s}
+.mini-toggle input:checked+span{background:#2864e8}
+.mini-toggle input:checked+span:before{transform:translateX(15px)}
+.filter-rules{display:grid;gap:8px}
+.filter-rule{padding:9px;border:1px solid #e2e7f0;border-radius:9px;background:#fff}
+.filter-rule-top{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.filter-rule-top strong{font-size:11px;flex:1}
+.filter-rule-enabled{font-size:10px;color:#65728a;display:flex;align-items:center;gap:4px}
+.filter-remove{border:0;background:#fff0f0;color:#bd3b3b;border-radius:5px;padding:4px 7px;font-size:10px;cursor:pointer}
+.filter-field{display:block;margin-top:7px}
+.filter-field span{display:block;margin-bottom:3px;color:#758198;font-size:10px}
+.filter-field input{width:100%;min-width:0;border:1px solid #dce2ec;border-radius:6px;padding:7px 8px;background:#fbfcfe;color:#26344b;font:11px/1.4 Consolas,monospace;outline:none}
+.filter-field input:focus,.filter-textarea:focus{border-color:#7da4f5}
+.filter-add{width:100%;margin:8px 0 12px;padding:7px;border:1px dashed #a9b9d4;border-radius:7px;background:#f8faff;color:#315db3;font-size:11px;font-weight:650;cursor:pointer}
+.filter-textarea{width:100%;border:1px solid #dce2ec;border-radius:6px;padding:7px 8px;background:#fbfcfe;color:#26344b;font:11px/1.4 Consolas,monospace;resize:vertical}
+.filter-preview-label{margin:8px 0 4px;color:#758198;font-size:10px}
+.filter-preview{min-height:31px;padding:8px;border:1px solid #b8dfc4;border-radius:6px;background:#f2fbf4;color:#245a34;font-size:11px;overflow-wrap:anywhere}
+.filter-status{min-height:14px;margin:5px 0 0;color:#b45309;font-size:10px}
