@@ -2,7 +2,7 @@
 (function (global) {
   "use strict";
   if (global.VieNeuTTS) return;
-  let audio = null, resolveCurrent = null, rejectCurrent = null, objectUrl = null, generation = 0;
+  let audio = null, resolveCurrent = null, rejectCurrent = null, objectUrl = null, generation = 0, paused = false;
   const clamp = (value, min, max, fallback) => {
     const n = Number(value);
     return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
@@ -65,12 +65,12 @@
       resolveCurrent = resolve; rejectCurrent = reject;
       audio.onended = () => { cleanup(); settle(); };
       audio.onerror = () => { cleanup(); const fail = rejectCurrent; resolveCurrent = rejectCurrent = null; if (fail) fail(new Error("Không phát được âm thanh WAV từ VieNeu.")); };
-      audio.play().catch(error => { cleanup(); const fail = rejectCurrent; resolveCurrent = rejectCurrent = null; if (fail) fail(error); });
+      if (!paused) audio.play().catch(error => { cleanup(); const fail = rejectCurrent; resolveCurrent = rejectCurrent = null; if (fail) fail(error); });
     });
   }
-  function cancel() { generation++; cleanup(); settle(); }
-  function pause() { if (audio && !audio.paused) audio.pause(); }
-  function resume() { if (audio && audio.paused) audio.play().catch(error => console.warn("[VieNeu TTS]", error)); }
+  function cancel() { generation++; paused = false; cleanup(); settle(); }
+  function pause() { paused = true; if (audio && !audio.paused) audio.pause(); }
+  function resume() { paused = false; if (audio && audio.paused) audio.play().catch(error => console.warn("[VieNeu TTS]", error)); }
   async function health(engine) { return request("VIENEU_TTS_HEALTH", { engine }); }
   async function voices(engine) { return request("VIENEU_TTS_VOICES", { engine }); }
   global.VieNeuTTS = { speak, cancel, pause, resume, health, voices, getConfig: config };
