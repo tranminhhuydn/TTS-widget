@@ -10,7 +10,7 @@
     if(event.source!==window||event.origin!==location.origin||data?.source!=="tts-subtitle-network"||data.type!=="TIMEDTEXT_RESPONSE")return;
     try{
       const url=new URL(data.url,location.href),id=new URL(location.href).searchParams.get("v");
-      if(url.searchParams.get("v")&&url.searchParams.get("v")!==id)return;
+      if(!id||data.pageVideoId!==id||(url.searchParams.get("v")&&url.searchParams.get("v")!==id))return;
       const payload=window.TTSSubtitleParser.parseText(data.body);
       if(Array.isArray(payload?.events)&&payload.events.length)capturedTimedtext={url:data.url,payload};
     }catch(error){console.warn("[TTS Subtitle] Không đọc được response timedtext:",error.message);}
@@ -195,7 +195,7 @@
         if(event.source!==window||event.origin!==location.origin||data?.source!=="tts-subtitle-network"||data.type!=="TIMEDTEXT_RESPONSE")return;
         try{
           const url=new URL(data.url,location.href),id=new URL(location.href).searchParams.get("v");
-          if(url.searchParams.get("v")&&url.searchParams.get("v")!==id)return;
+          if(!id||data.pageVideoId!==id||(url.searchParams.get("v")&&url.searchParams.get("v")!==id))return;
           const payload=window.TTSSubtitleParser.parseText(data.body);
           if(Array.isArray(payload?.events)&&payload.events.length)capturedTimedtext={url:data.url,payload};
         }catch(error){console.warn("[TTS Subtitle] Response timedtext không hợp lệ:",error.message);}
@@ -218,7 +218,10 @@
     return parsed;
   }
   async function activate(){
-    const token=++loadToken;video=document.querySelector("video.html5-main-video")||document.querySelector("video");
+    const token=++loadToken;
+    capturedTimedtext=null;
+    window.postMessage({source:"tts-subtitle-content",type:"GET_TIMEDTEXT_CACHE"},location.origin);
+    video=document.querySelector("video.html5-main-video")||document.querySelector("video");
     if(!video)throw Error("Không tìm thấy video YouTube.");
     status="loading";lastError="";const next=await load();if(token!==loadToken)return;
     if(settings.engine==="browser"){
@@ -282,5 +285,15 @@
   });
   speechSynthesis.onvoiceschanged=()=>{};
   chrome.storage.local.get(DEFAULTS,stored=>{settings={...DEFAULTS,...stored};if(!Array.isArray(settings.vieneuVoices)||!settings.vieneuVoices.length)settings.vieneuVoices=[settings.vieneuVoice||"Pham Tuyen"];enabled=false;});
-  document.addEventListener("yt-navigate-finish",()=>{if(enabled)activate().catch(e=>{status="error";console.warn("[TTS Subtitle]",e.message);});});
+  document.addEventListener("yt-navigate-start",()=>{
+    if(!enabled)return;
+    loadToken++;
+    capturedTimedtext=null;
+    if(engine){engine.destroy();engine=null;}
+    resetPreload();audioCache.clear();cancel();sentences=[];track=null;video=null;
+    status="loading";
+  });
+  document.addEventListener("yt-navigate-finish",()=>{
+    if(enabled)activate().catch(e=>{if(status!=="stopped"){status="error";lastError=e.message;console.warn("[TTS Subtitle]",e.message);}});
+  });
 })();
