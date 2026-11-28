@@ -25,6 +25,7 @@ function init(options={}){
 .tts-widget-root .engine-select-row select{flex:1;min-width:180px}
 .tts-widget-root .local-voice-settings{margin:8px 0;padding:10px;border:1px solid #dbe1e8;border-radius:7px}
 .tts-widget-root .local-voice-settings[hidden]{display:none!important}
+.tts-widget-root .local-voice-settings.is-engine-visible{display:block!important}
 .tts-widget-root .local-voice-settings select,.tts-widget-root .local-voice-settings input{width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:5px}
 .tts-widget-root .local-voice-settings .voice-row button{width:auto;white-space:nowrap}
 .tts-widget-root .engine-help{margin:6px 0 0;font-size:12px;color:#64748b}
@@ -500,7 +501,18 @@ function updateTtsEngineControls(engine){
   }
   if(gpuVoiceSettings){
     gpuVoiceSettings.hidden=!useGpu;
+    gpuVoiceSettings.classList.toggle("is-engine-visible",useGpu);
     gpuVoiceSettings.style.display=useGpu?"block":"none";
+  }
+  // Selecting an engine always returns the settings view to the Voice section.
+  const voiceSection=widgetRoot.querySelector('[data-settings-section="voice"]');
+  if(voiceSection){
+    widgetRoot.querySelectorAll("[data-settings-section]").forEach(section=>{
+      section.classList.toggle("is-active",section===voiceSection);
+    });
+    widgetRoot.querySelectorAll(".settings-nav button[data-settings-tab]").forEach(button=>{
+      button.setAttribute("aria-pressed",String(button.dataset.settingsTab==="voice"));
+    });
   }
 }
 async function saveTtsEngineConfig(){
