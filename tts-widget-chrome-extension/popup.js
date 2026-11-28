@@ -110,7 +110,7 @@ toggleButton.addEventListener("click", async () => {
         toggleButton.textContent="Kích hoạt trên trang này";
         showStatus("Đã tắt đọc phụ đề YouTube.","success");
       }else{
-        await chrome.scripting.executeScript({target:{tabId:tab.id},files:["youtube-subtitle-parser.js","youtube-hybrid-sync.js","youtube-hybrid.js","content.js"]});
+        await chrome.scripting.executeScript({target:{tabId:tab.id},files:["vieneu-tts-client.js","youtube-subtitle-parser.js","youtube-hybrid-sync.js","youtube-hybrid.js","content.js"]});
         const [verify]=await chrome.scripting.executeScript({target:{tabId:tab.id},func:async()=>{try{await window.TTSYouTubeHybrid?.ready;return {active:document.querySelector(".tts-widget-root")?.dataset.extensionActive==="true"};}catch(error){return {active:false,error:error?.message||"Không tải được phụ đề."};}}});
         if(!verify?.result?.active){showStatus(verify?.result?.error||"Chưa khởi tạo được bộ đọc phụ đề. Hãy kiểm tra video có phụ đề hay không.","error");return;}
         toggleButton.textContent="Tắt trên trang này";
@@ -166,7 +166,7 @@ toggleButton.addEventListener("click", async () => {
       if (!existing?.result) {
         await chrome.scripting.executeScript({
           target: { tabId: tab.id },
-          files: ["lib/tts-widget.js", "content.js"]
+          files: ["vieneu-tts-client.js", "lib/tts-widget.js", "content.js"]
         });
       }
 
