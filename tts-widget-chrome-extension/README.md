@@ -9,7 +9,7 @@
 1. Người dùng mở website cần đọc.
 2. Nhấn biểu tượng TTS-widget trên thanh công cụ Chrome.
 3. Trong popup, chọn **VieNeu GPU**, **VieNeu CPU** hoặc **Browser TTS**.
-4. Nếu dùng VieNeu, nhập tên voice (ví dụ `pham_tuyen`) hoặc để trống để dùng voice mặc định; có thể nhấn **Kiểm tra kết nối / thử giọng**.
+4. Nếu dùng VieNeu GPU, popup tự tải danh sách voice từ `GET /v1/audio/voices?model=vieneu` trên cổng 8081; chọn voice trong danh sách hoặc nhấn **Tải lại**. VieNeu CPU vẫn cho nhập tên voice thủ công; có thể nhấn **Kiểm tra kết nối / thử giọng**.
 5. Chọn **Kích hoạt trên trang này** để nạp lõi TTS-widget.
 6. Nhấn nút **🔊 Đọc nội dung này** xuất hiện ở góc dưới bên phải trang.
 7. Mở Cài đặt trong bộ điều khiển để chọn giọng Browser TTS, tốc độ, cao độ, âm lượng và tùy chọn highlight. Tốc độ cũng áp dụng cho WAV VieNeu khi phát; cao độ chỉ áp dụng cho Browser TTS. Có thể chọn giao diện Sáng/Tối/Theo hệ thống và cỡ chữ website từ 12–24 px.
