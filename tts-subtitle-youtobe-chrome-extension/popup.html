@@ -94,6 +94,17 @@
         <label class="check-row"><span><strong>Tự chọn giọng theo ngôn ngữ</strong><small>Ưu tiên giọng phù hợp với phụ đề</small></span><input id="autoLanguage" type="checkbox" checked></label>
         <div id="rotateSetting"><label class="check-row"><span><strong>Luân phiên giọng đọc</strong><small>Thay đổi giọng giữa các đoạn</small></span><input id="rotateVoices" type="checkbox"></label></div>
         <p class="advanced-help">Chế độ kể chuyện ghép các đoạn phụ đề thành câu hoàn chỉnh. Cả hai chế độ đều đồng bộ với thời gian video.</p>
+        <div class="text-filter-panel">
+          <div class="filter-heading"><span><strong>Lọc văn bản bằng Regex</strong><small>Chỉ lọc nội dung TTS, không sửa phụ đề YouTube</small></span><label class="mini-toggle"><input id="textFiltersEnabled" type="checkbox"><span></span></label></div>
+          <div id="textFilterRules" class="filter-rules"></div>
+          <button id="addTextFilterRule" class="filter-add" type="button">＋ Thêm quy tắc</button>
+          <label class="field-label" for="filterTestInput">Thử nghiệm bộ lọc</label>
+          <textarea id="filterTestInput" class="filter-textarea" rows="2" placeholder="Xin chào [âm nhạc] mọi người"></textarea>
+          <div class="filter-preview-label">Kết quả sau lọc</div>
+          <div id="filterTestOutput" class="filter-preview" aria-live="polite"></div>
+          <p class="advanced-help">Flags: g (tất cả kết quả), i (không phân biệt hoa/thường), m (nhiều dòng). Để trống phần thay thế nếu muốn xóa đoạn khớp.</p>
+          <p id="filterStatus" class="filter-status" role="status" aria-live="polite"></p>
+        </div>
       </div>
     </details>
 
