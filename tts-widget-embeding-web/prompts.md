@@ -549,3 +549,16 @@ Các yêu cầu dưới đây được bổ sung sau khi đối chiếu đặc t
 - Khi trạng thái là `reading` hoặc `testing`, vô hiệu hóa nút Đọc/Tiếp tục để tránh khởi động chồng hoặc khởi động lại ngoài ý muốn.
 - Giữ nút **Tạm dừng** riêng; cập nhật nhãn, tiêu đề và trạng thái disabled của nút dùng chung theo trạng thái SpeechManager.
 - Không tạo lại nút Tiếp tục riêng.
+
+## Quy tắc tự đánh giá lại khi yêu cầu chưa đạt
+
+Quy tắc này áp dụng bắt buộc cho mọi dự án con và mọi loại công việc trong repository.
+
+- Khi một yêu cầu đã được thực hiện nhưng kết quả vẫn không đáp ứng, hoặc cùng một lỗi/yêu cầu phải xử lý lặp lại mà chưa thành công, phải dừng cách làm hiện tại. Không tiếp tục lặp lại cùng một thao tác, không vá giao diện/triệu chứng khi chưa xác định nguyên nhân.
+- Tự đánh giá lại toàn bộ quá trình: yêu cầu thực tế của người dùng, phạm vi dự án, kiến trúc, luồng dữ liệu, hợp đồng API, cấu trúc DOM/HTML, CSS, trạng thái lưu trữ, thứ tự nạp mã, quyền và môi trường chạy — chọn các yếu tố liên quan để kiểm tra.
+- Quay lại bằng chứng gốc: đọc lại mã nguồn mới nhất trên `main`, tài liệu dự án, dữ liệu/API thực tế, log và thông báo lỗi. Không dựa vào giả định hoặc kết luận chưa được xác minh từ lần thử trước.
+- Nêu rõ điều gì đã thử, vì sao cách trước không giải quyết được, nguyên nhân gốc có bằng chứng nào hỗ trợ, và kiểm tra nào có thể phân biệt các giả thuyết. Nếu chưa đủ dữ liệu, phải nói rõ phần chưa biết và yêu cầu đúng thông tin tối thiểu cần thiết; không đoán mò.
+- Sau khi xác định nguyên nhân, thay đổi đúng điểm gây lỗi; ưu tiên giải pháp gốc thay vì thêm nhiều lớp CSS, workaround hoặc thay đổi không liên quan. Kiểm tra hồi quy và xác minh lại nội dung đã cập nhật trên GitHub.
+- Nếu không thể thực hiện hoặc xác minh do thiếu quyền, thiếu môi trường runtime, API local không truy cập được hay giới hạn công cụ, phải nói thẳng giới hạn đó và đưa ra bước kiểm tra cụ thể. Tuyệt đối không tuyên bố đã hoàn tất hoặc đã kiểm thử khi chưa có bằng chứng.
+- Cụm từ kích hoạt bắt buộc quy trình này là: **“giờ bạn phải tự đánh giá lại và tìm ra nguyên nhân mà vẫn làm chưa đúng yêu cầu”**. Khi người dùng nói câu này, phải thực hiện đánh giá lại từ đầu theo các bước trên, không tranh luận, không yêu cầu người dùng nhắc lại những thông tin đã có.
+- Không chờ người dùng phải nói câu kích hoạt: khi nhận thấy mình đang lặp lại một giải pháp không hiệu quả, chủ động áp dụng quy trình tự đánh giá lại này.
