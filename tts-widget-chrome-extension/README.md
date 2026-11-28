@@ -9,7 +9,7 @@
 1. Người dùng mở website cần đọc.
 2. Nhấn biểu tượng TTS-widget trên thanh công cụ Chrome.
 3. Chọn **Kích hoạt trên trang này** để nạp lõi TTS-widget.
-4. Mở Reader, nhấn nút **⚙ Cài đặt**. Cài đặt được chia thành năm danh mục: **Giọng đọc**, **Âm thanh**, **Tùy chọn đọc**, **Đồng bộ đọc** và **Highlight**. Trong Giọng đọc, chọn Browser TTS hoặc VieNeu GPU. Khi chọn GPU, danh sách giọng đọc tự tải từ API cổng 8081; có thể tìm kiếm, chọn giọng, thử giọng hoặc nhấn **Tải lại**.
+4. Mở Reader, nhấn nút **⚙ Cài đặt**. Cài đặt được chia thành năm danh mục: **Giọng đọc**, **Âm thanh**, **Tùy chọn đọc**, **Đồng bộ đọc** và **Highlight**. Trong Giọng đọc, chọn Browser TTS hoặc VieNeu GPU. Khi chọn GPU, danh sách giọng đọc tự tải từ API cổng 8081; có thể tìm kiếm, chọn giọng, thử giọng, thêm nhiều giọng vào danh sách luân phiên, đổi thứ tự và chỉnh tốc độ/âm lượng riêng cho từng giọng.
 5. Nhấn nút **🔊 Đọc nội dung này** xuất hiện ở góc dưới bên phải trang.
 6. Trong Cài đặt, cấu hình giọng đọc ở danh mục Giọng đọc; tốc độ, cao độ và âm lượng ở danh mục Âm thanh; các tùy chọn còn lại nằm trong Tùy chọn đọc, Đồng bộ đọc và Highlight. Tốc độ cũng áp dụng cho WAV VieNeu khi phát; cao độ chỉ áp dụng cho Browser TTS. Có thể chọn giao diện Sáng/Tối/Theo hệ thống và cỡ chữ website từ 12–24 px.
 7. Chọn **Tắt trên trang này** để dừng đọc và ẩn bộ điều khiển.
