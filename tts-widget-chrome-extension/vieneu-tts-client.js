@@ -71,5 +71,5 @@
   function resume() { if (audio && audio.paused) audio.play().catch(error => console.warn("[VieNeu TTS]", error)); }
   async function health(engine) { return request("VIENEU_TTS_HEALTH", { engine }); }
   async function voices(engine) { return request("VIENEU_TTS_VOICES", { engine }); }
-  global.VieNeuTTS = { speak, cancel, pause, resume, health, voices };
+  global.VieNeuTTS = { speak, cancel, pause, resume, health, voices, getConfig: config };
 })(globalThis);
