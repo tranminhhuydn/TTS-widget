@@ -4,7 +4,7 @@
   if(global.TTSYouTubeHybrid)return;
   const KEY="tts-widget-settings-v2";
   let engine=null,active=false,video=null,videoId="",sentences=[],utterance=null,volume=1,preferredVoice="";
-  let status="idle",ready=Promise.resolve(false),navigationListenerAdded=false,storageListenerAdded=false;
+  let status="idle",ready=Promise.resolve(false),navigationListenerAdded=false,storageListenerAdded=false,navigationToken=0;
   const readSettings=()=>{try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch(_){return {}}};
   function getVoice(lang){
     const voices= speechSynthesis.getVoices();
@@ -55,8 +55,10 @@
     }
     try{return global.ytInitialPlayerResponse||null}catch(_){return null}
   }
-  async function loadSubtitles(){
+  async function loadSubtitles(expectedVideoId,token){
     const response=parsePlayerResponse();
+    const responseVideoId=response?.videoDetails?.videoId;
+    if(responseVideoId && responseVideoId!==expectedVideoId)throw new Error("YouTube chưa cập nhật dữ liệu của video mới.");
     const tracks=response?.captions?.playerCaptionsTracklistRenderer?.captionTracks||[];
     if(!tracks.length)throw new Error("Video này không cung cấp phụ đề.");
     const wanted=(navigator.language||"vi").split("-")[0].toLowerCase();
@@ -67,8 +69,11 @@
     const result=await fetch(url.href,{credentials:"include"});
     if(!result.ok)throw new Error("Không tải được phụ đề ("+result.status+").");
     const payload=await result.json();
+    if(token!==navigationToken||currentVideoId()!==expectedVideoId)throw new Error("Đã chuyển video trong lúc tải phụ đề.");
     if(!global.TTSYouTubeSubtitleParser||!global.TTSYouTubeHybridSync)throw new Error("Thiếu module xử lý phụ đề.");
-    sentences=global.TTSYouTubeSubtitleParser.toSentences(payload);
+    const parsed=global.TTSYouTubeSubtitleParser.toSentences(payload);
+    if(token!==navigationToken||currentVideoId()!==expectedVideoId)throw new Error("Đã chuyển video trong lúc xử lý phụ đề.");
+    sentences=parsed;
     if(!sentences.length)throw new Error("Phụ đề không có nội dung văn bản.");
     return sentences;
   }
@@ -82,14 +87,22 @@
   async function activate(){
     active=true;
     ensureRoot();
+    const id=currentVideoId();
+    if(!id)throw new Error("Không xác định được video YouTube hiện tại.");
     video=document.querySelector("video.html5-main-video")||document.querySelector("video");
     if(!video)throw new Error("Chưa tìm thấy trình phát video YouTube.");
-    const id=currentVideoId();
-    if(id!==videoId||!sentences.length){
+    if(id!==videoId||!sentences.length||!engine){
+      const token=++navigationToken;
       if(engine)engine.destroy();
+      engine=null;
       cancelSpeech();
+      sentences=[];
+      currentTrack=null;
+      videoId="";
+      status="loading";
+      await loadSubtitles(id,token);
+      if(token!==navigationToken||currentVideoId()!==id)return;
       videoId=id;
-      await loadSubtitles();
       engine=new global.TTSYouTubeHybridSync({
         video,sentences,
         speak:speakSentence,cancel:cancelSpeech,
@@ -98,7 +111,7 @@
         onStatus:value=>{status=value;}
       });
     }
-    engine.start(video.currentTime);
+    if(engine&&currentVideoId()===videoId)engine.start(video.currentTime);
   }
   function deactivate(){
     active=false;
@@ -108,10 +121,27 @@
     if(root)root.dataset.extensionActive="false";
     status="stopped";
   }
+  function handleNavigationStart(){
+    if(!active)return;
+    navigationToken++;
+    if(engine)engine.destroy();
+    engine=null;
+    cancelSpeech();
+    sentences=[];
+    currentTrack=null;
+    videoId="";
+    status="loading";
+  }
   async function refresh(){
     if(!active)return;
     const id=currentVideoId();
-    if(id!==videoId){try{await activate()}catch(error){console.warn("[TTS YouTube]",error.message)}}
+    if(id!==videoId||!engine){
+      try{await activate()}catch(error){
+        if(currentVideoId()!==videoId)videoId="";
+        status="error";
+        console.warn("[TTS YouTube]",error.message);
+      }
+    }
   }
   function setVolume(value){
     volume=Math.min(1,Math.max(0,Number(value)||0));
@@ -140,7 +170,11 @@
     active=true;
     ensureRoot();
     ready=activate().then(()=>true).catch(error=>{status="error";const root=document.querySelector(".tts-widget-root");if(root)root.dataset.extensionActive="false";console.warn("[TTS YouTube]",error.message);throw error;});
-    if(!navigationListenerAdded){document.addEventListener("yt-navigate-finish",()=>{refresh()});navigationListenerAdded=true;}
+    if(!navigationListenerAdded){
+      document.addEventListener("yt-navigate-start",handleNavigationStart);
+      document.addEventListener("yt-navigate-finish",()=>{refresh()});
+      navigationListenerAdded=true;
+    }
     return true;
   }
   global.TTSYouTubeHybrid={init,activate,deactivate,stop:deactivate,setVolume,getStatus:()=>status,get ready(){return ready;}};
