@@ -25,7 +25,7 @@ Extension chọn vùng nội dung theo thứ tự: `article`, `main`, rồi `bod
 - `content.js`: tìm vùng nội dung và khởi tạo widget.
 - `background.js`: service worker gọi API VieNeu local, tránh giới hạn CORS của content script.
 - `vieneu-tts-client.js`: phát WAV, quản lý tạm dừng/tiếp tục/dừng.
-- `youtube-hybrid.js`: dùng chung VieNeu TTS cho lời đọc phụ đề YouTube.
+- Các module `youtube-*.js` là phần đọc phụ đề YouTube có sẵn; không thuộc tích hợp VieNeu cho Reader website.
 - `lib/tts-widget.js`: bản đóng gói của lõi TTS-widget dùng trong Extension.
 
 ### Đồng bộ lõi
@@ -75,7 +75,7 @@ Extension theo dõi thay đổi DOM của vùng nội dung bằng `MutationObser
 - Đây là nút đọc cho vùng nội dung của trang, không phải nút riêng trên từng câu trả lời ChatGPT.
 - Chế độ tối/sáng toàn trang dùng các quy tắc CSS tổng quát; website có CSS nền/kiểu chữ đặc thù hoặc shadow DOM có thể cần tinh chỉnh riêng. Ảnh, video, SVG và iframe được loại trừ khỏi tác động font/filter.
 - Trên ChatGPT, bộ chọn `main` có thể lấy nhiều khối nội dung trong vùng hội thoại; chưa có bộ điều khiển riêng cho từng phản hồi assistant.
-- Extension hỗ trợ VieNeu TTS Local (GPU/CPU) và Web Speech API của trình duyệt. Nó không truy cập hoặc điều khiển giao diện Chrome Read Aloud và không thể bảo đảm danh sách giọng đọc giống Chrome Read Aloud.
+- Extension Reader website hỗ trợ VieNeu TTS Local (GPU/CPU) và Web Speech API của trình duyệt. Phần đọc phụ đề YouTube hiện có không dùng adapter VieNeu trong phạm vi tích hợp này. Nó không truy cập hoặc điều khiển giao diện Chrome Read Aloud và không thể bảo đảm danh sách giọng đọc giống Chrome Read Aloud.
 - Các trang nội bộ của Chrome, Chrome Web Store và một số trang có chính sách bảo mật đặc biệt không cho phép Extension chèn script.
 - Đọc nền và sự kiện highlight phụ thuộc vào trình duyệt, hệ điều hành và giọng đọc.
 - Khi tắt, widget được ẩn và phiên đọc hiện tại bị dừng; tài nguyên và listeners đã đăng ký bởi lõi vẫn còn trong trang để hỗ trợ bật lại mà không phải tải lại trang.
