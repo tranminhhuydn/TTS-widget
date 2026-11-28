@@ -493,8 +493,15 @@ function requestLocalVoices(engine){
   });
 }
 function updateTtsEngineControls(engine){
-  if(browserVoiceSettings)browserVoiceSettings.hidden=engine!=="browser";
-  if(gpuVoiceSettings)gpuVoiceSettings.hidden=engine!=="vieneu-gpu";
+  const useGpu=engine==="vieneu-gpu";
+  if(browserVoiceSettings){
+    browserVoiceSettings.hidden=useGpu;
+    browserVoiceSettings.style.display=useGpu?"none":"block";
+  }
+  if(gpuVoiceSettings){
+    gpuVoiceSettings.hidden=!useGpu;
+    gpuVoiceSettings.style.display=useGpu?"block":"none";
+  }
 }
 async function saveTtsEngineConfig(){
   if(!globalThis.chrome?.storage?.sync)return;
