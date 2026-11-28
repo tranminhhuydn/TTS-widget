@@ -330,7 +330,10 @@ class SpeechManager {
     this.queue=[];
     let paragraphVoiceIndex=0;
     this.reader.blocks.forEach((b,paragraph)=>{
-      const voiceRotationIndex=b.element?.tagName==="P"?paragraphVoiceIndex++:null;
+      // Reader treats paragraphs, headings, list items and quotations as
+      // separate readable blocks. Rotate once per block, not only for <p>,
+      // so GPU rotation also works on pages built with lists or headings.
+      const voiceRotationIndex=paragraphVoiceIndex++;
       // Code blocks are not prose: sentence punctuation such as "." in
       // console.log or file paths must not split them into misleading pieces.
       if(b.element&&b.element.tagName==="PRE"){
