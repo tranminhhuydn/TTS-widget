@@ -4,7 +4,15 @@
   const DEFAULTS={enabled:false,engine:"browser",vieneuVoice:"Pham Tuyen",vieneuVoices:["Pham Tuyen"],rate:1,volume:1,voiceURI:"",voiceURIs:[],rotateVoices:false,autoLanguage:true,readingMode:"story",textFilters:{enabled:true,rules:[{id:"default-music",enabled:true,pattern:"\\[(?:âm nhạc|nhạc nền|tiếng vỗ tay|music|background music|laughter|applause)\\]",replacement:"",flags:"gi"}]}};
   const isVieNeuEngine=value=>value==="vieneu"||value==="vieneu-gpu";
   let settings={...DEFAULTS},enabled=false,video=null,engine=null,sentences=[],track=null,utterance=null,activeAudio=null,activeAudioUrl=null,activeAudioResolve=null,rotationIndex=0,status="idle",loadToken=0;
-  let capturedTimedtext=null;
+  let capturedTimedtext=null,editorCues=[],editorVideoId=null,editorCustomActive=false,subtitleOverlay=null;
+  const editorKey=id=>"ttsSubtitleEditor:v1:"+id;
+  const currentVideoId=()=>new URL(location.href).searchParams.get("v")||"";
+  function readEditorDocument(id){return new Promise(resolve=>chrome.storage.local.get(editorKey(id),data=>resolve(data[editorKey(id)]||null)));}
+  function normalizeEditorCues(cues){return(Array.isArray(cues)?cues:[]).map((cue,index)=>({id:String(cue.id||"cue-"+index),text:String(cue.text||"").trim(),startTime:Math.max(0,Number(cue.startTime)||0),endTime:Math.max(0,Number(cue.endTime)||0)})).filter(cue=>cue.text&&Number.isFinite(cue.startTime)&&Number.isFinite(cue.endTime)&&cue.endTime>cue.startTime).sort((a,b)=>a.startTime-b.startTime).map((cue,index)=>({...cue,id:String(index+1)}));}
+  function renderSubtitleOverlay(){if(!subtitleOverlay||!video||!enabled||!editorCustomActive)return;const now=video.currentTime||0;const cue=editorCues.find(item=>Number(item.startTime)<=now&&Number(item.endTime)>=now);subtitleOverlay.textContent=cue?.text||"";subtitleOverlay.classList.toggle("is-visible",!!cue?.text);}
+  function ensureSubtitleOverlay(){if(!video)return;const player=video.closest(".html5-video-player")||video.parentElement;if(!player)return;if(subtitleOverlay?.parentElement!==player){subtitleOverlay?.remove();subtitleOverlay=document.createElement("div");subtitleOverlay.id="tts-subtitle-editor-overlay";subtitleOverlay.setAttribute("aria-live","off");player.append(subtitleOverlay);}video.removeEventListener("timeupdate",renderSubtitleOverlay);video.addEventListener("timeupdate",renderSubtitleOverlay);video.removeEventListener("seeked",renderSubtitleOverlay);video.addEventListener("seeked",renderSubtitleOverlay);renderSubtitleOverlay();}
+  function clearSubtitleOverlay(){if(video){video.removeEventListener("timeupdate",renderSubtitleOverlay);video.removeEventListener("seeked",renderSubtitleOverlay);}subtitleOverlay?.remove();subtitleOverlay=null;}
+  async function getEditorData(){const id=currentVideoId();if(!id)throw Error("Không xác định được video YouTube hiện tại.");const saved=await readEditorDocument(id);if(saved&&Array.isArray(saved.cues))return{videoId:id,title:document.title.replace(/ - YouTube$/,""),cues:saved.cues,custom:true,currentTime:video?.currentTime||0};let payload=capturedTimedtext?.payload;if(!payload){window.postMessage({source:"tts-subtitle-content",type:"GET_TIMEDTEXT_CACHE"},location.origin);const captured=await waitForTimedtext(track?.languageCode||"",loadToken);payload=captured.payload;}const cues=window.TTSSubtitleParser.parse(payload).map((cue,index)=>({id:String(index+1),text:cue.text,startTime:cue.start,endTime:cue.end}));if(!cues.length)throw Error("Không tìm thấy phụ đề gốc. Hãy bật CC trên YouTube rồi tải lại Editor.");return{videoId:id,title:document.title.replace(/ - YouTube$/,""),cues,custom:false,currentTime:video?.currentTime||0};}
   window.addEventListener("message",event=>{
     const data=event.data;
     if(event.source!==window||event.origin!==location.origin||data?.source!=="tts-subtitle-network"||data.type!=="TIMEDTEXT_RESPONSE")return;
@@ -229,12 +237,12 @@
     const tracks=playerResponse()?.captions?.playerCaptionsTracklistRenderer?.captionTracks||[];
     const preferred=(navigator.language||"vi").split("-")[0].toLowerCase();
     track=tracks.find(t=>t.languageCode?.toLowerCase().startsWith(preferred))||tracks.find(t=>t.languageCode?.toLowerCase().startsWith("vi"))||tracks[0]||null;
-    const captured=await waitForTimedtext(track?.languageCode||"",loadToken);
-    const parsed=settings.readingMode==="original"
-      ? window.TTSSubtitleParser.parse(captured.payload).map((cue,id)=>({id,text:cue.text,startTime:cue.start,endTime:cue.end}))
-      : window.TTSSubtitleParser.toSentences(captured.payload);
-    if(!parsed.length)throw Error("Network Listener đã bắt được timedtext nhưng không tìm thấy câu phụ đề JSON3.");
-    return parsed;
+    const id=currentVideoId(),saved=await readEditorDocument(id);let cues;if(id!==currentVideoId())return[];
+    editorCustomActive=!!(saved&&Array.isArray(saved.cues));
+    if(editorCustomActive)cues=normalizeEditorCues(saved.cues);else{const captured=await waitForTimedtext(track?.languageCode||"",loadToken);cues=window.TTSSubtitleParser.parse(captured.payload).map((cue,index)=>({id:String(index+1),text:cue.text,startTime:cue.start,endTime:cue.end}));}
+    if(!cues.length)throw Error("Không tìm thấy nội dung phụ đề để đọc.");editorCues=cues;editorVideoId=id;
+    const parsed=settings.readingMode==="original"?cues.map((cue,index)=>({...cue,id:String(index+1)})):window.TTSSubtitleParser.toSentencesFromCues(cues);
+    if(!parsed.length)throw Error("Không tìm thấy câu phụ đề hợp lệ.");return parsed;
   }
   async function activate(){
     const token=++loadToken;
@@ -242,6 +250,8 @@
     window.postMessage({source:"tts-subtitle-content",type:"GET_TIMEDTEXT_CACHE"},location.origin);
     video=document.querySelector("video.html5-main-video")||document.querySelector("video");
     if(!video)throw Error("Không tìm thấy video YouTube.");
+    if(editorVideoId&&editorVideoId!==currentVideoId()){editorCues=[];editorVideoId=null;editorCustomActive=false;clearSubtitleOverlay();}
+    ensureSubtitleOverlay();
     status="loading";lastError="";const next=await load();if(token!==loadToken)return;
     if(settings.engine==="browser"){
       await new Promise((resolve,reject)=>{
@@ -256,14 +266,18 @@
     }
     if(engine)engine.destroy();resetPreload();audioCache.clear();sentences=next;
     engine=new window.TTSSubtitleHybridSync({video,sentences,speak,prepare,cancel,resetPreload,pauseSpeech:()=>{if(activeAudio)activeAudio.pause();speechSynthesis.pause();},resumeSpeech:()=>{if(activeAudio)activeAudio.play().catch(()=>{});speechSynthesis.resume();},onStatus:s=>status=s,onError:e=>{status="error";lastError=e.message;console.warn("[TTS Subtitle] VieNeu:",e.message);}});
-    enabled=true;chrome.storage.local.set({enabled:true});engine.start(video.currentTime);status="reading";
+    enabled=true;chrome.storage.local.set({enabled:true});ensureSubtitleOverlay();renderSubtitleOverlay();engine.start(video.currentTime);status="reading";
   }
-  function deactivate(persist=true){enabled=false;loadToken++;if(engine)engine.stop();resetPreload();audioCache.clear();cancel();status="stopped";chrome.runtime.sendMessage({target:"tts-subtitle-youtube",type:"TTS_RELEASE"},()=>void chrome.runtime.lastError);if(persist)chrome.storage.local.set({enabled:false});}
+  function deactivate(persist=true){enabled=false;loadToken++;if(engine)engine.stop();resetPreload();audioCache.clear();cancel();if(subtitleOverlay)subtitleOverlay.classList.remove("is-visible");status="stopped";chrome.runtime.sendMessage({target:"tts-subtitle-youtube",type:"TTS_RELEASE"},()=>void chrome.runtime.lastError);if(persist)chrome.storage.local.set({enabled:false});}
   function response(){return{lastError,preloadedAudio:audioCache.size,pendingAudio:audioPending.size,enabled,engine:settings.engine,vieneuVoice:settings.vieneuVoice,vieneuVoices:settings.vieneuVoices,rate:settings.rate,volume:settings.volume,voiceURI:settings.voiceURI,voiceURIs:settings.voiceURIs,rotateVoices:settings.rotateVoices,autoLanguage:settings.autoLanguage,readingMode:settings.readingMode,status,voices:voices().map(v=>({name:v.name,lang:v.lang,voiceURI:v.voiceURI}))};}
   chrome.runtime.onMessage.addListener((m,s,send)=>{
     if(m?.target!=="tts-subtitle-youtube")return;
     if(m.type==="TTS_PREEMPT"){deactivate(false);send({stopped:true,reason:"another-tab"});return;}
-    if(m.type==="GET_STATE"){send(response());return;}
+    if(m.type==="GET_STATE"){send({...response(),videoId:currentVideoId(),videoTitle:document.title.replace(/ - YouTube$/,""),currentTime:video?.currentTime||0});return;}
+    if(m.type==="GET_EDITOR_DATA"){getEditorData().then(data=>send(data)).catch(error=>send({error:error.message,videoId:currentVideoId()}));return true;}
+    if(m.type==="SEEK_TO_TIME"){const targetVideo=document.querySelector("video.html5-main-video")||document.querySelector("video");if(!targetVideo){send({error:"Không tìm thấy video."});return;}targetVideo.currentTime=Math.max(0,Number(m.value)||0);send({ok:true,currentTime:targetVideo.currentTime});return;}
+    if(m.type==="SAVE_EDITOR_DATA"){const id=currentVideoId();if(!id||m.videoId!==id){send({error:"Video đã thay đổi. Hãy tải lại Editor trước khi lưu."});return;}const cues=normalizeEditorCues(m.cues);if(!cues.length){send({error:"Bản biên tập cần có ít nhất một đoạn phụ đề hợp lệ."});return;}const key=editorKey(id),doc={version:1,videoId:id,updatedAt:Date.now(),cues};chrome.storage.local.set({[key]:doc},()=>{if(chrome.runtime.lastError){send({error:"Không lưu được: "+chrome.runtime.lastError.message});return;}editorCues=cues;editorVideoId=id;editorCustomActive=true;ensureSubtitleOverlay();renderSubtitleOverlay();if(enabled)activate().then(()=>send({ok:true,cues})).catch(error=>send({error:error.message}));else send({ok:true,cues});});return true;}
+    if(m.type==="RESET_EDITOR_DATA"){const id=currentVideoId();if(!id||m.videoId!==id){send({error:"Video đã thay đổi. Hãy tải lại Editor."});return;}chrome.storage.local.remove(editorKey(id),()=>{if(chrome.runtime.lastError){send({error:chrome.runtime.lastError.message});return;}editorCues=[];editorVideoId=null;editorCustomActive=false;if(enabled)activate().then(()=>send({ok:true})).catch(error=>send({error:error.message}));else{clearSubtitleOverlay();send({ok:true});}});return true;}
     if(m.type==="SET_ENABLED"){if(m.value)activate().then(()=>send({enabled:true})).catch(e=>{status="error";send({error:e.message});});else{deactivate();send({enabled:false});}return true;}
     if(m.type==="STOP"){deactivate();send({stopped:true});return;}
     if(m.type==="SET_ENGINE"){
@@ -317,7 +331,7 @@
     loadToken++;
     capturedTimedtext=null;
     if(engine){engine.destroy();engine=null;}
-    resetPreload();audioCache.clear();cancel();sentences=[];track=null;video=null;
+    resetPreload();audioCache.clear();cancel();sentences=[];track=null;clearSubtitleOverlay();video=null;editorCues=[];editorVideoId=null;editorCustomActive=false;
     status="loading";
   });
   document.addEventListener("yt-navigate-finish",()=>{
