@@ -36,5 +36,6 @@
     const timeAt=(pos,end)=>{const s=spans.find(x=>end?x.end>=pos:x.end>pos)||spans[spans.length-1]; if(!s)return 0; const ratio=Math.max(0,Math.min(1,(pos-s.start)/Math.max(1,s.end-s.start)));return s.time+(s.endTime-s.time)*ratio;};
     return ranges.map((r,id)=>({id,text:r.text,startTime:timeAt(r.start,false),endTime:timeAt(r.end,true)}));
   }
-  window.TTSSubtitleParser={parseText,parse,toSentences};
+  function toSentencesFromCues(cues){const payload={events:(Array.isArray(cues)?cues:[]).map(cue=>({tStartMs:Math.round(Number(cue.startTime||0)*1000),dDurationMs:Math.max(0,Math.round((Number(cue.endTime||0)-Number(cue.startTime||0))*1000)),segs:[{utf8:String(cue.text||"")}]}))};return toSentences(payload);}
+  window.TTSSubtitleParser={parseText,parse,toSentences,toSentencesFromCues};
 })();
