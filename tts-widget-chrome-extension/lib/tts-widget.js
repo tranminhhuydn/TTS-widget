@@ -69,8 +69,7 @@ function init(options={}){
       });
     });
     layout.append(nav,main);main.append(settingsGridElement);
-    settingsPanelElement.insertBefore(layout,settingsGridElement);
-    settingsGridElement.remove();
+    settingsPanelElement.append(layout);
   }
   /* SETTINGS MANAGER */
 class SettingsManager {
