@@ -2,7 +2,7 @@
 
 ## Trạng thái
 
-**Bản khởi tạo 0.1.0** – Extension Manifest V3 với cơ chế bật/tắt theo tab.
+**Bản tích hợp VieNeu Local TTS** – Extension Manifest V3 với cơ chế bật/tắt theo tab, hỗ trợ VieNeu GPU, VieNeu CPU và Browser TTS.
 
 ## Cách hoạt động
 
@@ -22,6 +22,9 @@ Extension chọn vùng nội dung theo thứ tự: `article`, `main`, rồi `bod
 - `icons/`: icon 16, 48 và 128 px.
 - `popup.html`, `popup.css`, `popup.js`: giao diện bật/tắt bộ đọc cho tab hiện tại.
 - `content.js`: tìm vùng nội dung và khởi tạo widget.
+- `background.js`: service worker gọi API VieNeu local, tránh giới hạn CORS của content script.
+- `vieneu-tts-client.js`: phát WAV, quản lý tạm dừng/tiếp tục/dừng.
+- `youtube-hybrid.js`: dùng chung VieNeu TTS cho lời đọc phụ đề YouTube.
 - `lib/tts-widget.js`: bản đóng gói của lõi TTS-widget dùng trong Extension.
 
 ### Đồng bộ lõi
@@ -30,10 +33,26 @@ Chrome Extension phải đóng gói các tệp mà nó sử dụng trong thư m�
 
 Khi cập nhật lõi nhúng website, cần chủ động đồng bộ bản này và kiểm tra diff. Không chỉnh sửa trực tiếp một bản mà quên bản còn lại. Nguồn chuẩn hiện tại: [phiên bản nhúng website](../tts-widget-embeding-web/tts-widget.js).
 
+## VieNeu TTS Local
+
+Extension gọi API trên cùng máy tính:
+
+- GPU: `http://127.0.0.1:8081`
+- CPU: `http://127.0.0.1:8080`
+- Health: `/health`
+- Voices: `/v1/audio/voices?model=vieneu`
+- Speech: `POST /v1/audio/speech`
+
+Cần cài và khởi động VieNeu GPU/CPU theo [`../tts-local/setup.md`](../tts-local/setup.md). Chọn engine trong popup; thiết lập `ttsEngine` và `ttsLocalVoice` được lưu bằng `chrome.storage.sync`. Engine Browser TTS vẫn được giữ làm lựa chọn thủ công. VieNeu tạo WAV theo từng đoạn văn bản; highlight đồng bộ theo đoạn, còn highlight từng từ phụ thuộc Browser TTS.
+
+Các request local được gửi qua Manifest V3 service worker `background.js`. Không mở API ra mạng công cộng; giữ server bind ở `127.0.0.1`.
+
 ## Quyền được yêu cầu
 
 - `activeTab`: chỉ cấp quyền tương tác với tab hiện tại sau thao tác rõ ràng của người dùng.
 - `scripting`: cho phép nạp các tệp JavaScript đóng gói vào tab hiện tại.
+- `storage`: lưu engine và voice đã chọn.
+- Host permission `127.0.0.1:8080` và `127.0.0.1:8081`: gọi hai API VieNeu local từ service worker.
 
 Không khai báo quyền truy cập tất cả website và không cần service worker ở phiên bản đầu.
 
@@ -55,7 +74,7 @@ Extension theo dõi thay đổi DOM của vùng nội dung bằng `MutationObser
 - Đây là nút đọc cho vùng nội dung của trang, không phải nút riêng trên từng câu trả lời ChatGPT.
 - Chế độ tối/sáng toàn trang dùng các quy tắc CSS tổng quát; website có CSS nền/kiểu chữ đặc thù hoặc shadow DOM có thể cần tinh chỉnh riêng. Ảnh, video, SVG và iframe được loại trừ khỏi tác động font/filter.
 - Trên ChatGPT, bộ chọn `main` có thể lấy nhiều khối nội dung trong vùng hội thoại; chưa có bộ điều khiển riêng cho từng phản hồi assistant.
-- Extension dùng Web Speech API của trình duyệt. Nó không truy cập hoặc điều khiển giao diện Chrome Read Aloud và không thể bảo đảm danh sách giọng đọc giống Chrome Read Aloud.
+- Extension hỗ trợ VieNeu TTS Local (GPU/CPU) và Web Speech API của trình duyệt. Nó không truy cập hoặc điều khiển giao diện Chrome Read Aloud và không thể bảo đảm danh sách giọng đọc giống Chrome Read Aloud.
 - Các trang nội bộ của Chrome, Chrome Web Store và một số trang có chính sách bảo mật đặc biệt không cho phép Extension chèn script.
 - Đọc nền và sự kiện highlight phụ thuộc vào trình duyệt, hệ điều hành và giọng đọc.
 - Khi tắt, widget được ẩn và phiên đọc hiện tại bị dừng; tài nguyên và listeners đã đăng ký bởi lõi vẫn còn trong trang để hỗ trợ bật lại mà không phải tải lại trang.
