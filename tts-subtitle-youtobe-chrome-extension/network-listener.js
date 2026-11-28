@@ -11,9 +11,9 @@
       return url.hostname === "www.youtube.com" && url.pathname === "/api/timedtext";
     } catch (_) { return false; }
   };
-  const publish = (url, body) => {
+  const publish = (url, body, pageVideoId = new URL(location.href).searchParams.get("v") || "") => {
     if (!isTimedtext(url) || typeof body !== "string" || !body.trim() || body.length > 8 * 1024 * 1024) return;
-    const entry = { url: String(url), body, capturedAt: Date.now() };
+    const entry = { url: String(url), body, pageVideoId, capturedAt: Date.now() };
     cache.push(entry);
     if (cache.length > MAX_CACHE) cache.shift();
     window.postMessage({ source: "tts-subtitle-network", type: "TIMEDTEXT_RESPONSE", ...entry }, location.origin);
@@ -25,11 +25,11 @@
     const data = event.data;
     if (event.source !== window || event.origin !== location.origin ||
         data?.source !== "tts-subtitle-content" || data.type !== "GET_TIMEDTEXT_CACHE") return;
-    const videoId = new URL(location.href).searchParams.get("v");
+    const videoId = new URL(location.href).searchParams.get("v") || "";
     for (const entry of cache) {
       let requestVideoId = "";
       try { requestVideoId = new URL(entry.url, location.href).searchParams.get("v") || ""; } catch (_) {}
-      if (!requestVideoId || !videoId || requestVideoId === videoId) {
+      if (entry.pageVideoId === videoId && (!requestVideoId || requestVideoId === videoId)) {
         window.postMessage({ source: "tts-subtitle-network", type: "TIMEDTEXT_RESPONSE", ...entry }, location.origin);
       }
     }
@@ -40,7 +40,8 @@
     const requestUrl = args[0] instanceof Request ? args[0].url : String(args[0]);
     return originalFetch.apply(this, args).then(response => {
       if (isTimedtext(requestUrl)) {
-        response.clone().text().then(body => publish(response.url || requestUrl, body)).catch(() => {});
+        const requestVideoId = new URL(requestUrl, location.href).searchParams.get("v") || new URL(location.href).searchParams.get("v") || "";
+        response.clone().text().then(body => publish(response.url || requestUrl, body, requestVideoId)).catch(() => {});
       }
       return response;
     });
@@ -50,6 +51,7 @@
   const originalSend = XMLHttpRequest.prototype.send;
   XMLHttpRequest.prototype.open = function(method, url, ...rest) {
     this.__ttsTimedtextUrl = String(url);
+    this.__ttsTimedtextVideoId = new URL(String(url), location.href).searchParams.get("v") || new URL(location.href).searchParams.get("v") || "";
     return originalOpen.call(this, method, url, ...rest);
   };
   XMLHttpRequest.prototype.send = function(...args) {
@@ -57,7 +59,7 @@
       this.addEventListener("load", () => {
         try {
           if (!this.responseType || this.responseType === "text") {
-            publish(this.responseURL || this.__ttsTimedtextUrl, this.responseText);
+            publish(this.responseURL || this.__ttsTimedtextUrl, this.responseText, this.__ttsTimedtextVideoId);
           }
         } catch (_) {}
       }, { once: true });
