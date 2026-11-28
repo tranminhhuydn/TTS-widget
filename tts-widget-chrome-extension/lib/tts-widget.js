@@ -493,9 +493,13 @@ function renderGpuVoiceOptions(){
   const query=String(settingGpuVoiceSearch?.value||"").trim().toLocaleLowerCase();
   const filtered=gpuVoiceCatalog.filter(voice=>(voice.name+" "+voice.id).toLocaleLowerCase().includes(query));
   settingGpuVoice.replaceChildren();
-  if(!filtered.length){settingGpuVoice.add(new Option(query?"Không tìm thấy giọng đọc phù hợp":"API chưa công bố giọng đọc nào",""));return;}
-  for(const voice of filtered)settingGpuVoice.add(new Option(voice.name===voice.id?voice.name:voice.name+" · "+voice.id,voice.id));
-  settingGpuVoice.value=filtered.some(voice=>voice.id===selectedGpuVoiceId)?selectedGpuVoiceId:filtered[0].id;
+  if(!filtered.length){settingGpuVoice.add(new Option(query?"Không tìm thấy giọng đọc phù hợp":"API chưa công bố giọng đọc nào",""));}
+  else{
+    for(const voice of filtered)settingGpuVoice.add(new Option(voice.name===voice.id?voice.name:voice.name+" · "+voice.id,voice.id));
+    if(filtered.some(voice=>voice.id===selectedGpuVoiceId))settingGpuVoice.value=selectedGpuVoiceId;
+    else{settingGpuVoice.add(new Option("Chọn giọng đọc...",""),0);settingGpuVoice.value="";}
+  }
+  const testButton=$("testLocalVoiceBtn");if(testButton)testButton.disabled=!settingGpuVoice.value;
 }
 async function loadGpuVoiceOptions(preferred=""){
   if(!settingGpuVoice||!gpuVoiceStatus)return;
