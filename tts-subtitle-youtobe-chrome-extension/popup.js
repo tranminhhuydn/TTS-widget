@@ -264,7 +264,7 @@ $("refreshVieNeuVoices").addEventListener("click", () => {
 });
 const DEFAULT_TEXT_FILTERS = {
   enabled: true,
-  rules: [{ id: "default-music", enabled: true, pattern: "\\[(?:âm nhạc|tiếng vỗ tay|laughter|applause)\\]", replacement: "", flags: "gi" }]
+  rules: [{ id: "default-music", enabled: true, pattern: "\\[(?:âm nhạc|nhạc nền|tiếng vỗ tay|music|background music|laughter|applause)\\]", replacement: "", flags: "gi" }]
 };
 let textFilterRules = [];
 function normalizeTextFilterSettings(value) {
