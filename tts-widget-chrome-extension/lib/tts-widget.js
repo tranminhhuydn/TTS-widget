@@ -470,16 +470,29 @@ const gpuVoiceStatus=$("gpuVoiceStatus");
 const refreshGpuVoicesBtn=$("refreshGpuVoicesBtn");
 
 function normalizeLocalVoices(data){
-  let source=data?.voices??data?.data?.voices??data?.items??data?.data??data;
+  // audio.cpp versions/wrappers may return voices directly, under data,
+  // or as a keyed object. Unwrap known collection containers before mapping.
+  let source=data;
+  for(let depth=0;depth<5&&source&&!Array.isArray(source)&&typeof source==="object";depth++){
+    const collectionKey=["voices","items","results","presets"].find(key=>source[key]!==undefined);
+    if(collectionKey){source=source[collectionKey];continue;}
+    if(source.data!==undefined){source=source.data;continue;}
+    break;
+  }
   if(source&&!Array.isArray(source)&&typeof source==="object"){
-    source=Object.entries(source).map(([key,value])=>typeof value==="string"?{id:key,name:value}:{id:key,...value});
+    source=Object.entries(source).map(([key,value])=>{
+      if(typeof value==="string")return {id:key,name:value};
+      if(value&&typeof value==="object"&&!Array.isArray(value))return {...value,id:value.id??value.voice??key};
+      return null;
+    }).filter(Boolean);
   }
   if(!Array.isArray(source))return [];
   return source.map(item=>{
-    if(typeof item==="string")return {id:item,name:item};
-    const id=item?.voice??item?.id??item?.name??item?.voice_id??item?.speaker??item?.key;
-    const name=item?.display_name??item?.label??item?.name??id;
-    return id?{id:String(id),name:String(name),available:item?.available!==false}:null;
+    if(typeof item==="string")return {id:item,name:item,available:true};
+    if(!item||typeof item!=="object")return null;
+    const id=item.voice??item.id??item.name??item.voice_id??item.speaker??item.key;
+    const name=item.display_name??item.label??item.name??item.title??id;
+    return id?{id:String(id),name:String(name),available:item.available!==false&&item.enabled!==false}:null;
   }).filter(item=>item&&item.available);
 }
 function requestLocalVoices(engine){
