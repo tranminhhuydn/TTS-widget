@@ -590,7 +590,7 @@ async function loadGpuVoiceOptions(preferred=""){
     await saveTtsEngineConfig();
     gpuVoiceStatus.textContent="Đã tải "+gpuVoiceCatalog.length+" giọng đọc GPU.";
   }catch(error){
-    gpuVoiceCatalog=[];selectedGpuVoiceId="";
+    gpuVoiceCatalog=[];selectedGpuVoiceIds=[];
     settingGpuVoice.replaceChildren(new Option("Không tải được danh sách giọng đọc",""));
     gpuVoiceStatus.textContent="Lỗi tải giọng đọc GPU: "+(error?.message||String(error));
   }finally{refreshGpuVoicesBtn.disabled=false;}
