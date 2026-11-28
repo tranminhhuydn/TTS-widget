@@ -23,32 +23,6 @@
       Đang kiểm tra trạng thái trên tab hiện tại.
     </p>
 
-    <section class="appearance-setting audio-setting" aria-label="Bộ máy giọng đọc">
-      <h2>Bộ máy giọng đọc</h2>
-      <label class="font-size-row" for="ttsEngine"><span>Engine</span></label>
-      <select id="ttsEngine">
-        <option value="vieneu-gpu">VieNeu GPU</option>
-        <option value="vieneu-cpu">VieNeu CPU</option>
-        <option value="browser">Browser TTS</option>
-      </select>
-      <div id="cpuVoiceSettings">
-        <label class="font-size-row" for="ttsLocalVoice"><span>Voice VieNeu CPU</span></label>
-        <input id="ttsLocalVoice" type="text" placeholder="Ví dụ: pham_tuyen">
-      </div>
-      <div id="gpuVoiceSettings" hidden>
-        <div class="font-size-row voice-select-heading">
-          <label for="ttsGpuVoice">Danh sách voice VieNeu GPU</label>
-          <button id="refreshGpuVoices" class="voice-refresh-button" type="button">↻ Tải lại</button>
-        </div>
-        <select id="ttsGpuVoice" class="voice-select">
-          <option value="">Đang chờ danh sách voice...</option>
-        </select>
-        <p id="gpuVoiceStatus" class="voice-status" role="status" aria-live="polite">Chưa tải danh sách voice.</p>
-      </div>
-      <button id="testLocalTts" type="button">Kiểm tra kết nối / thử giọng</button>
-      <p id="ttsEngineStatus" class="status" role="status" aria-live="polite">Chưa kiểm tra kết nối.</p>
-    </section>
-
     <section class="appearance-setting audio-setting" aria-label="Âm thanh TTS">
       <h2>Âm thanh TTS</h2>
       <label class="font-size-row" for="ttsVolume"><span>Âm lượng giọng đọc</span><output id="ttsVolumeValue">100%</output></label>
@@ -69,7 +43,7 @@
     <div class="hint">
       Trên website thông thường, nhấn nút loa ở góc dưới bên phải để đọc nội dung.
       Trên YouTube, bật Extension tại đây rồi dùng nút phát, tạm dừng và tua của YouTube.
-      Chọn giọng đọc trong Cài đặt TTS-widget; âm lượng điều chỉnh ngay tại popup này.
+      Cấu hình bộ máy và giọng đọc trong Cài đặt của Reader; âm lượng điều chỉnh ngay tại popup này.
     </div>
     <footer>VieNeu TTS Local · GPU / CPU / Browser</footer>
   </main>
