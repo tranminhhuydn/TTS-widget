@@ -1,6 +1,6 @@
 "use strict";
 
-const BASES = { "vieneu-gpu": "http://127.0.0.1:8081", "vieneu-cpu": "http://127.0.0.1:8080" };
+const BASE_URL = "http://127.0.0.1:8081";
 
 function toBase64(buffer) {
   const bytes = new Uint8Array(buffer);
@@ -15,8 +15,7 @@ function toBase64(buffer) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || !["VIENEU_TTS_SYNTHESIZE", "VIENEU_TTS_VOICES", "VIENEU_TTS_HEALTH"].includes(message.type)) return;
   (async () => {
-    const engine = message.engine === "vieneu-cpu" ? "vieneu-cpu" : "vieneu-gpu";
-    const base = BASES[engine];
+    const base = BASE_URL;
     if (message.type === "VIENEU_TTS_HEALTH") {
       const response = await fetch(base + "/health");
       const body = await response.text();
