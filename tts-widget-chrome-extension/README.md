@@ -8,9 +8,8 @@
 
 1. Người dùng mở website cần đọc.
 2. Nhấn biểu tượng TTS-widget trên thanh công cụ Chrome.
-3. Trong popup, chọn **VieNeu GPU**, **VieNeu CPU** hoặc **Browser TTS**.
-4. Nếu dùng VieNeu GPU, popup tự tải danh sách voice từ `GET /v1/audio/voices?model=vieneu` trên cổng 8081; chọn voice trong danh sách hoặc nhấn **Tải lại**. VieNeu CPU vẫn cho nhập tên voice thủ công; có thể nhấn **Kiểm tra kết nối / thử giọng**.
-5. Chọn **Kích hoạt trên trang này** để nạp lõi TTS-widget.
+3. Chọn **Kích hoạt trên trang này** để nạp lõi TTS-widget.
+4. Mở Reader, nhấn nút **⚙ Cài đặt** rồi vào mục **Giọng đọc** để chọn Browser TTS, VieNeu CPU hoặc VieNeu GPU. Khi chọn GPU, danh sách voice tự tải từ API cổng 8081; có thể nhấn **Tải lại**. CPU cho phép nhập voice ID thủ công.
 6. Nhấn nút **🔊 Đọc nội dung này** xuất hiện ở góc dưới bên phải trang.
 7. Mở Cài đặt trong bộ điều khiển để chọn giọng Browser TTS, tốc độ, cao độ, âm lượng và tùy chọn highlight. Tốc độ cũng áp dụng cho WAV VieNeu khi phát; cao độ chỉ áp dụng cho Browser TTS. Có thể chọn giao diện Sáng/Tối/Theo hệ thống và cỡ chữ website từ 12–24 px.
 8. Chọn **Tắt trên trang này** để dừng đọc và ẩn bộ điều khiển.
@@ -44,7 +43,7 @@ Extension gọi API trên cùng máy tính:
 - Voices: `/v1/audio/voices?model=vieneu`
 - Speech: `POST /v1/audio/speech`
 
-Cần cài và khởi động VieNeu GPU/CPU theo [`../tts-local/setup.md`](../tts-local/setup.md). Chọn engine trong popup; thiết lập `ttsEngine` và `ttsLocalVoice` được lưu bằng `chrome.storage.sync`. Engine Browser TTS vẫn được giữ làm lựa chọn thủ công. VieNeu tạo WAV theo từng đoạn văn bản; highlight đồng bộ theo đoạn, còn highlight từng từ và cao độ phụ thuộc Browser TTS. Tốc độ WAV được điều chỉnh ở trình phát phía client.
+Cần cài và khởi động VieNeu GPU/CPU theo [`../tts-local/setup.md`](../tts-local/setup.md). Chọn engine trong **Cài đặt → Giọng đọc** của Reader; thiết lập `ttsEngine` và `ttsLocalVoice` được lưu bằng `chrome.storage.sync`. Engine Browser TTS vẫn được giữ làm lựa chọn thủ công. VieNeu tạo WAV theo từng đoạn văn bản; highlight đồng bộ theo đoạn, còn highlight từng từ và cao độ phụ thuộc Browser TTS. Tốc độ WAV được điều chỉnh ở trình phát phía client.
 
 Các request local được gửi qua Manifest V3 service worker `background.js`. Không mở API ra mạng công cộng; giữ server bind ở `127.0.0.1`.
 
