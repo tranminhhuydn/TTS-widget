@@ -3,7 +3,7 @@
   "use strict";
   if(global.TTSYouTubeHybrid)return;
   const KEY="tts-widget-settings-v2";
-  let engine=null,active=false,video=null,videoId="",sentences=[],utterance=null,volume=1,preferredVoice="";
+  let engine=null,active=false,video=null,videoId="",sentences=[],utterance=null,volume=1,preferredVoice="",usingLocalAudio=false;
   let status="idle",ready=Promise.resolve(false),navigationListenerAdded=false,storageListenerAdded=false;
   const readSettings=()=>{try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch(_){return {}}};
   function getVoice(lang){
@@ -15,23 +15,33 @@
     const prefix=String(lang||"").split("-")[0].toLowerCase();
     return voices.find(v=>v.lang.toLowerCase().startsWith(prefix))||voices.find(v=>v.lang.toLowerCase().startsWith("vi"))||voices.find(v=>v.default)||null;
   }
-  function cancelSpeech(){try{speechSynthesis.cancel()}catch(_){} utterance=null;}
+  function cancelSpeech(){try{speechSynthesis.cancel()}catch(_){} global.VieNeuTTS?.cancel();utterance=null;usingLocalAudio=false;}
   function speakSentence(item){
     return new Promise((resolve,reject)=>{
       if(!active){resolve();return;}
       cancelSpeech();
       const settings=readSettings();
-      const u=new SpeechSynthesisUtterance(item.text);
-      const lang=currentTrack?.languageCode||"vi";
-      const voice=getVoice(lang);
-      if(voice){u.voice=voice;u.lang=voice.lang}else u.lang=lang;
-      u.rate=Math.min(1.8,Math.max(.6,Number(settings.rate)||1));
-      u.pitch=Math.min(2,Math.max(.5,Number(settings.pitch)||1));
-      u.volume=Math.min(1,Math.max(0,Number(settings.volume??volume)));
-      utterance=u;
-      u.onend=()=>{if(utterance===u)utterance=null;resolve()};
-      u.onerror=event=>{if(utterance===u)utterance=null;if(event.error==="canceled"||event.error==="interrupted")resolve();else reject(event)};
-      speechSynthesis.speak(u);
+      const localOptions={rate:Math.min(1.8,Math.max(.6,Number(settings.rate)||1)),volume:Math.min(1,Math.max(0,Number(settings.volume??volume)))};
+      const browserSpeak=()=>{
+        if(!active){resolve();return;}
+        const u=new SpeechSynthesisUtterance(item.text);
+        const lang=currentTrack?.languageCode||"vi";
+        const voice=getVoice(lang);
+        if(voice){u.voice=voice;u.lang=voice.lang}else u.lang=lang;
+        u.rate=localOptions.rate;u.pitch=Math.min(2,Math.max(.5,Number(settings.pitch)||1));u.volume=localOptions.volume;
+        utterance=u;
+        u.onend=()=>{if(utterance===u)utterance=null;resolve()};
+        u.onerror=event=>{if(utterance===u)utterance=null;if(event.error==="canceled"||event.error==="interrupted")resolve();else reject(event)};
+        speechSynthesis.speak(u);
+      };
+      if(!global.VieNeuTTS){browserSpeak();return;}
+      global.VieNeuTTS.getConfig().then(cfg=>{
+        if(cfg.engine==="browser"){browserSpeak();return;}
+        usingLocalAudio=true;
+        global.VieNeuTTS.speak(item.text,{engine:cfg.engine,voice:cfg.voice,...localOptions})
+          .then(()=>{usingLocalAudio=false;resolve()})
+          .catch(error=>{usingLocalAudio=false;reject(error)});
+      }).catch(reject);
     });
   }
   let currentTrack=null;
@@ -93,8 +103,8 @@
       engine=new global.TTSYouTubeHybridSync({
         video,sentences,
         speak:speakSentence,cancel:cancelSpeech,
-        pauseSpeech:()=>{try{speechSynthesis.pause()}catch(_){}},
-        resumeSpeech:()=>{try{speechSynthesis.resume()}catch(_){}},
+        pauseSpeech:()=>{if(usingLocalAudio)global.VieNeuTTS?.pause();else try{speechSynthesis.pause()}catch(_){}},
+        resumeSpeech:()=>{if(usingLocalAudio)global.VieNeuTTS?.resume();else try{speechSynthesis.resume()}catch(_){}},
         onStatus:value=>{status=value;}
       });
     }
