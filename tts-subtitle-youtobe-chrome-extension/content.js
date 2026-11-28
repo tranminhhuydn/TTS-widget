@@ -12,7 +12,7 @@
   function renderSubtitleOverlay(){if(!subtitleOverlay||!video)return;if(!enabled||!editorCustomActive){subtitleOverlay.textContent="";subtitleOverlay.classList.remove("is-visible");return;}const now=video.currentTime||0;const cue=editorCues.find(item=>Number(item.startTime)<=now&&Number(item.endTime)>=now);subtitleOverlay.textContent=cue?.text||"";subtitleOverlay.classList.toggle("is-visible",!!cue?.text);}
   function ensureSubtitleOverlay(){if(!video)return;const player=video.closest(".html5-video-player")||video.parentElement;if(!player)return;if(subtitleOverlay?.parentElement!==player){subtitleOverlay?.remove();subtitleOverlay=document.createElement("div");subtitleOverlay.id="tts-subtitle-editor-overlay";subtitleOverlay.setAttribute("aria-live","off");player.append(subtitleOverlay);}video.removeEventListener("timeupdate",renderSubtitleOverlay);video.addEventListener("timeupdate",renderSubtitleOverlay);video.removeEventListener("seeked",renderSubtitleOverlay);video.addEventListener("seeked",renderSubtitleOverlay);renderSubtitleOverlay();}
   function clearSubtitleOverlay(){if(video){video.removeEventListener("timeupdate",renderSubtitleOverlay);video.removeEventListener("seeked",renderSubtitleOverlay);}subtitleOverlay?.remove();subtitleOverlay=null;}
-  async function getEditorData(){const id=currentVideoId();if(!id)throw Error("Không xác định được video YouTube hiện tại.");const saved=await readEditorDocument(id);if(saved&&Array.isArray(saved.cues))return{videoId:id,title:document.title.replace(/ - YouTube$/,""),cues:saved.cues,custom:true,currentTime:video?.currentTime||0};let payload=capturedTimedtext?.payload;if(!payload){window.postMessage({source:"tts-subtitle-content",type:"GET_TIMEDTEXT_CACHE"},location.origin);const captured=await waitForTimedtext(track?.languageCode||"",loadToken);payload=captured.payload;}const cues=window.TTSSubtitleParser.parse(payload).map((cue,index)=>({id:String(index+1),text:cue.text,startTime:cue.start,endTime:cue.end}));if(!cues.length)throw Error("Không tìm thấy phụ đề gốc. Hãy bật CC trên YouTube rồi tải lại Editor.");return{videoId:id,title:document.title.replace(/ - YouTube$/,""),cues,custom:false,currentTime:video?.currentTime||0};}
+  async function getEditorData(){const id=currentVideoId();if(!id)throw Error("Không xác định được video YouTube hiện tại.");const saved=await readEditorDocument(id);if(saved&&Array.isArray(saved.cues))return{videoId:id,title:document.title.replace(/ - YouTube$/,""),cues:saved.cues,custom:true,currentTime:video?.currentTime||0};let payload=capturedTimedtext?.pageVideoId===id?capturedTimedtext.payload:null;if(!payload){window.postMessage({source:"tts-subtitle-content",type:"GET_TIMEDTEXT_CACHE"},location.origin);const captured=await waitForTimedtext(track?.languageCode||"",loadToken);payload=captured.payload;}const cues=window.TTSSubtitleParser.parse(payload).map((cue,index)=>({id:String(index+1),text:cue.text,startTime:cue.start,endTime:cue.end}));if(!cues.length)throw Error("Không tìm thấy phụ đề gốc. Hãy bật CC trên YouTube rồi tải lại Editor.");return{videoId:id,title:document.title.replace(/ - YouTube$/,""),cues,custom:false,currentTime:video?.currentTime||0};}
   window.addEventListener("message",event=>{
     const data=event.data;
     if(event.source!==window||event.origin!==location.origin||data?.source!=="tts-subtitle-network"||data.type!=="TIMEDTEXT_RESPONSE")return;
@@ -20,7 +20,7 @@
       const url=new URL(data.url,location.href),id=new URL(location.href).searchParams.get("v");
       if(!id||data.pageVideoId!==id||(url.searchParams.get("v")&&url.searchParams.get("v")!==id))return;
       const payload=window.TTSSubtitleParser.parseText(data.body);
-      if(Array.isArray(payload?.events)&&payload.events.length)capturedTimedtext={url:data.url,payload};
+      if(Array.isArray(payload?.events)&&payload.events.length)capturedTimedtext={url:data.url,payload,pageVideoId:data.pageVideoId};
     }catch(error){console.warn("[TTS Subtitle] Không đọc được response timedtext:",error.message);}
   });
   // Yêu cầu Network Listener phát lại JSON3 nếu YouTube đã tải phụ đề trước document_idle.
@@ -224,7 +224,7 @@
           const url=new URL(data.url,location.href),id=new URL(location.href).searchParams.get("v");
           if(!id||data.pageVideoId!==id||(url.searchParams.get("v")&&url.searchParams.get("v")!==id))return;
           const payload=window.TTSSubtitleParser.parseText(data.body);
-          if(Array.isArray(payload?.events)&&payload.events.length)capturedTimedtext={url:data.url,payload};
+          if(Array.isArray(payload?.events)&&payload.events.length)capturedTimedtext={url:data.url,payload,pageVideoId:data.pageVideoId};
         }catch(error){console.warn("[TTS Subtitle] Response timedtext không hợp lệ:",error.message);}
         check();
       };
