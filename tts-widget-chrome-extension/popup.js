@@ -205,3 +205,60 @@ loadAppearanceSettings().catch(error=>showStatus(error?.message||'Không tải �
 loadTtsVolume().catch(error=>showStatus(error?.message||'Không tải được âm lượng TTS.','error'));
 refreshState();
 
+
+
+/* VieNeu local engine settings */
+const ttsEngineSelect = document.getElementById("ttsEngine");
+const ttsLocalVoiceInput = document.getElementById("ttsLocalVoice");
+const testLocalTtsButton = document.getElementById("testLocalTts");
+const ttsEngineStatus = document.getElementById("ttsEngineStatus");
+async function loadLocalTtsSettings() {
+  const saved = await chrome.storage.sync.get({ ttsEngine: "browser", ttsLocalVoice: "" });
+  if (ttsEngineSelect) ttsEngineSelect.value = saved.ttsEngine;
+  if (ttsLocalVoiceInput) ttsLocalVoiceInput.value = saved.ttsLocalVoice || "";
+}
+async function saveLocalTtsSettings() {
+  await chrome.storage.sync.set({
+    ttsEngine: ttsEngineSelect.value,
+    ttsLocalVoice: ttsLocalVoiceInput.value.trim()
+  });
+  ttsEngineStatus.textContent = "Đã lưu bộ máy giọng đọc.";
+}
+ttsEngineSelect?.addEventListener("change", () => saveLocalTtsSettings().catch(error => {
+  ttsEngineStatus.textContent = error?.message || "Không lưu được engine.";
+}));
+ttsLocalVoiceInput?.addEventListener("change", () => saveLocalTtsSettings().catch(error => {
+  ttsEngineStatus.textContent = error?.message || "Không lưu được voice.";
+}));
+testLocalTtsButton?.addEventListener("click", async () => {
+  testLocalTtsButton.disabled = true;
+  try {
+    await saveLocalTtsSettings();
+    const engine = ttsEngineSelect.value;
+    if (engine === "browser") {
+      ttsEngineStatus.textContent = "Browser TTS được cung cấp bởi Chrome; hãy thử giọng trong cửa sổ Reader.";
+      return;
+    }
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) throw new Error("Không xác định được tab hiện tại.");
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["vieneu-tts-client.js"] });
+    const [result] = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: async (selectedEngine, voice) => {
+        try {
+          const health = await window.VieNeuTTS.health(selectedEngine);
+          await window.VieNeuTTS.speak("Xin chào. Đây là thử nghiệm giọng đọc VieNeu trên máy tính.", { engine: selectedEngine, voice, volume: 1 });
+          return { ok: true, health: health.body };
+        } catch (error) { return { ok: false, error: error?.message || String(error) }; }
+      },
+      args: [engine, ttsLocalVoiceInput.value.trim()]
+    });
+    if (!result?.result?.ok) throw new Error(result?.result?.error || "Không kết nối được VieNeu.");
+    ttsEngineStatus.textContent = "Kết nối thành công và đã phát thử VieNeu.";
+  } catch (error) {
+    ttsEngineStatus.textContent = "Lỗi: " + (error?.message || "Không kết nối được VieNeu.");
+  } finally { testLocalTtsButton.disabled = false; }
+});
+loadLocalTtsSettings().catch(error => {
+  if (ttsEngineStatus) ttsEngineStatus.textContent = error?.message || "Không tải được engine.";
+});
