@@ -39,15 +39,3 @@ Chrome Extension độc lập để theo dõi Network của tab hiện tại, li
 ## Bắt đầu
 
 Đọc README trong thư mục của phiên bản tương ứng trước khi sử dụng hoặc phát triển phiên bản đó.
-
-## Quy tắc làm việc với GitHub
-
-Đây là quy tắc bắt buộc khi thực hiện mọi công việc trong repository này:
-
-- **Luôn làm việc trực tiếp trên nhánh `main`**: đọc, tạo và chỉnh sửa file trên `main`.
-- **Không tự ý tạo nhánh mới** (feature branch, fix branch hoặc bất kỳ nhánh phụ nào).
-- **Không tự tạo Pull Request (PR)** và không yêu cầu người dùng merge PR.
-- Sau khi chỉnh sửa, commit thay đổi trực tiếp lên `main` với nội dung commit rõ ràng.
-- Trước khi ghi file, phải kiểm tra nội dung hiện tại trên `main` để tránh ghi đè thay đổi mới.
-- Không tự ý thay đổi quy trình trên, kể cả khi công việc có nhiều bước hoặc là một tính năng mới. Chỉ thay đổi khi người dùng yêu cầu rõ ràng.
-- Các quy tắc phân tách thư mục và phạm vi từng phiên bản ở trên vẫn phải được tuân thủ; làm trực tiếp trên `main` không có nghĩa là được sửa các khu vực ngoài phạm vi yêu cầu.
