@@ -212,24 +212,135 @@ const ttsEngineSelect = document.getElementById("ttsEngine");
 const ttsLocalVoiceInput = document.getElementById("ttsLocalVoice");
 const testLocalTtsButton = document.getElementById("testLocalTts");
 const ttsEngineStatus = document.getElementById("ttsEngineStatus");
+const cpuVoiceSettings = document.getElementById("cpuVoiceSettings");
+const gpuVoiceSettings = document.getElementById("gpuVoiceSettings");
+const ttsGpuVoiceSelect = document.getElementById("ttsGpuVoice");
+const gpuVoiceStatus = document.getElementById("gpuVoiceStatus");
+const refreshGpuVoicesButton = document.getElementById("refreshGpuVoices");
+
+function normalizeVieNeuVoices(data) {
+  let source = data?.voices ?? data?.data?.voices ?? data?.items ?? data?.data ?? data;
+  if (source && !Array.isArray(source) && typeof source === "object") {
+    source = Object.entries(source).map(([key, value]) =>
+      typeof value === "string" ? { id: key, name: value } : { id: key, ...value });
+  }
+  if (!Array.isArray(source)) return [];
+  return source.map(item => {
+    if (typeof item === "string") return { id: item, name: item, available: true };
+    const id = item?.voice ?? item?.id ?? item?.name ?? item?.voice_id ?? item?.speaker ?? item?.key;
+    const name = item?.display_name ?? item?.label ?? item?.name ?? id;
+    return id ? { id: String(id), name: String(name), available: item?.available !== false } : null;
+  }).filter(item => item && item.available);
+}
+
+function updateVoiceControls(engine) {
+  const isGpu = engine === "vieneu-gpu";
+  if (cpuVoiceSettings) cpuVoiceSettings.hidden = isGpu || engine === "browser";
+  if (gpuVoiceSettings) gpuVoiceSettings.hidden = !isGpu;
+}
+
+function sendVoiceRequest(engine) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage({ type: "VIENEU_TTS_VOICES", engine }, response => {
+      const runtimeError = chrome.runtime.lastError;
+      if (runtimeError) return reject(new Error(runtimeError.message));
+      if (!response?.ok) return reject(new Error(response?.error || "Không lấy được danh sách voice."));
+      resolve(response.data);
+    });
+  });
+}
+
+async function loadGpuVoices(preferredVoice = "") {
+  if (!ttsGpuVoiceSelect || !gpuVoiceStatus) return;
+  gpuVoiceStatus.textContent = "Đang tải danh sách voice từ VieNeu GPU (8081)...";
+  gpuVoiceStatus.className = "voice-status";
+  if (refreshGpuVoicesButton) refreshGpuVoicesButton.disabled = true;
+  try {
+    const data = await sendVoiceRequest("vieneu-gpu");
+    const voices = normalizeVieNeuVoices(data);
+    ttsGpuVoiceSelect.replaceChildren();
+    if (!voices.length) {
+      ttsGpuVoiceSelect.add(new Option("API chưa công bố voice nào", ""));
+      gpuVoiceStatus.textContent = "API đã phản hồi nhưng danh sách voice đang trống.";
+      gpuVoiceStatus.className = "voice-status error";
+      return;
+    }
+    const apiSelected = data?.selected_voice ?? data?.data?.selected_voice ?? "";
+    const selected = [preferredVoice, apiSelected, voices[0].id]
+      .find(id => id && voices.some(voice => voice.id === String(id)));
+    for (const voice of voices) {
+      ttsGpuVoiceSelect.add(new Option(
+        voice.name === voice.id ? voice.name : voice.name + " · " + voice.id,
+        voice.id
+      ));
+    }
+    ttsGpuVoiceSelect.value = String(selected);
+    await chrome.storage.sync.set({ ttsLocalVoice: ttsGpuVoiceSelect.value });
+    gpuVoiceStatus.textContent = "Đã tải " + voices.length + " voice từ GPU.";
+    gpuVoiceStatus.className = "voice-status success";
+  } catch (error) {
+    ttsGpuVoiceSelect.replaceChildren(new Option("Không tải được danh sách voice", ""));
+    gpuVoiceStatus.textContent = "Lỗi tải voice GPU: " + (error?.message || String(error));
+    gpuVoiceStatus.className = "voice-status error";
+  } finally {
+    if (refreshGpuVoicesButton) refreshGpuVoicesButton.disabled = false;
+  }
+}
+
 async function loadLocalTtsSettings() {
   const saved = await chrome.storage.sync.get({ ttsEngine: "browser", ttsLocalVoice: "" });
   if (ttsEngineSelect) ttsEngineSelect.value = saved.ttsEngine;
   if (ttsLocalVoiceInput) ttsLocalVoiceInput.value = saved.ttsLocalVoice || "";
+  updateVoiceControls(saved.ttsEngine);
+  if (saved.ttsEngine === "vieneu-gpu") await loadGpuVoices(saved.ttsLocalVoice || "");
 }
+
+async function selectedLocalVoice() {
+  return ttsEngineSelect.value === "vieneu-gpu"
+    ? String(ttsGpuVoiceSelect?.value || "").trim()
+    : String(ttsLocalVoiceInput?.value || "").trim();
+}
+
 async function saveLocalTtsSettings() {
-  await chrome.storage.sync.set({
-    ttsEngine: ttsEngineSelect.value,
-    ttsLocalVoice: ttsLocalVoiceInput.value.trim()
-  });
-  ttsEngineStatus.textContent = "Đã lưu bộ máy giọng đọc.";
+  const voice = await selectedLocalVoice();
+  await chrome.storage.sync.set({ ttsEngine: ttsEngineSelect.value, ttsLocalVoice: voice });
+  if (ttsEngineStatus) ttsEngineStatus.textContent = "Đã lưu bộ máy giọng đọc.";
 }
-ttsEngineSelect?.addEventListener("change", () => saveLocalTtsSettings().catch(error => {
-  ttsEngineStatus.textContent = error?.message || "Không lưu được engine.";
-}));
+
+ttsEngineSelect?.addEventListener("change", async () => {
+  updateVoiceControls(ttsEngineSelect.value);
+  try {
+    await saveLocalTtsSettings();
+    if (ttsEngineSelect.value === "vieneu-gpu") {
+      const saved = await chrome.storage.sync.get({ ttsLocalVoice: "" });
+      await loadGpuVoices(saved.ttsLocalVoice);
+    }
+  } catch (error) {
+    if (ttsEngineStatus) ttsEngineStatus.textContent = error?.message || "Không lưu được engine.";
+  }
+});
+
 ttsLocalVoiceInput?.addEventListener("change", () => saveLocalTtsSettings().catch(error => {
-  ttsEngineStatus.textContent = error?.message || "Không lưu được voice.";
+  if (ttsEngineStatus) ttsEngineStatus.textContent = error?.message || "Không lưu được voice.";
 }));
+
+ttsGpuVoiceSelect?.addEventListener("change", () => saveLocalTtsSettings().then(() => {
+  if (gpuVoiceStatus) {
+    gpuVoiceStatus.textContent = "Đã chọn voice: " + ttsGpuVoiceSelect.value;
+    gpuVoiceStatus.className = "voice-status success";
+  }
+}).catch(error => {
+  if (gpuVoiceStatus) {
+    gpuVoiceStatus.textContent = error?.message || "Không lưu được voice.";
+    gpuVoiceStatus.className = "voice-status error";
+  }
+}));
+
+refreshGpuVoicesButton?.addEventListener("click", async () => {
+  const selected = ttsGpuVoiceSelect?.value || (await chrome.storage.sync.get({ ttsLocalVoice: "" })).ttsLocalVoice;
+  await loadGpuVoices(selected);
+});
+
 testLocalTtsButton?.addEventListener("click", async () => {
   testLocalTtsButton.disabled = true;
   try {
@@ -239,26 +350,32 @@ testLocalTtsButton?.addEventListener("click", async () => {
       ttsEngineStatus.textContent = "Browser TTS được cung cấp bởi Chrome; hãy thử giọng trong cửa sổ Reader.";
       return;
     }
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.id) throw new Error("Không xác định được tab hiện tại.");
+    const tab = await getActiveTab();
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["vieneu-tts-client.js"] });
+    const voice = await selectedLocalVoice();
+    if (engine === "vieneu-gpu" && !voice) throw new Error("Hãy tải và chọn một voice GPU trước khi thử giọng.");
     const [result] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      func: async (selectedEngine, voice) => {
+      func: async (selectedEngine, selectedVoice) => {
         try {
           const health = await window.VieNeuTTS.health(selectedEngine);
-          await window.VieNeuTTS.speak("Xin chào. Đây là thử nghiệm giọng đọc VieNeu trên máy tính.", { engine: selectedEngine, voice, volume: 1 });
+          await window.VieNeuTTS.speak("Xin chào. Đây là thử nghiệm giọng đọc VieNeu trên máy tính.", {
+            engine: selectedEngine, voice: selectedVoice, volume: 1
+          });
           return { ok: true, health: health.body };
         } catch (error) { return { ok: false, error: error?.message || String(error) }; }
       },
-      args: [engine, ttsLocalVoiceInput.value.trim()]
+      args: [engine, voice]
     });
     if (!result?.result?.ok) throw new Error(result?.result?.error || "Không kết nối được VieNeu.");
     ttsEngineStatus.textContent = "Kết nối thành công và đã phát thử VieNeu.";
   } catch (error) {
     ttsEngineStatus.textContent = "Lỗi: " + (error?.message || "Không kết nối được VieNeu.");
-  } finally { testLocalTtsButton.disabled = false; }
+  } finally {
+    testLocalTtsButton.disabled = false;
+  }
 });
+
 loadLocalTtsSettings().catch(error => {
   if (ttsEngineStatus) ttsEngineStatus.textContent = error?.message || "Không tải được engine.";
 });
