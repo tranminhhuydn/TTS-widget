@@ -391,7 +391,26 @@ function renderEditorCues(){
     const title=document.createElement("strong");title.textContent="Đoạn "+(index+1);
     const actions=document.createElement("div");actions.className="editor-cue-actions";
     const jump=document.createElement("button");jump.type="button";jump.textContent="▶ Đến đoạn";jump.addEventListener("click",()=>editorMessage("SEEK_TO_TIME",{value:Number(cue.startTime)}));
-    const pause=document.createElement("button");pause.type="button";pause.className="cue-pause";pause.textContent="⏸ Tạm dừng";pause.title="Tạm dừng video để biên tập";pause.addEventListener("click",()=>editorMessage("PAUSE_VIDEO"));
+    const pause=document.createElement("button");pause.type="button";pause.className="cue-pause";pause.textContent="⏸ Tạm dừng";pause.title="Tạm dừng video để biên tập";pause.addEventListener("click",()=>{
+      pause.disabled=true;pause.textContent="⏸ Đang dừng...";
+      chrome.scripting.executeScript({
+        target:{tabId},
+        func:()=>{
+          const video=document.querySelector("video.html5-main-video")||document.querySelector("video");
+          const player=document.getElementById("movie_player");
+          if(video){video.pause();if(player&&typeof player.pauseVideo==="function")player.pauseVideo();return{ok:video.paused,currentTime:video.currentTime};}
+          if(player&&typeof player.pauseVideo==="function"){player.pauseVideo();return{ok:true};}
+          return{ok:false,error:"Không tìm thấy trình phát video YouTube."};
+        }
+      },results=>{
+        const error=chrome.runtime.lastError;
+        pause.disabled=false;pause.textContent="⏸ Tạm dừng";
+        if(error){setEditorStatus("Không thể tạm dừng video: "+error.message,"error");return;}
+        const result=results?.[0]?.result;
+        if(result?.ok)setEditorStatus("Đã tạm dừng video tại "+Number(result.currentTime||0).toFixed(1)+" giây.","success");
+        else setEditorStatus(result?.error||"YouTube chưa xác nhận video đã tạm dừng.","error");
+      });
+    });
     const remove=document.createElement("button");remove.type="button";remove.className="cue-delete";remove.textContent="Xóa";remove.addEventListener("click",()=>{editorCues.splice(index,1);renderEditorCues();});
     actions.append(jump,pause,remove);top.append(title,actions);card.append(top);
     const times=document.createElement("div");times.className="editor-time-row";
