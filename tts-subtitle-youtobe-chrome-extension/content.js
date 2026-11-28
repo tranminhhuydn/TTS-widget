@@ -8,7 +8,7 @@
   const editorKey=id=>"ttsSubtitleEditor:v1:"+id;
   const currentVideoId=()=>new URL(location.href).searchParams.get("v")||"";
   function readEditorDocument(id){return new Promise(resolve=>chrome.storage.local.get(editorKey(id),data=>resolve(data[editorKey(id)]||null)));}
-  function normalizeEditorCues(cues){return(Array.isArray(cues)?cues:[]).map((cue,index)=>({id:String(cue.id||"cue-"+index),text:String(cue.text||"").trim(),startTime:Math.max(0,Number(cue.startTime)||0),endTime:Math.max(0,Number(cue.endTime)||0)})).filter(cue=>cue.text&&Number.isFinite(cue.startTime)&&Number.isFinite(cue.endTime)&&cue.endTime>cue.startTime).sort((a,b)=>a.startTime-b.startTime).map((cue,index)=>({...cue,id:String(index+1)}));}
+  function normalizeEditorCues(cues){return(Array.isArray(cues)?cues:[]).map((cue,index)=>({id:String(cue.id||"cue-"+index),text:String(cue.text||"").trim(),startTime:Math.max(0,Number(cue.startTime)||0),endTime:Math.max(0,Number(cue.endTime)||0),voice:String(cue.voice||""),voiceEngine:String(cue.voiceEngine||"")})).filter(cue=>cue.text&&Number.isFinite(cue.startTime)&&Number.isFinite(cue.endTime)&&cue.endTime>cue.startTime).sort((a,b)=>a.startTime-b.startTime).map((cue,index)=>({...cue,id:String(index+1)}));}
   function renderSubtitleOverlay(){if(!subtitleOverlay||!video)return;if(!enabled||!editorCustomActive){subtitleOverlay.textContent="";subtitleOverlay.classList.remove("is-visible");return;}const now=video.currentTime||0;const cue=editorCues.find(item=>Number(item.startTime)<=now&&Number(item.endTime)>=now);subtitleOverlay.textContent=cue?.text||"";subtitleOverlay.classList.toggle("is-visible",!!cue?.text);}
   function ensureSubtitleOverlay(){if(!video)return;const player=video.closest(".html5-video-player")||video.parentElement;if(!player)return;if(subtitleOverlay?.parentElement!==player){subtitleOverlay?.remove();subtitleOverlay=document.createElement("div");subtitleOverlay.id="tts-subtitle-editor-overlay";subtitleOverlay.setAttribute("aria-live","off");player.append(subtitleOverlay);}video.removeEventListener("timeupdate",renderSubtitleOverlay);video.addEventListener("timeupdate",renderSubtitleOverlay);video.removeEventListener("seeked",renderSubtitleOverlay);video.addEventListener("seeked",renderSubtitleOverlay);renderSubtitleOverlay();}
   function clearSubtitleOverlay(){if(video){video.removeEventListener("timeupdate",renderSubtitleOverlay);video.removeEventListener("seeked",renderSubtitleOverlay);}subtitleOverlay?.remove();subtitleOverlay=null;}
@@ -69,8 +69,9 @@
   const norm=s=>String(s||"").replace(/\s+/g," ").trim();
   function language(text,trackLang){if(trackLang)return trackLang;if(/[\u3040-\u30ff]/.test(text))return"ja";if(/[\u4e00-\u9fff]/.test(text))return"zh";if(/[\uac00-\ud7af]/.test(text))return"ko";if(/[\u0100-\u017f]/.test(text))return"vi";if(/[\u0400-\u04ff]/.test(text))return"ru";return"en";}
   function voices(){return speechSynthesis.getVoices();}
-  function chooseVoice(text,lang){
-    const all=voices(),code=(settings.autoLanguage?language(text,lang):"").toLowerCase();
+  function chooseVoice(text,lang,voiceOverride=""){
+    const all=voices();if(voiceOverride){const exact=all.find(v=>v.voiceURI===voiceOverride||v.name===voiceOverride);if(exact)return exact;}
+    const code=(settings.autoLanguage?language(text,lang):"").toLowerCase();
     const selected=(settings.voiceURIs||[]).map(id=>all.find(v=>v.voiceURI===id)).filter(Boolean);
     const matches=list=>list.filter(v=>v.lang.toLowerCase()===code||v.lang.toLowerCase().startsWith(code+"-"));
     if(settings.rotateVoices&&selected.length){const pool=settings.autoLanguage&&matches(selected).length?matches(selected):selected;const v=pool[rotationIndex%pool.length];rotationIndex++;return v;}
@@ -100,7 +101,8 @@
     audioPending.clear();
     audioFailures.clear();
   }
-  function selectedVieNeuVoice() {
+  function selectedVieNeuVoice(voiceOverride="") {
+    if(voiceOverride)return String(voiceOverride);
     if (settings.engine === "vieneu") return "Pham Tuyen";
     const selected = Array.isArray(settings.vieneuVoices) && settings.vieneuVoices.length
       ? settings.vieneuVoices
@@ -109,11 +111,11 @@
     if (selected.length > 1) rotationIndex++;
     return voice;
   }
-  async function synthesizeBlob(text){
-    text=applyTextFilters(text);
+  async function synthesizeBlob(item){
+    const text=applyTextFilters(item.text);
     if(!text)return null;
     await loadPronunciationDictionary();
-    const voice = selectedVieNeuVoice();
+    const voice = selectedVieNeuVoice(item.voiceEngine===settings.engine?item.voice:"");
     return new Promise((resolve,reject)=>{
       chrome.runtime.sendMessage({target:"vieneu-local-tts",type:"SYNTHESIZE",engine:settings.engine,text:pronunciationText(text),voice},response=>{
         const runtimeError=chrome.runtime.lastError;
@@ -133,7 +135,7 @@
     while(synthesisQueue.length){
       const task=synthesisQueue.shift();
       try{
-        const blob=await synthesizeBlob(task.item.text);
+        const blob=await synthesizeBlob(task.item);
         if(task.generation===preloadGeneration){
           audioCache.set(task.item.id,blob);
           lastError="";
@@ -184,7 +186,7 @@
     // Chrome đôi khi bỏ lệnh speak ngay sau cancel(), đặc biệt với giọng đọc mạng.
     cancel();
     const spokenText=pronunciationText(item.text);
-    const u=new SpeechSynthesisUtterance(spokenText),v=chooseVoice(spokenText,track?.languageCode||"");
+    const u=new SpeechSynthesisUtterance(spokenText),v=chooseVoice(spokenText,track?.languageCode||"",item.voiceEngine===settings.engine?item.voice:"");
     if(v){u.voice=v;u.lang=v.lang;}else u.lang=language(item.text,track?.languageCode);
     u.rate=Math.max(.5,Math.min(2,Number(settings.rate)||1));u.volume=Math.max(0,Math.min(1,Number(settings.volume)||0));
     utterance=u;
@@ -233,6 +235,13 @@
       check();
     });
   }
+  function buildStorySentences(cues){
+    const groups=[];
+    for(const cue of cues){const voice=cue.voiceEngine===settings.engine?String(cue.voice||""):"";const previous=groups[groups.length-1];if(previous&&previous.voice===voice)previous.cues.push(cue);else groups.push({voice,cues:[cue]});}
+    const result=[];let sequence=0;
+    for(const group of groups){const parsed=window.TTSSubtitleParser.toSentencesFromCues(group.cues);for(const sentence of parsed)result.push({...sentence,id:String(++sequence),voice:group.voice,voiceEngine:group.voice?settings.engine:""});}
+    return result;
+  }
   async function load(){
     const tracks=playerResponse()?.captions?.playerCaptionsTracklistRenderer?.captionTracks||[];
     const preferred=(navigator.language||"vi").split("-")[0].toLowerCase();
@@ -241,7 +250,7 @@
     editorCustomActive=!!(saved&&Array.isArray(saved.cues));
     if(editorCustomActive)cues=normalizeEditorCues(saved.cues);else{const captured=await waitForTimedtext(track?.languageCode||"",loadToken);cues=window.TTSSubtitleParser.parse(captured.payload).map((cue,index)=>({id:String(index+1),text:cue.text,startTime:cue.start,endTime:cue.end}));}
     if(!cues.length)throw Error("Không tìm thấy nội dung phụ đề để đọc.");editorCues=cues;editorVideoId=id;
-    const parsed=settings.readingMode==="original"?cues.map((cue,index)=>({...cue,id:String(index+1)})):window.TTSSubtitleParser.toSentencesFromCues(cues);
+    const parsed=settings.readingMode==="original"?cues.map((cue,index)=>({...cue,id:String(index+1),voice:cue.voiceEngine===settings.engine?cue.voice:"",voiceEngine:cue.voiceEngine===settings.engine?settings.engine:""})):buildStorySentences(cues);
     if(!parsed.length)throw Error("Không tìm thấy câu phụ đề hợp lệ.");return parsed;
   }
   async function activate(){
@@ -276,7 +285,7 @@
     if(m.type==="GET_STATE"){send({...response(),videoId:currentVideoId(),videoTitle:document.title.replace(/ - YouTube$/,""),currentTime:video?.currentTime||0});return;}
     if(m.type==="GET_EDITOR_DATA"){getEditorData().then(data=>send(data)).catch(error=>send({error:error.message,videoId:currentVideoId()}));return true;}
     if(m.type==="SEEK_TO_TIME"){const targetVideo=document.querySelector("video.html5-main-video")||document.querySelector("video");if(!targetVideo){send({error:"Không tìm thấy video."});return;}targetVideo.currentTime=Math.max(0,Number(m.value)||0);send({ok:true,currentTime:targetVideo.currentTime});return;}
-    if(m.type==="SAVE_EDITOR_DATA"){const id=currentVideoId();if(!id||m.videoId!==id){send({error:"Video đã thay đổi. Hãy tải lại Editor trước khi lưu."});return;}const cues=normalizeEditorCues(m.cues);if(!cues.length){send({error:"Bản biên tập cần có ít nhất một đoạn phụ đề hợp lệ."});return;}const key=editorKey(id),doc={version:1,videoId:id,updatedAt:Date.now(),cues};chrome.storage.local.set({[key]:doc},()=>{if(chrome.runtime.lastError){send({error:"Không lưu được: "+chrome.runtime.lastError.message});return;}editorCues=cues;editorVideoId=id;editorCustomActive=true;ensureSubtitleOverlay();renderSubtitleOverlay();if(enabled)activate().then(()=>send({ok:true,cues})).catch(error=>send({error:error.message}));else send({ok:true,cues});});return true;}
+    if(m.type==="SAVE_EDITOR_DATA"){const id=currentVideoId();if(!id||m.videoId!==id){send({error:"Video đã thay đổi. Hãy tải lại Editor trước khi lưu."});return;}const cues=normalizeEditorCues(m.cues);if(!cues.length){send({error:"Bản biên tập cần có ít nhất một đoạn phụ đề hợp lệ."});return;}const key=editorKey(id),doc={version:2,videoId:id,updatedAt:Date.now(),cues};chrome.storage.local.set({[key]:doc},()=>{if(chrome.runtime.lastError){send({error:"Không lưu được: "+chrome.runtime.lastError.message});return;}editorCues=cues;editorVideoId=id;editorCustomActive=true;ensureSubtitleOverlay();renderSubtitleOverlay();if(enabled)activate().then(()=>send({ok:true,cues})).catch(error=>send({error:error.message}));else send({ok:true,cues});});return true;}
     if(m.type==="RESET_EDITOR_DATA"){const id=currentVideoId();if(!id||m.videoId!==id){send({error:"Video đã thay đổi. Hãy tải lại Editor."});return;}chrome.storage.local.remove(editorKey(id),()=>{if(chrome.runtime.lastError){send({error:chrome.runtime.lastError.message});return;}editorCues=[];editorVideoId=null;editorCustomActive=false;if(enabled)activate().then(()=>send({ok:true})).catch(error=>send({error:error.message}));else{clearSubtitleOverlay();send({ok:true});}});return true;}
     if(m.type==="SET_ENABLED"){if(m.value)activate().then(()=>send({enabled:true})).catch(e=>{status="error";send({error:e.message});});else{deactivate();send({enabled:false});}return true;}
     if(m.type==="STOP"){deactivate();send({stopped:true});return;}
