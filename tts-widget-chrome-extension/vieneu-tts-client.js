@@ -13,7 +13,7 @@
       if (global.chrome?.storage?.sync) stored = await chrome.storage.sync.get({ ttsEngine: "browser", ttsLocalVoice: "" });
     } catch (_) {}
     return {
-      engine: ["browser", "vieneu-cpu", "vieneu-gpu"].includes(stored.ttsEngine) ? stored.ttsEngine : "browser",
+      engine: ["browser", "vieneu-gpu"].includes(stored.ttsEngine) ? stored.ttsEngine : "browser",
       voice: String(stored.ttsLocalVoice || "").trim()
     };
   }
