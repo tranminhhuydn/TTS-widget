@@ -117,3 +117,12 @@ footer{margin-top:11px;text-align:center;color:#a0a8b6;font-size:9px}
 .filter-preview-label{margin:8px 0 4px;color:#758198;font-size:10px}
 .filter-preview{min-height:31px;padding:8px;border:1px solid #b8dfc4;border-radius:6px;background:#f2fbf4;color:#245a34;font-size:11px;overflow-wrap:anywhere}
 .filter-status{min-height:14px;margin:5px 0 0;color:#b45309;font-size:10px}
+
+.filter-flags{margin-top:10px;padding:9px;border:1px solid #e2e7f0;border-radius:7px;background:#f8faff}
+.filter-flags-title{margin-bottom:7px;color:#52617a;font-size:10px;font-weight:750}
+.filter-flag-option{display:flex;align-items:flex-start;gap:7px;padding:6px 0;cursor:pointer}
+.filter-flag-option+.filter-flag-option{border-top:1px solid #e9edf4}
+.filter-flag-option input{width:15px;height:15px;margin:2px 0 0;flex:none;accent-color:#2563eb}
+.filter-flag-option strong,.filter-flag-option small{display:block}
+.filter-flag-option strong{color:#354158;font-size:10.5px}
+.filter-flag-option small{margin-top:2px;color:#7e8ba0;font-size:9.5px;line-height:1.4}
