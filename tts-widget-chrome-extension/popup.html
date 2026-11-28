@@ -31,8 +31,20 @@
         <option value="vieneu-cpu">VieNeu CPU</option>
         <option value="browser">Browser TTS</option>
       </select>
-      <label class="font-size-row" for="ttsLocalVoice"><span>Voice VieNeu (để trống = mặc định)</span></label>
-      <input id="ttsLocalVoice" type="text" placeholder="Ví dụ: pham_tuyen">
+      <div id="cpuVoiceSettings">
+        <label class="font-size-row" for="ttsLocalVoice"><span>Voice VieNeu CPU</span></label>
+        <input id="ttsLocalVoice" type="text" placeholder="Ví dụ: pham_tuyen">
+      </div>
+      <div id="gpuVoiceSettings" hidden>
+        <div class="font-size-row voice-select-heading">
+          <label for="ttsGpuVoice">Danh sách voice VieNeu GPU</label>
+          <button id="refreshGpuVoices" class="voice-refresh-button" type="button">↻ Tải lại</button>
+        </div>
+        <select id="ttsGpuVoice" class="voice-select">
+          <option value="">Đang chờ danh sách voice...</option>
+        </select>
+        <p id="gpuVoiceStatus" class="voice-status" role="status" aria-live="polite">Chưa tải danh sách voice.</p>
+      </div>
       <button id="testLocalTts" type="button">Kiểm tra kết nối / thử giọng</button>
       <p id="ttsEngineStatus" class="status" role="status" aria-live="polite">Chưa kiểm tra kết nối.</p>
     </section>
