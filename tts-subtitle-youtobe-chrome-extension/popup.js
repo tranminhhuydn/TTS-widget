@@ -262,3 +262,81 @@ $("vieneuVoices").addEventListener("change", event => {
 $("refreshVieNeuVoices").addEventListener("click", () => {
   loadVieNeuVoices(Array.from($("vieneuVoices").selectedOptions).map(o => o.value));
 });
+const DEFAULT_TEXT_FILTERS = {
+  enabled: true,
+  rules: [{ id: "default-music", enabled: true, pattern: "\\[(?:âm nhạc|tiếng vỗ tay|laughter|applause)\\]", replacement: "", flags: "gi" }]
+};
+let textFilterRules = [];
+function normalizeTextFilterSettings(value) {
+  const source = value && typeof value === "object" ? value : DEFAULT_TEXT_FILTERS;
+  const rules = Array.isArray(source.rules) ? source.rules : DEFAULT_TEXT_FILTERS.rules;
+  return { enabled: source.enabled !== false, rules: rules.slice(0, 30).map((rule, index) => ({
+    id: String(rule.id || "rule-" + index), enabled: rule.enabled !== false,
+    pattern: String(rule.pattern || ""), replacement: String(rule.replacement ?? ""),
+    flags: String(rule.flags || "gi").replace(/[^dgimsuvy]/g, "").slice(0, 8)
+  })) };
+}
+function renderTextFilterRules() {
+  const host = $("textFilterRules"); host.innerHTML = "";
+  textFilterRules.forEach((rule, index) => {
+    const card = document.createElement("div"); card.className = "filter-rule";
+    const top = document.createElement("div"); top.className = "filter-rule-top";
+    const title = document.createElement("strong"); title.textContent = "Quy tắc " + (index + 1);
+    const enabled = document.createElement("input"); enabled.type = "checkbox"; enabled.checked = rule.enabled;
+    enabled.addEventListener("change", () => { rule.enabled = enabled.checked; persistTextFilters(); });
+    const enabledLabel = document.createElement("label"); enabledLabel.className = "filter-rule-enabled"; enabledLabel.append(enabled, document.createTextNode(" Bật"));
+    const remove = document.createElement("button"); remove.type = "button"; remove.className = "filter-remove"; remove.textContent = "Xóa";
+    remove.addEventListener("click", () => { textFilterRules.splice(index, 1); renderTextFilterRules(); persistTextFilters(); });
+    top.append(title, enabledLabel, remove); card.append(top);
+    const field = (caption, prop, placeholder) => {
+      const label = document.createElement("label"); label.className = "filter-field";
+      const span = document.createElement("span"); span.textContent = caption;
+      const input = document.createElement("input"); input.type = "text"; input.value = rule[prop]; input.placeholder = placeholder;
+      input.addEventListener("input", () => { rule[prop] = input.value; updateFilterPreview(); });
+      input.addEventListener("change", persistTextFilters);
+      label.append(span, input); card.append(label);
+    };
+    field("Biểu thức tìm kiếm (Regex)", "pattern", "\\[âm nhạc\\]");
+    field("Thay thế bằng", "replacement", "Để trống để xóa");
+    field("Flags", "flags", "gi");
+    host.append(card);
+  });
+}
+function getFilterResult(input, showErrors = false) {
+  let result = String(input || ""), errorMessage = "";
+  if ($("textFiltersEnabled").checked) for (let i = 0; i < textFilterRules.length; i++) {
+    const rule = textFilterRules[i]; if (!rule.enabled || !rule.pattern) continue;
+    try {
+      if (rule.pattern.length > 300) throw new Error("Regex không được dài quá 300 ký tự.");
+      result = result.replace(new RegExp(rule.pattern, rule.flags || "g"), rule.replacement || "");
+    } catch (error) { errorMessage = "Quy tắc " + (i + 1) + ": " + error.message; break; }
+  }
+  result = result.replace(/[ \t]{2,}/g, " ").replace(/\s+([,.;!?])/g, "$1").trim();
+  if (showErrors) $("filterStatus").textContent = errorMessage;
+  return result;
+}
+function updateFilterPreview() {
+  const result = getFilterResult($("filterTestInput").value, true);
+  $("filterTestOutput").textContent = result || "(Không còn nội dung để đọc)";
+}
+function persistTextFilters() {
+  const textFilters = { enabled: $("textFiltersEnabled").checked, rules: textFilterRules };
+  chrome.storage.local.set({ textFilters }, () => {
+    $("filterStatus").textContent = chrome.runtime.lastError ? "Không lưu được: " + chrome.runtime.lastError.message : "Đã lưu bộ lọc.";
+    updateFilterPreview();
+  });
+}
+function initializeTextFilters() {
+  chrome.storage.local.get({ textFilters: DEFAULT_TEXT_FILTERS }, stored => {
+    const config = normalizeTextFilterSettings(stored.textFilters);
+    $("textFiltersEnabled").checked = config.enabled; textFilterRules = config.rules;
+    renderTextFilterRules(); $("filterTestInput").value = "Xin chào [âm nhạc] mọi người"; updateFilterPreview();
+  });
+  $("textFiltersEnabled").addEventListener("change", persistTextFilters);
+  $("addTextFilterRule").addEventListener("click", () => {
+    textFilterRules.push({ id: "rule-" + Date.now(), enabled: true, pattern: "", replacement: "", flags: "gi" });
+    renderTextFilterRules(); persistTextFilters();
+  });
+  $("filterTestInput").addEventListener("input", updateFilterPreview);
+}
+initializeTextFilters();
