@@ -60,6 +60,7 @@
     objectUrl = URL.createObjectURL(new Blob([bytes], { type: result.mime || "audio/wav" }));
     audio = new Audio(objectUrl);
     audio.volume = clamp(options.volume, 0, 1, 1);
+    audio.playbackRate = clamp(options.rate, 0.6, 1.8, 1);
     return new Promise((resolve, reject) => {
       resolveCurrent = resolve; rejectCurrent = reject;
       audio.onended = () => { cleanup(); settle(); };
