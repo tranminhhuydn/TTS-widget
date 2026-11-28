@@ -298,7 +298,40 @@ function renderTextFilterRules() {
     };
     field("Biểu thức tìm kiếm (Regex)", "pattern", "\\[âm nhạc\\]");
     field("Thay thế bằng", "replacement", "Để trống để xóa");
-    field("Flags", "flags", "gi");
+
+    const flagsGroup = document.createElement("div");
+    flagsGroup.className = "filter-flags";
+    const flagsTitle = document.createElement("div");
+    flagsTitle.className = "filter-flags-title";
+    flagsTitle.textContent = "Cách tìm kiếm (chọn các tùy chọn)";
+    flagsGroup.append(flagsTitle);
+    [
+      { flag: "g", title: "Tìm tất cả", description: "Thay thế tất cả đoạn tìm thấy, không chỉ đoạn đầu tiên." },
+      { flag: "i", title: "Không phân biệt hoa/thường", description: "Ví dụ [ÂM NHẠC] và [âm nhạc] đều được nhận diện." },
+      { flag: "m", title: "Theo từng dòng", description: "Giúp ký hiệu đầu dòng (^) và cuối dòng ($) áp dụng cho từng dòng." }
+    ].forEach(option => {
+      const label = document.createElement("label");
+      label.className = "filter-flag-option";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = rule.flags.includes(option.flag);
+      checkbox.addEventListener("change", () => {
+        const selected = new Set(rule.flags.split(""));
+        if (checkbox.checked) selected.add(option.flag);
+        else selected.delete(option.flag);
+        rule.flags = ["g", "i", "m"].filter(flag => selected.has(flag)).join("");
+        persistTextFilters();
+      });
+      const copy = document.createElement("span");
+      const name = document.createElement("strong");
+      name.textContent = option.flag + " – " + option.title;
+      const description = document.createElement("small");
+      description.textContent = option.description;
+      copy.append(name, description);
+      label.append(checkbox, copy);
+      flagsGroup.append(label);
+    });
+    card.append(flagsGroup);
     host.append(card);
   });
 }
