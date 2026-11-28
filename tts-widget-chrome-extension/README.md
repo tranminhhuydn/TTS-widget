@@ -8,11 +8,12 @@
 
 1. Người dùng mở website cần đọc.
 2. Nhấn biểu tượng TTS-widget trên thanh công cụ Chrome.
-3. Popup tự kiểm tra trạng thái của tab hiện tại.
-4. Chọn **Kích hoạt trên trang này** để nạp lõi TTS-widget.
-5. Nhấn nút **🔊 Đọc nội dung này** xuất hiện ở góc dưới bên phải trang.
-6. Mở Cài đặt trong bộ điều khiển để chọn giọng, tốc độ, cao độ, âm lượng và tùy chọn highlight. Có thể chọn giao diện Sáng/Tối/Theo hệ thống cho toàn bộ website và tùy chỉnh cỡ chữ trang từ 12–24 px; ảnh, video, SVG và iframe được giữ nguyên.
-7. Chọn **Tắt trên trang này** để dừng đọc, đóng cửa sổ đọc và ẩn bộ điều khiển trên tab hiện tại. Có thể kích hoạt lại mà không cần tải lại trang.
+3. Trong popup, chọn **VieNeu GPU**, **VieNeu CPU** hoặc **Browser TTS**.
+4. Nếu dùng VieNeu, nhập tên voice (ví dụ `pham_tuyen`) hoặc để trống để dùng voice mặc định; có thể nhấn **Kiểm tra kết nối / thử giọng**.
+5. Chọn **Kích hoạt trên trang này** để nạp lõi TTS-widget.
+6. Nhấn nút **🔊 Đọc nội dung này** xuất hiện ở góc dưới bên phải trang.
+7. Mở Cài đặt trong bộ điều khiển để chọn giọng Browser TTS, tốc độ, cao độ, âm lượng và tùy chọn highlight. Tốc độ cũng áp dụng cho WAV VieNeu khi phát; cao độ chỉ áp dụng cho Browser TTS. Có thể chọn giao diện Sáng/Tối/Theo hệ thống và cỡ chữ website từ 12–24 px.
+8. Chọn **Tắt trên trang này** để dừng đọc và ẩn bộ điều khiển.
 
 Extension chọn vùng nội dung theo thứ tự: `article`, `main`, rồi `body` (khi tìm được ít nhất một khối văn bản phù hợp). Popup xác minh nút loa đã được tạo và hiển thị trước khi báo kích hoạt thành công.
 
@@ -29,7 +30,7 @@ Extension chọn vùng nội dung theo thứ tự: `article`, `main`, rồi `bod
 
 ### Đồng bộ lõi
 
-Chrome Extension phải đóng gói các tệp mà nó sử dụng trong thư mục Extension; đường dẫn trong gói không thể tham chiếu ngược ra ngoài thư mục Extension. Vì vậy `lib/tts-widget.js` là bản đóng gói nguyên trạng từ `tts-widget-embeding-web/tts-widget.js`.
+Chrome Extension phải đóng gói các tệp mà nó sử dụng trong thư mục Extension; đường dẫn trong gói không thể tham chiếu ngược ra ngoài thư mục Extension. Vì vậy `lib/tts-widget.js` là bản đóng gói từ lõi `tts-widget-embeding-web/tts-widget.js`, có phần điều chỉnh riêng cho adapter VieNeu TTS của Extension. Các thay đổi tích hợp engine phải nằm trong bản Extension, không sửa ngược lõi website nếu chưa được yêu cầu.
 
 Khi cập nhật lõi nhúng website, cần chủ động đồng bộ bản này và kiểm tra diff. Không chỉnh sửa trực tiếp một bản mà quên bản còn lại. Nguồn chuẩn hiện tại: [phiên bản nhúng website](../tts-widget-embeding-web/tts-widget.js).
 
@@ -43,7 +44,7 @@ Extension gọi API trên cùng máy tính:
 - Voices: `/v1/audio/voices?model=vieneu`
 - Speech: `POST /v1/audio/speech`
 
-Cần cài và khởi động VieNeu GPU/CPU theo [`../tts-local/setup.md`](../tts-local/setup.md). Chọn engine trong popup; thiết lập `ttsEngine` và `ttsLocalVoice` được lưu bằng `chrome.storage.sync`. Engine Browser TTS vẫn được giữ làm lựa chọn thủ công. VieNeu tạo WAV theo từng đoạn văn bản; highlight đồng bộ theo đoạn, còn highlight từng từ phụ thuộc Browser TTS.
+Cần cài và khởi động VieNeu GPU/CPU theo [`../tts-local/setup.md`](../tts-local/setup.md). Chọn engine trong popup; thiết lập `ttsEngine` và `ttsLocalVoice` được lưu bằng `chrome.storage.sync`. Engine Browser TTS vẫn được giữ làm lựa chọn thủ công. VieNeu tạo WAV theo từng đoạn văn bản; highlight đồng bộ theo đoạn, còn highlight từng từ và cao độ phụ thuộc Browser TTS. Tốc độ WAV được điều chỉnh ở trình phát phía client.
 
 Các request local được gửi qua Manifest V3 service worker `background.js`. Không mở API ra mạng công cộng; giữ server bind ở `127.0.0.1`.
 
@@ -54,7 +55,7 @@ Các request local được gửi qua Manifest V3 service worker `background.js`
 - `storage`: lưu engine và voice đã chọn.
 - Host permission `127.0.0.1:8080` và `127.0.0.1:8081`: gọi hai API VieNeu local từ service worker.
 
-Không khai báo quyền truy cập tất cả website và không cần service worker ở phiên bản đầu.
+Extension hiện dùng content script để quản lý giao diện trang và Manifest V3 service worker để gọi API localhost; không đưa API local ra Internet.
 
 ## Cài đặt thử
 
