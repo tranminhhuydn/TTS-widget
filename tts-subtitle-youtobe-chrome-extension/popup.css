@@ -148,3 +148,14 @@ body{height:600px;overflow:hidden}
 .editor-reset{width:100%;font-size:9px;padding-left:5px;padding-right:5px}
 .editor-help{margin:8px 1px}
 .editor-footer{display:none}
+
+
+/* Thanh thao tác Editor: ba nút nằm trên cùng một hàng. */
+.editor-toolbar-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.editor-toolbar-actions button{min-width:0;min-height:35px;padding:6px 3px;font-size:9px;line-height:1.2;white-space:nowrap}
+.editor-reset{font-size:8.5px}
+.editor-cue{transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease}
+.editor-cue.is-playing{background:#fff8d9;border-color:#e8c85a;box-shadow:0 0 0 1px #f4df8d inset}
+.editor-cue.is-playing .editor-cue-top strong{color:#8a6410}
+.editor-cue-actions .cue-pause{border-color:#e9d28a;background:#fffdf3;color:#8a6410}
+.editor-cue-actions .cue-pause:hover{background:#fff2bf}
