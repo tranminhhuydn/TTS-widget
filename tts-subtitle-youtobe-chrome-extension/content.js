@@ -1,7 +1,7 @@
 (() => {
   if (window.__ttsSubtitleYouTubeLoaded) return;
   window.__ttsSubtitleYouTubeLoaded=true;
-  const DEFAULTS={enabled:false,engine:"browser",vieneuVoice:"Pham Tuyen",vieneuVoices:["Pham Tuyen"],rate:1,volume:1,voiceURI:"",voiceURIs:[],rotateVoices:false,autoLanguage:true,readingMode:"story"};
+  const DEFAULTS={enabled:false,engine:"browser",vieneuVoice:"Pham Tuyen",vieneuVoices:["Pham Tuyen"],rate:1,volume:1,voiceURI:"",voiceURIs:[],rotateVoices:false,autoLanguage:true,readingMode:"story",textFilters:{enabled:true,rules:[{id:"default-music",enabled:true,pattern:"\\[(?:âm nhạc|tiếng vỗ tay|laughter|applause)\\]",replacement:"",flags:"gi"}]}};
   const isVieNeuEngine=value=>value==="vieneu"||value==="vieneu-gpu";
   let settings={...DEFAULTS},enabled=false,video=null,engine=null,sentences=[],track=null,utterance=null,activeAudio=null,activeAudioUrl=null,activeAudioResolve=null,rotationIndex=0,status="idle",loadToken=0;
   let capturedTimedtext=null;
@@ -43,6 +43,20 @@
     if(!pronunciationPattern)return source;
     pronunciationPattern.lastIndex=0;
     return source.replace(pronunciationPattern,(match,prefix,term)=>prefix+(pronunciationLookup[term.toLocaleLowerCase()]||term));
+  }
+  function applyTextFilters(value){
+    let result=String(value||"");
+    const config=settings.textFilters||DEFAULTS.textFilters;
+    if(config.enabled===false||!Array.isArray(config.rules))return result;
+    for(const rule of config.rules.slice(0,30)){
+      if(!rule||rule.enabled===false||!rule.pattern)continue;
+      try{
+        if(String(rule.pattern).length>300)continue;
+        const flags=String(rule.flags||"g").replace(/[^dgimsuvy]/g,"").slice(0,8);
+        result=result.replace(new RegExp(rule.pattern,flags),String(rule.replacement??""));
+      }catch(error){console.warn("[TTS Subtitle] Regex không hợp lệ:",error.message);}
+    }
+    return result.replace(/[ \t]{2,}/g," ").replace(/\s+([,.;!?])/g,"$1").trim();
   }
   const norm=s=>String(s||"").replace(/\s+/g," ").trim();
   function language(text,trackLang){if(trackLang)return trackLang;if(/[\u3040-\u30ff]/.test(text))return"ja";if(/[\u4e00-\u9fff]/.test(text))return"zh";if(/[\uac00-\ud7af]/.test(text))return"ko";if(/[\u0100-\u017f]/.test(text))return"vi";if(/[\u0400-\u04ff]/.test(text))return"ru";return"en";}
@@ -88,6 +102,8 @@
     return voice;
   }
   async function synthesizeBlob(text){
+    text=applyTextFilters(text);
+    if(!text)return null;
     await loadPronunciationDictionary();
     const voice = selectedVieNeuVoice();
     return new Promise((resolve,reject)=>{
@@ -127,6 +143,9 @@
   }
   function prepare(item){
     if(!isVieNeuEngine(settings.engine))return Promise.resolve(null);
+    const filteredText=applyTextFilters(item.text);
+    if(!filteredText)return Promise.resolve(null);
+    item={...item,text:filteredText};
     if(audioCache.has(item.id))return Promise.resolve(audioCache.get(item.id));
     if(audioFailures.has(item.id))return Promise.reject(audioFailures.get(item.id));
     if(audioPending.has(item.id))return audioPending.get(item.id);
@@ -153,7 +172,7 @@
       audio.play().catch(error=>{cleanup();reject(Error("Trình duyệt không phát được âm thanh VieNeu: "+error.message));});
     }));
   }
-  async function speak(item){await loadPronunciationDictionary();if(isVieNeuEngine(settings.engine))return playVieNeu(item);return new Promise((resolve,reject)=>{
+  async function speak(item){const filteredText=applyTextFilters(item.text);if(!filteredText)return;item={...item,text:filteredText};await loadPronunciationDictionary();if(isVieNeuEngine(settings.engine))return playVieNeu(item);return new Promise((resolve,reject)=>{
     // Chrome đôi khi bỏ lệnh speak ngay sau cancel(), đặc biệt với giọng đọc mạng.
     cancel();
     const spokenText=pronunciationText(item.text);
@@ -282,6 +301,14 @@
     const key={SET_RATE:"rate",SET_VOLUME:"volume",SET_VOICES:"voiceURIs",SET_ROTATE:"rotateVoices",SET_AUTO_LANGUAGE:"autoLanguage"}[m.type];
     if(key){settings[key]=m.value;if(key==="rate")settings.rate=Math.max(.5,Math.min(2,Number(m.value)||1));if(key==="volume")settings.volume=Math.max(0,Math.min(1,Number(m.value)||0));if(key==="voiceURIs")rotationIndex=0;chrome.storage.local.set({[key]:settings[key]});if(engine&&key==="volume"&&utterance){}send({[key]:settings[key]});}
     return true;
+  });
+  chrome.storage.onChanged.addListener((changes,area)=>{
+    if(area!=="local"||!changes.textFilters)return;
+    settings.textFilters=changes.textFilters.newValue||DEFAULTS.textFilters;
+    if(enabled){
+      resetPreload();audioCache.clear();
+      activate().catch(error=>{status="error";lastError=error.message;console.warn("[TTS Subtitle] Không áp dụng được bộ lọc mới:",error.message);});
+    }
   });
   speechSynthesis.onvoiceschanged=()=>{};
   chrome.storage.local.get(DEFAULTS,stored=>{settings={...DEFAULTS,...stored};if(!Array.isArray(settings.vieneuVoices)||!settings.vieneuVoices.length)settings.vieneuVoices=[settings.vieneuVoice||"Pham Tuyen"];enabled=false;});
