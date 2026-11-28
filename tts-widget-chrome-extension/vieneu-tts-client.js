@@ -2,7 +2,7 @@
 (function (global) {
   "use strict";
   if (global.VieNeuTTS) return;
-  let audio = null, resolveCurrent = null, rejectCurrent = null, objectUrl = null;
+  let audio = null, resolveCurrent = null, rejectCurrent = null, objectUrl = null, generation = 0;
   const clamp = (value, min, max, fallback) => {
     const n = Number(value);
     return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
@@ -13,7 +13,7 @@
       if (global.chrome?.storage?.sync) stored = await chrome.storage.sync.get({ ttsEngine: "browser", ttsLocalVoice: "" });
     } catch (_) {}
     return {
-      engine: stored.ttsEngine === "vieneu-cpu" ? "vieneu-cpu" : "vieneu-gpu",
+      engine: ["browser", "vieneu-cpu", "vieneu-gpu"].includes(stored.ttsEngine) ? stored.ttsEngine : "browser",
       voice: String(stored.ttsLocalVoice || "").trim()
     };
   }
@@ -45,14 +45,15 @@
   }
   async function speak(text, options = {}) {
     cancel();
+    const token = generation;
     const cfg = await config();
     const engine = options.engine || cfg.engine;
     const voice = options.voice !== undefined ? options.voice : cfg.voice;
     const result = await request("VIENEU_TTS_SYNTHESIZE", {
       engine, input: String(text || ""), voice,
-      rate: clamp(options.rate, 0.6, 1.8, 1),
       volume: clamp(options.volume, 0, 1, 1)
     });
+    if (token !== generation) return;
     const binary = atob(result.audioBase64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -66,7 +67,7 @@
       audio.play().catch(error => { cleanup(); const fail = rejectCurrent; resolveCurrent = rejectCurrent = null; if (fail) fail(error); });
     });
   }
-  function cancel() { cleanup(); settle(); }
+  function cancel() { generation++; cleanup(); settle(); }
   function pause() { if (audio && !audio.paused) audio.pause(); }
   function resume() { if (audio && audio.paused) audio.play().catch(error => console.warn("[VieNeu TTS]", error)); }
   async function health(engine) { return request("VIENEU_TTS_HEALTH", { engine }); }
