@@ -33,7 +33,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!input) throw new Error("Văn bản tổng hợp đang trống.");
     const payload = { model: "vieneu", input, response_format: "wav" };
     if (message.voice) payload.voice = String(message.voice);
-    if (message.rate !== undefined) payload.speed = Number(message.rate);
     const response = await fetch(base + "/v1/audio/speech", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
