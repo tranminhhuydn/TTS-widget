@@ -64,38 +64,3 @@ footer { margin-top: 14px; color: #94a3b8; font-size: 10px; text-align: center; 
 #ttsVolume { width:100%; margin:0; accent-color:#2463a6; cursor:pointer; }
 #ttsVolumeValue { font-variant-numeric:tabular-nums; }
 :root[data-theme="dark"] .audio-setting { background:#1f2937; border-color:#374151; }
-
-
-/* VieNeu GPU voice picker */
-.voice-select-heading { align-items: center; }
-.voice-refresh-button {
-  width: auto;
-  padding: 5px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-}
-.voice-select {
-  width: 100%;
-  min-height: 36px;
-  padding: 8px;
-  border: 1px solid #cbd5e1;
-  border-radius: 7px;
-  background: #fff;
-  color: #1f2937;
-  font: inherit;
-  font-size: 12px;
-}
-.voice-status {
-  margin: 7px 0 0;
-  color: #64748b;
-  font-size: 11px;
-  line-height: 1.4;
-}
-.voice-status.success { color: #167044; }
-.voice-status.error { color: #b42318; }
-:root[data-theme="dark"] .voice-select {
-  color-scheme: dark;
-  color: #e5e7eb;
-  background: #111827;
-  border-color: #475569;
-}
