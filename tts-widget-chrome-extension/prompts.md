@@ -91,10 +91,10 @@ Bạn đang phát triển phiên bản **TTS-widget Chrome Extension** trong th�
 - Extension hỗ trợ ba engine: `vieneu-gpu`, `vieneu-cpu`, `browser`; lựa chọn được lưu trong `chrome.storage.sync` dưới khóa `ttsEngine`, voice local lưu ở `ttsLocalVoice`.
 - GPU dùng `http://127.0.0.1:8081`; CPU dùng `http://127.0.0.1:8080`. Không tự ý đổi cổng hoặc tự động fallback sang engine khác khi API lỗi.
 - Mọi request local phải đi qua Manifest V3 service worker `background.js`; không gọi fetch trực tiếp tới localhost từ content script vì origin của trang có thể bị CORS chặn.
-- `vieneu-tts-client.js` là lớp phát WAV dùng chung cho Reader website và YouTube. Không tạo hai audio player độc lập hoặc để hai engine phát chồng.
+- `vieneu-tts-client.js` chỉ phục vụ Reader website trong `tts-widget-chrome-extension`. Không tích hợp adapter này vào luồng YouTube.
 - Giữ Browser TTS như lựa chọn thủ công tương thích ngược. Không xóa VoiceManager, voice rotation, highlight, playback controls hoặc đồng bộ phụ đề.
 - VieNeu API hiện trả WAV theo request. Tạm dừng/tiếp tục phải điều khiển phần tử Audio; không gọi SpeechSynthesis.pause/resume cho audio VieNeu.
 - Voice local là tên preset đã đăng ký trong audio.cpp (ví dụ `pham_tuyen`). Không suy luận danh sách voice từ preset GGUF; dùng endpoint `/v1/audio/voices?model=vieneu` để kiểm tra.
 - API README hiện không cam kết hỗ trợ pitch/rate tùy ý. Không gửi các trường request chưa được xác minh; chỉ truyền các trường đã xác nhận.
-- Khi thay đổi luồng tổng hợp, kiểm thử Reader website và YouTube riêng: dừng trong lúc đang tạo WAV, pause/resume, seek, đổi video, lỗi server, chuyển engine và phát liên tiếp. Kiểm tra không phát audio trễ sau khi người dùng đã Stop.
+- Khi thay đổi luồng tổng hợp, chỉ kiểm thử Reader website: dừng trong lúc đang tạo WAV, pause/resume, lỗi server, chuyển engine và phát liên tiếp. Không thay đổi hoặc kiểm thử lại extension YouTube độc lập trong task tích hợp này.
 - Không tuyên bố đã kiểm thử thực tế trên máy người dùng nếu chỉ mới kiểm tra cú pháp hoặc mã nguồn.
