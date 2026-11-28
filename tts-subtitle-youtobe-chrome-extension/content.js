@@ -1,7 +1,7 @@
 (() => {
   if (window.__ttsSubtitleYouTubeLoaded) return;
   window.__ttsSubtitleYouTubeLoaded=true;
-  const DEFAULTS={enabled:false,engine:"browser",vieneuVoice:"Pham Tuyen",vieneuVoices:["Pham Tuyen"],rate:1,volume:1,voiceURI:"",voiceURIs:[],rotateVoices:false,autoLanguage:true,readingMode:"story",textFilters:{enabled:true,rules:[{id:"default-music",enabled:true,pattern:"\\[(?:âm nhạc|tiếng vỗ tay|laughter|applause)\\]",replacement:"",flags:"gi"}]}};
+  const DEFAULTS={enabled:false,engine:"browser",vieneuVoice:"Pham Tuyen",vieneuVoices:["Pham Tuyen"],rate:1,volume:1,voiceURI:"",voiceURIs:[],rotateVoices:false,autoLanguage:true,readingMode:"story",textFilters:{enabled:true,rules:[{id:"default-music",enabled:true,pattern:"\\[(?:âm nhạc|nhạc nền|tiếng vỗ tay|music|background music|laughter|applause)\\]",replacement:"",flags:"gi"}]}};
   const isVieNeuEngine=value=>value==="vieneu"||value==="vieneu-gpu";
   let settings={...DEFAULTS},enabled=false,video=null,engine=null,sentences=[],track=null,utterance=null,activeAudio=null,activeAudioUrl=null,activeAudioResolve=null,rotationIndex=0,status="idle",loadToken=0;
   let capturedTimedtext=null;
